@@ -282,6 +282,11 @@ try {
         elements: { card: 'figure' },
         config: { pdfMaxPagesPerSlide: 3 },
         revealSpoilers: true,
+        // The plugin restores what the highlighter strips out of a code block:
+        // callout badges and diff line markers. Without it the printed copy
+        // shows a diff in plain grey.
+        scripts: ['vendor/reveal-carve/reveal-carve.js'],
+        plugins: ['RevealCarve()', 'RevealHighlight', 'RevealNotes'],
         version,
     });
 

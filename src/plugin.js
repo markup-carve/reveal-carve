@@ -163,13 +163,15 @@ export function markDiffs(deck) {
             const lines = block.innerHTML.replace(/\n$/, '').split('\n');
             const probe = document.createElement('div');
 
-            block.innerHTML = `${lines.map((line) => {
-                probe.innerHTML = line;
-                const text = probe.textContent.trimStart();
-                const kind = text.startsWith('+') ? 'add' : text.startsWith('-') ? 'del' : '';
+            block.innerHTML = lines
+                .map((line) => {
+                    probe.innerHTML = line;
+                    const text = probe.textContent.trimStart();
+                    const kind = text.startsWith('+') ? 'add' : text.startsWith('-') ? 'del' : '';
 
-                return kind ? `<span class="diff-${kind}">${line}</span>` : line;
-            }).join('\n')}\n`;
+                    return kind ? `<span class="diff-${kind}">${line}</span>` : line;
+                })
+                .join('\n');
         }
     };
 

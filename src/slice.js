@@ -290,13 +290,19 @@ export function markDiffLines(html) {
     return html.replace(
         /<pre([^>]*class="[^"]*\bdiff\b[^"]*"[^>]*)>\s*<code([^>]*)>([\s\S]*?)<\/code>\s*<\/pre>/g,
         (match, preAttrs, codeAttrs, body) => {
+            // The marker is an inline-block spanning the full width, so the line
+            // break stays where it was: a block element here would break twice.
             const lines = body.replace(/\n$/, '').split('\n').map((line) => {
                 const kind = line.startsWith('+') ? 'add' : line.startsWith('-') ? 'del' : '';
 
-                return kind ? `<span class="diff-${kind}">${line}</span>` : line;
+                return kind
+                    ? { html: `<span class="diff-${kind}">${line}</span>`, wrapped: true }
+                    : { html: line, wrapped: false };
             });
 
-            return `<pre${preAttrs}><code${codeAttrs}>${lines.join('\n')}\n</code></pre>`;
+            const body_ = lines.map((line) => line.html).join('\n');
+
+            return `<pre${preAttrs}><code${codeAttrs}>${body_}</code></pre>`;
         },
     );
 }

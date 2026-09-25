@@ -720,13 +720,19 @@ body.reveal-viewport.speaker-view .deck-timer,
 
 /* Diff blocks: `{.diff}` above the fence. Carve passes the class through, and
    the plugin marks each line so the added and removed ones can be coloured. */
+.reveal pre.diff code .diff-add,
+.reveal pre.diff code .diff-del {
+    /* inline-block, not block: the code already carries its own line breaks, and
+       a block element would add a second one under every changed line. */
+    display: inline-block;
+    width: 100%;
+}
+
 .reveal pre.diff code .diff-add {
-    display: block;
     background: rgba(31, 122, 77, 0.22);
 }
 
 .reveal pre.diff code .diff-del {
-    display: block;
     background: rgba(211, 60, 67, 0.18);
 }
 
