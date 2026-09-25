@@ -34,7 +34,8 @@
         "./handout": "./src/handout.js",
         "./dev": "./src/dev.js",
         "./theme.css": "./src/theme.css",
-        "./package.json": "./package.json"
+        "./package.json": "./package.json",
+        "./theme-dark.css": "./src/theme-dark.css"
     },
     "bin": {
         "reveal-carve": "./src/cli.js"

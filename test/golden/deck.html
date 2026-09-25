@@ -1,0 +1,152 @@
+<section class="center">
+<h1 id="reveal-carve">reveal-carve</h1>
+<p>Slides in Carve, rendered in the browser.</p>
+<aside class="notes">
+<p>This deck is one <code>.crv</code> file. Press S for the speaker view, Escape for the overview.</p>
+</aside>
+</section>
+
+<section>
+<h2 id="What-is-on-this-deck">What is on this deck</h2>
+<ul class="toc-list columns-2">
+  <li>reveal-carve</li>
+  <li>The pitch [2 min]</li>
+  <li>1. Code, unescaped</li>
+  <li>2. Highlight the line you are talking about</li>
+  <li>3. Before and after, side by side</li>
+  <li>4. The boxes a technical deck needs</li>
+  <li>5. Tables without ceremony</li>
+  <li>6. Vertical stacks</li>
+  <li>Slide attributes</li>
+  <li>7. Diagrams, from the same source</li>
+  <li>What you also get</li>
+</ul>
+</section>
+
+<section data-minutes="2">
+<h2 id="The-pitch">The pitch</h2>
+<ul>
+  <li class="fragment">Code samples need no escaping</li>
+  <li class="fragment">Layout is markup, not embedded HTML</li>
+  <li class="fragment">Stepwise code highlighting from a fence attribute</li>
+  <li class="fragment">The source is checkable before anyone presents it</li>
+</ul>
+<aside class="notes">
+<p>Each bullet arrives on its own key press because the slide carries a <code>%% fragments</code> directive.</p>
+</aside>
+</section>
+
+<section>
+<h2 id="s-1-Code-unescaped">1. Code, unescaped</h2>
+<pre><code class="language-php">$articles = $this-&gt;Articles-&gt;find()
+    -&gt;contain(['Users'])
+    -&gt;where(['published' =&gt; true])
+    -&gt;orderBy(['created' =&gt; 'DESC'])
+    -&gt;all();
+</code></pre>
+<div class="note">
+  <p>In HTML this slide would need <code>&amp;gt;</code> eleven times. Every one of them is a chance to break the sample.</p>
+</div>
+</section>
+
+<section>
+<h2 id="s-2-Highlight-the-line-you-are-talking-about">2. Highlight the line you are talking about</h2>
+<pre><code data-line-numbers="1|2-3|4" class="language-php">$query = $this-&gt;Orders-&gt;selectQuery();
+$query-&gt;contain(['Customers'])
+    -&gt;where(['status' =&gt; 'open']);
+$total = $query-&gt;count();
+</code></pre>
+<div class="note">
+  <p>Press the right arrow: the deck walks the three steps written in the fence’s attribute line.</p>
+</div>
+<aside class="notes">
+<p>The attribute line is Carve. reveal reads it on the code element, so the plugin moves it there.</p>
+</aside>
+</section>
+
+<section>
+<h2 id="s-3-Before-and-after-side-by-side">3. Before and after, side by side</h2>
+<div class="two-col">
+  <div class="before">
+    <h3 id="CakePHP-4">CakePHP 4</h3>
+    <pre><code class="language-php">$table-&gt;query()
+    -&gt;update()
+    -&gt;set(['done' =&gt; true]);
+</code></pre>
+  </div>
+  <div class="after">
+    <h3 id="CakePHP-5">CakePHP 5</h3>
+    <pre><code class="language-php">$table-&gt;updateQuery()
+    -&gt;set(['done' =&gt; true]);
+</code></pre>
+  </div>
+</div>
+<div class="note">
+  <p>Two containers with attributes. No <code>&lt;div&gt;</code> in the source.</p>
+</div>
+</section>
+
+<section>
+<h2 id="s-4-The-boxes-a-technical-deck-needs">4. The boxes a technical deck needs</h2>
+<div class="exercise">
+  <p><strong>Exercise:</strong> open <code>config/app.php</code>, set <code>errorLevel</code> to <code>E_ALL</code>, click through the app and read the log.</p>
+</div>
+<p>Version markers ride along inline: enum support <span class="tag">5.0</span> and enum validation <span class="tag" ok="">5.1</span>.</p>
+</section>
+
+<section>
+<h2 id="s-5-Tables-without-ceremony">5. Tables without ceremony</h2>
+<table>
+  <thead>
+    <tr><th scope="col">Removed in 5.0</th><th scope="col">Replacement</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>Shell</code></td><td><code>Command</code></td></tr>
+    <tr><td><code>PaginatorComponent</code></td><td><code>NumericPaginator</code></td></tr>
+    <tr><td><code>Mailer\Email</code></td><td><code>Mailer</code></td></tr>
+  </tbody>
+</table>
+</section>
+
+<section>
+<section>
+<h2 id="s-6-Vertical-stacks">6. Vertical stacks</h2>
+<p>The main line stays on the horizontal axis.</p>
+</section>
+<section>
+<h3 id="Detail-on-demand">Detail on demand</h3>
+<p>Questions that only sometimes come up live below the slide, not in the main flow.</p>
+</section>
+<section>
+<h3 id="Another-one">Another one</h3>
+<p>Press the up arrow to go back.</p>
+</section>
+</section>
+
+<section class="center" data-background="#1f2937" data-background-opacity="1">
+<h2 id="Slide-attributes">Slide attributes</h2>
+<p>Backgrounds, transitions and auto-animate pairs come from an <code>%% attr:</code> directive.</p>
+</section>
+
+<section>
+<h2 id="s-7-Diagrams-from-the-same-source">7. Diagrams, from the same source</h2>
+<pre class="mermaid" role="img" aria-label="mermaid">graph LR
+    A[deck.crv] --> B{reveal-carve}
+    B --> C[slides in the browser]
+    B --> D[static page]
+    B --> E[handout.md]</pre>
+<div class="note">
+  <p>Enabled with <code>--extension mermaid</code>. Carve emits the block, Mermaid draws it.</p>
+</div>
+</section>
+
+<section class="center">
+<h2 id="What-you-also-get">What you also get</h2>
+<div class="big">
+  <p>lint, handout, watch</p>
+</div>
+<p>A deck source is checkable, exportable as a document, and rebuilt on save.</p>
+<aside class="notes">
+<p>Point at the README for the three commands.</p>
+</aside>
+</section>

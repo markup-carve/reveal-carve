@@ -49,3 +49,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   source, so tabs and code groups appear in full rather than one panel deep.
 - PDF export drives Chrome over the DevTools protocol and waits for reveal's
   print layout, instead of trusting `--print-to-pdf` and a timer.
+- `%% toc: chapters` lists chapter files with their summed minutes.
+- Speaker timer from `%% minutes:`, shown in the speaker view.
+- `reveal-carve vendor` copies reveal, Carve and the diagram renderers next to a
+  deck; `reveal-carve check` runs carve lint, carve fmt and the deck rules.
+- Dark theme, `{.diff}` line colouring, and `{data-line-numbers}` documented.
+- Callout badges and diff markers survive reveal's highlighter.
+- Code groups and css-mode tabs show exactly one panel again.

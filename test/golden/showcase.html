@@ -1,0 +1,147 @@
+<section class="center">
+<h1 id="Everything-Carve-can-put-on-a-slide">Everything Carve can put on a slide</h1>
+<p>Diagrams, charts, math, real SVG, and the parts of the language a deck actually uses.</p>
+<aside class="notes">
+<p>Every slide after this one is rendered from Carve source with no raw HTML anywhere.</p>
+</aside>
+</section>
+
+<section>
+<h2 id="What-is-in-here">What is in here</h2>
+<ul class="toc-list columns-2">
+  <li>Everything Carve can put on a slide</li>
+  <li>Mermaid, drawn on the slide</li>
+  <li>A sequence, same idea</li>
+  <li>A chart from data in the source</li>
+  <li>Real SVG, inline in the source</li>
+  <li>Math</li>
+  <li>Footnotes and definitions</li>
+  <li>Task lists and admonitions</li>
+  <li>The small type</li>
+  <li>Quotes and tables</li>
+  <li>All of it from one file</li>
+</ul>
+</section>
+
+<section>
+<h2 id="Mermaid-drawn-on-the-slide">Mermaid, drawn on the slide</h2>
+<pre class="mermaid" role="img" aria-label="mermaid">graph LR
+    A[deck.crv] --> B{reveal-carve}
+    B --> C[browser]
+    B --> D[static page]
+    B --> E[handout.md]</pre>
+<div class="note">
+  <p><code>--extension mermaid</code>. Carve emits the block, Mermaid draws the SVG.</p>
+</div>
+</section>
+
+<section>
+<h2 id="A-sequence-same-idea">A sequence, same idea</h2>
+<pre class="mermaid" role="img" aria-label="mermaid">sequenceDiagram
+    Author->>Carve: deck.crv
+    Carve->>reveal: slide markup
+    reveal->>Audience: slides
+    Author->>Handout: same source</pre>
+</section>
+
+<section>
+<h2 id="A-chart-from-data-in-the-source">A chart from data in the source</h2>
+<div class="chart" role="img" aria-label="chart"><script type="application/json">{
+  "type": "bar",
+  "data": {
+    "labels": ["Markdown", "Carve"],
+    "datasets": [{
+      "label": "Escapes needed in the sample above",
+      "data": [11, 0],
+      "backgroundColor": ["#9ca3af", "#d33c43"]
+    }]
+  },
+  "options": {
+    "plugins": { "legend": { "display": false } },
+    "scales": { "y": { "beginAtZero": true } }
+  }
+}</script></div>
+<div class="note">
+  <p><code>--extension chart</code>. The JSON is Chart.js configuration, kept in the deck source.</p>
+</div>
+</section>
+
+<section>
+<h2 id="Real-SVG-inline-in-the-source">Real SVG, inline in the source</h2>
+<img src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20240%2090%22%20role%3D%22img%22%20aria-label%3D%22Three%20boxes%22%3E%0A%20%20%3Crect%20x%3D%224%22%20y%3D%2220%22%20width%3D%2266%22%20height%3D%2244%22%20rx%3D%226%22%20fill%3D%22%23d33c43%22%2F%3E%0A%20%20%3Crect%20x%3D%2286%22%20y%3D%2220%22%20width%3D%2266%22%20height%3D%2244%22%20rx%3D%226%22%20fill%3D%22%236b7280%22%2F%3E%0A%20%20%3Crect%20x%3D%22168%22%20y%3D%2220%22%20width%3D%2266%22%20height%3D%2244%22%20rx%3D%226%22%20fill%3D%22%231f7a4d%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M74%2042h8M156%2042h8%22%20stroke%3D%22%23374151%22%20stroke-width%3D%223%22%2F%3E%0A%3C%2Fsvg%3E" alt="">
+<div class="note">
+  <p><code>--extension imgFence:{"language":"svg"}</code>. The SVG is sanitized and emitted as a data URI, so nothing external is loaded.</p>
+</div>
+</section>
+
+<section>
+<h2 id="Math">Math</h2>
+<div class="math display">\[t_{upgrade} = \sum_{i=1}^{n} \left( c_i \cdot d_i \right) + r\]</div>
+<div class="note">
+  <p><code>--extension mathBlock</code> plus KaTeX on the page.</p>
+</div>
+</section>
+
+<section>
+<h2 id="Footnotes-and-definitions">Footnotes and definitions</h2>
+<p>CakePHP 5 removed every deprecation that was live in 4.5<a id="fnref1" href="#fn1" role="doc-noteref"><sup>1</sup></a>.</p>
+<dl>
+  <dt>Deprecation</dt>
+  <dd>An API that still works but is scheduled to disappear.</dd>
+  <dt>Rector</dt>
+  <dd>The tool that applies the mechanical part of an upgrade.</dd>
+</dl>
+<aside role="doc-endnotes" aria-label="Footnotes"><hr>
+  <ol>
+    <li id="fn1">
+      <p>Migration guide 5.0, “Deprecated Features Removed”.<a href="#fnref1" role="doc-backlink" aria-label="Back to reference">↩</a></p>
+    </li>
+  </ol></aside>
+</section>
+
+<section>
+<h2 id="Task-lists-and-admonitions">Task lists and admonitions</h2>
+<ul>
+  <li><input type="checkbox" checked disabled aria-label="Tests green on 4.5"> Tests green on 4.5</li>
+  <li><input type="checkbox" checked disabled aria-label="Deprecations resolved"> Deprecations resolved</li>
+  <li><input type="checkbox" disabled aria-label="PHP 8.1 in production"> PHP 8.1 in production</li>
+  <li><input type="checkbox" disabled aria-label="Plugins checked"> Plugins checked</li>
+</ul>
+<aside class="admonition warning" aria-label="Warning">
+  <p>Run the upgrade tool <strong>before</strong> bumping the dependency. Afterwards it cannot resolve the old class names.</p>
+</aside>
+</section>
+
+<section>
+<h2 id="The-small-type">The small type</h2>
+<p>Press <kbd>Ctrl</kbd> then <kbd>S</kbd> to open the speaker view. <abbr title="HyperText Markup Language">HTML</abbr> is rendered as an abbreviation.</p>
+<p>Text can be <mark>highlighted</mark>, struck <s>through</s>, raised to x<sup>2</sup> or lowered to H<sub>2</sub>O.</p>
+<p>Brand red is <span class="swatch"><span class="swatch-chip" style="background-color:#d33c43"></span> #d33c43</span>, the muted tone is <span class="swatch"><span class="swatch-chip" style="background-color:#6b7280"></span> #6b7280</span>.</p>
+</section>
+
+<section>
+<h2 id="Quotes-and-tables">Quotes and tables</h2>
+<blockquote><p>The slides are the handout, and that is the problem.
+<cite>Every training feedback form, ever</cite></p></blockquote>
+<table>
+  <thead>
+    <tr><th scope="col">Feature</th><th scope="col">Markdown</th><th scope="col">Carve</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Escaping in code</td><td>required</td><td>none</td></tr>
+    <tr><td>Columns</td><td>HTML</td><td>containers</td></tr>
+    <tr><td>Includes</td><td>none</td><td><code>{{ path }}</code></td></tr>
+    <tr><td>Lint</td><td>style only</td><td>structural</td></tr>
+  </tbody>
+</table>
+</section>
+
+<section class="center">
+<h2 id="All-of-it-from-one-file">All of it from one file</h2>
+<div class="big">
+  <p>No raw HTML on any slide.</p>
+</div>
+<aside class="notes">
+<p>Point out that the same source produced the handout linked in the footer.</p>
+</aside>
+</section>

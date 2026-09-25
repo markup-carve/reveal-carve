@@ -63,8 +63,12 @@ export function readSource(source, options = {}) {
     return chapters
         .map((name) => {
             const path = join(source, name);
+            const text = expand(readFileSync(path, 'utf8').trim(), path);
+            // The file name, minus its ordering prefix, names the chapter for
+            // `%% toc: chapters`. It is a Carve comment, so it renders to nothing.
+            const title = name.replace(/\.[^.]+$/, '').replace(/^\d+[-_]?/, '').replace(/[-_]/g, ' ');
 
-            return expand(readFileSync(path, 'utf8').trim(), path);
+            return `%% chapter: ${title}\n\n${text}`;
         })
         .join('\n\n---\n\n');
 }

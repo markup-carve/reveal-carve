@@ -41,5 +41,6 @@ await build({
 
 mkdirSync('dist', { recursive: true });
 copyFileSync('src/theme.css', 'dist/reveal-carve.css');
+copyFileSync('src/theme-dark.css', 'dist/reveal-carve-dark.css');
 
-console.log('dist/: reveal-carve.mjs, .cjs, .js and reveal-carve.css written');
+console.log('dist/: reveal-carve.mjs, .cjs, .js and both themes written');

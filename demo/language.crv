@@ -113,6 +113,29 @@ Palette: :color[#d33c43] accent, :color[#1f7a4d] success, :color[#6b7280] muted.
 
 ---
 
+## Diffs and line numbers
+
+{.diff}
+```js
+  let icon = document.querySelector('li.file-entry > span.icon');
+- icon.classList.add('icon-file-text');
++ icon.classList.remove('icon-file-text');
+```
+
+{data-line-numbers}
+```php
+$table->updateQuery()
+    ->set(['published' => true])
+    ->execute();
+```
+
+{.note}
+:::
+`{.diff}` colours the changed lines, `{data-line-numbers}` numbers them. Both are plain Carve attribute lines.
+:::
+
+---
+
 ## Code with callouts
 
 ```php

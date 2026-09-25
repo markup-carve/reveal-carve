@@ -1,0 +1,171 @@
+<section class="center">
+<h1 id="The-rest-of-the-language">The rest of the language</h1>
+<p>Constructs the first showcase left out, plus the three plugin features that are easiest to miss.</p>
+</section>
+
+<section>
+<h2 id="On-this-deck">On this deck</h2>
+<ul class="toc-list columns-2">
+  <li>The rest of the language</li>
+  <li>Tabs</li>
+  <li>Code groups</li>
+  <li>Details, folded away</li>
+  <li>A table with block content</li>
+  <li>Spoilers and swatches</li>
+  <li>Diffs and line numbers</li>
+  <li>Code with callouts</li>
+  <li>Auto-animate</li>
+  <li>Auto-animate, grown</li>
+  <li>Containers as real elements</li>
+  <li>When a slide is broken</li>
+  <li>That is the language</li>
+</ul>
+</section>
+
+<section>
+<h2 id="Tabs">Tabs</h2>
+<div class="tabs" role="tablist" aria-label="Tabs">
+<button type="button" role="tab" id="tabset-1-tab-1" aria-selected="true" aria-controls="tabset-1-panel-1" class="tabs-label">Composer</button>
+<button type="button" role="tab" id="tabset-1-tab-2" aria-selected="false" aria-controls="tabset-1-panel-2" class="tabs-label" tabindex="-1">Rector</button>
+<button type="button" role="tab" id="tabset-1-tab-3" aria-selected="false" aria-controls="tabset-1-panel-3" class="tabs-label" tabindex="-1">Tests</button>
+<div role="tabpanel" id="tabset-1-panel-1" aria-labelledby="tabset-1-tab-1" class="tabs-panel">
+<pre><code class="language-bash">composer require cakephp/cakephp:^5.2
+</code></pre>
+</div>
+<div role="tabpanel" id="tabset-1-panel-2" aria-labelledby="tabset-1-tab-2" class="tabs-panel" hidden>
+<pre><code class="language-bash">bin/cake upgrade rector --rules cakephp50 src
+</code></pre>
+</div>
+<div role="tabpanel" id="tabset-1-panel-3" aria-labelledby="tabset-1-tab-3" class="tabs-panel" hidden>
+<pre><code class="language-bash">vendor/bin/phpunit --filter ArticlesTable
+</code></pre>
+</div>
+</div>
+<div class="note">
+  <p><code>--extension tabs</code>. Arrow left and right switch tabs while the strip has focus; reveal keeps the keys otherwise.</p>
+</div>
+</section>
+
+<section>
+<h2 id="Code-groups">Code groups</h2>
+<div class="code-group" role="group" aria-label="Code examples">
+<input type="radio" name="codegroup-1" id="codegroup-1-tab-1" class="code-group-radio" checked>
+<label for="codegroup-1-tab-1" class="code-group-label">Composer</label>
+<input type="radio" name="codegroup-1" id="codegroup-1-tab-2" class="code-group-radio">
+<label for="codegroup-1-tab-2" class="code-group-label">composer.json</label>
+<input type="radio" name="codegroup-1" id="codegroup-1-tab-3" class="code-group-radio">
+<label for="codegroup-1-tab-3" class="code-group-label">Application.php</label>
+<div class="code-group-panel" role="group" aria-label="Composer"><pre><code class="language-bash">composer require cakephp/cakephp:^5.2
+</code></pre>
+</div>
+<div class="code-group-panel" role="group" aria-label="composer.json"><pre><code class="language-json">{ "require": { "cakephp/cakephp": "^5.2" } }
+</code></pre>
+</div>
+<div class="code-group-panel" role="group" aria-label="Application.php"><pre><code class="language-php">$this-&gt;addPlugin('Migrations');
+</code></pre>
+</div>
+</div>
+<div class="note">
+  <p><code>--extension codeGroup</code>. One block per file, switched on screen and unfolded in the PDF.</p>
+</div>
+</section>
+
+<section>
+<h2 id="Details-folded-away">Details, folded away</h2>
+<details>
+  <summary>Details</summary>
+  <h3 id="The-long-version-of-why-buffering-changed">The long version of why buffering changed</h3>
+  <p>5.0 always buffered result sets, which raised memory on large exports. 5.1 brought back <code>disableBufferedResults()</code>.</p>
+</details>
+<div class="note">
+  <p>Useful for the question you only sometimes get asked.</p>
+</div>
+</section>
+
+<section>
+<h2 id="A-table-with-block-content">A table with block content</h2>
+<table>
+  <tbody>
+    <tr><td><strong>Step</strong></td><td><strong>Command</strong></td><td><strong>Guards it</strong></td></tr>
+    <tr><td>Deprecations</td><td><pre><code class="language-bash">bin/cake upgrade rector --rules cakephp45 src
+</code></pre></td><td>Tests</td></tr>
+    <tr><td>The jump</td><td><pre><code class="language-bash">composer update -W
+</code></pre></td><td>Tests, PHPStan</td></tr>
+  </tbody>
+</table>
+</section>
+
+<section>
+<h2 id="Spoilers-and-swatches">Spoilers and swatches</h2>
+<p>The answer to “how long does the upgrade take” is <span class="spoiler">as long as your test suite is short</span>.</p>
+<p>Palette: <span class="swatch"><span class="swatch-chip" style="background-color:#d33c43"></span> #d33c43</span> accent, <span class="swatch"><span class="swatch-chip" style="background-color:#1f7a4d"></span> #1f7a4d</span> success, <span class="swatch"><span class="swatch-chip" style="background-color:#6b7280"></span> #6b7280</span> muted.</p>
+</section>
+
+<section>
+<h2 id="Diffs-and-line-numbers">Diffs and line numbers</h2>
+<pre class="diff"><code data-noescape class="language-js">  let icon = document.querySelector('li.file-entry &gt; span.icon');
+<span class="diff-del">- icon.classList.add('icon-file-text');</span>
+<span class="diff-add">+ icon.classList.remove('icon-file-text');</span>
+</code></pre>
+<pre><code data-line-numbers="" class="language-php">$table-&gt;updateQuery()
+    -&gt;set(['published' =&gt; true])
+    -&gt;execute();
+</code></pre>
+<div class="note">
+  <p><code>{.diff}</code> colours the changed lines, <code>{data-line-numbers}</code> numbers them. Both are plain Carve attribute lines.</p>
+</div>
+</section>
+
+<section>
+<h2 id="Code-with-callouts">Code with callouts</h2>
+<pre><code data-noescape class="language-php">$query = $this-&gt;Articles-&gt;selectQuery();   <b class="callout" data-callout="1">1</b>
+$query-&gt;contain(['Authors'])               <b class="callout" data-callout="2">2</b>
+    -&gt;where(['published' =&gt; true]);
+</code></pre>
+<ol class="callouts">
+  <li value="1">One query type, so the IDE and PHPStan know what comes next.</li>
+  <li value="2">Eager loading, which is the whole point of the slide.</li>
+</ol>
+<div class="note">
+  <p><code>--extension codeCallouts</code>. The markers bind to the list under the block.</p>
+</div>
+</section>
+
+<section data-auto-animate>
+<h2 id="Auto-animate">Auto-animate</h2>
+<div class="big" data-id="claim">
+  <p>One idea</p>
+</div>
+</section>
+
+<section data-auto-animate>
+<h2 id="animate-grown">Auto-animate, grown</h2>
+<div class="big" data-id="claim" style="font-size: 2.4em">
+  <p>One idea, moved and grown</p>
+</div>
+<div class="note">
+  <p>Two slides, both with <code>%% animate</code>, and the same <code>data-id</code> on the element that should travel. Without that id reveal has nothing to pair, because the text differs.</p>
+</div>
+</section>
+
+<section>
+<h2 id="Containers-as-real-elements">Containers as real elements</h2>
+<figure class="card">
+  <h3 id="Built-with-element-card-figure">Built with <code>--element card=figure</code></h3>
+  <p>This box is a <code>&lt;figure&gt;</code> in the output, while the source stays <code>{.card}</code> plus a container.</p>
+</figure>
+</section>
+
+<section>
+<h2 id="When-a-slide-is-broken">When a slide is broken</h2>
+<div class="note">
+  <p>A source error does not shorten the deck silently. It renders a slide carrying the engine’s message, so you see it on the projector instead of wondering where slide nine went. <code>--strict</code> fails the build instead.</p>
+</div>
+</section>
+
+<section class="center">
+<h2 id="That-is-the-language">That is the language</h2>
+<div class="big">
+  <p>Still no raw HTML.</p>
+</div>
+</section>

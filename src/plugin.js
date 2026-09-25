@@ -21,6 +21,7 @@
 import { renderDeck, DEFAULTS } from './slice.js';
 import { missingRenderers, resolveExtensions } from './extensions.js';
 import { setupTabs } from './tabs.js';
+import { setupTimer } from './timer.js';
 
 function dedent(text) {
     const lines = text.replace(/^\n+/, '').replace(/\s+$/, '').split('\n');
@@ -140,6 +141,102 @@ function forwardAttributes(from, to) {
 }
 
 /**
+ * Colour the lines of a `{.diff}` block after highlighting.
+ *
+ * The lines are marked while rendering too, but highlight.js rebuilds the
+ * element and throws those spans away, so the work is done again here - once
+ * reveal reports ready, which is after every plugin has had its turn.
+ */
+export function markDiffs(deck) {
+    const blocks = [...deck.getRevealElement().querySelectorAll('pre.diff code')];
+
+    if (!blocks.length) {
+        return;
+    }
+
+    const paint = () => {
+        for (const block of blocks) {
+            if (block.querySelector('.diff-add, .diff-del')) {
+                continue;
+            }
+
+            const lines = block.innerHTML.replace(/\n$/, '').split('\n');
+            const probe = document.createElement('div');
+
+            block.innerHTML = `${lines.map((line) => {
+                probe.innerHTML = line;
+                const text = probe.textContent.trimStart();
+                const kind = text.startsWith('+') ? 'add' : text.startsWith('-') ? 'del' : '';
+
+                return kind ? `<span class="diff-${kind}">${line}</span>` : line;
+            }).join('\n')}\n`;
+        }
+    };
+
+    deck.on?.('ready', paint);
+    paint();
+}
+
+/**
+ * Keep callout markers through syntax highlighting.
+ *
+ * reveal's highlight plugin hands each block to highlight.js, which rebuilds the
+ * element from its text - so the `<b class="callout">` Carve put inside the code
+ * comes back as a bare number and loses its badge. The markers are remembered
+ * before that happens and written back on `ready`, which is after every plugin,
+ * including the highlighter, has run.
+ */
+export function protectCallouts(deck) {
+    const blocks = new Set(
+        [...deck.getRevealElement().querySelectorAll('code .callout')]
+            .map((marker) => marker.closest('code')),
+    );
+
+    if (!blocks.size) {
+        return;
+    }
+
+    const remembered = [...blocks].map((block) => ({
+        block,
+        markers: [...block.querySelectorAll('.callout')].map((marker) => ({
+            number: marker.textContent.trim(),
+            html: marker.outerHTML,
+        })),
+    }));
+
+    const restore = () => {
+        for (const { block, markers } of remembered) {
+            if (block.querySelector('.callout')) {
+                continue;
+            }
+
+            let html = block.innerHTML;
+
+            for (const marker of markers) {
+                // The highlighter usually wraps the number as a literal, so the
+                // wrapped form is tried first; the bare one covers a language
+                // whose grammar leaves it alone. Both are anchored to the end of
+                // the line, which is what keeps a number inside the code safe.
+                const wrapped = new RegExp(
+                    `<span class="hljs-number">${marker.number}</span>(\\s*)$`,
+                    'm',
+                );
+                const bare = new RegExp(`(^|[^\\w"'>])${marker.number}(\\s*)$`, 'm');
+
+                html = wrapped.test(html)
+                    ? html.replace(wrapped, `${marker.html}$1`)
+                    : html.replace(bare, `$1${marker.html}$2`);
+            }
+
+            block.innerHTML = html;
+        }
+    };
+
+    deck.on?.('ready', restore);
+    restore();
+}
+
+/**
  * An optional deck footer, configured as `carve: { footer: '<a ...>' }`.
  * It sits outside `.slides`, so it survives every transition. There is no
  * default content: what belongs down there is the deck author's business.
@@ -190,6 +287,9 @@ async function convert(deck) {
 
     ensureFooter(deck, config);
     setupTabs(deck, config);
+    setupTimer(deck, config);
+    protectCallouts(deck);
+    markDiffs(deck);
 }
 
 const plugin = () => ({

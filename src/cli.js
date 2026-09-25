@@ -10,7 +10,7 @@
  * `build` is the default, so the verb may be left out.
  */
 
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 
@@ -21,8 +21,9 @@ import { serve } from './dev.js';
 import { missingRenderers, parseExtensionArgument, resolveExtensions } from './extensions.js';
 import { deckMinutes } from './slice.js';
 import { exportPdf } from './pdf.js';
+import { vendorAssets } from './vendor.js';
 
-const VERBS = ['build', 'watch', 'lint', 'handout', 'pdf', 'agenda'];
+const VERBS = ['build', 'watch', 'lint', 'handout', 'pdf', 'agenda', 'vendor', 'check'];
 
 // The Carve package publishes ESM only, so this is a dynamic import rather than
 // a require: `require('@markup-carve/carve')` fails with ERR_PACKAGE_PATH_NOT_EXPORTED.
@@ -141,6 +142,8 @@ function usage() {
   reveal-carve handout <source> <target.md>     export slides plus speaker notes
   reveal-carve pdf     <deck.html> <out.pdf>    print the deck with headless Chrome
   reveal-carve agenda  <source>                 list the slides and their planned minutes
+  reveal-carve vendor  <dir>                    copy reveal, Carve and the renderers next to a deck
+  reveal-carve check   <source...>              carve lint, carve fmt and the deck rules in one go
 
 A source is a .crv file or a directory holding one file per chapter.
 
@@ -228,6 +231,66 @@ switch (verb) {
         break;
     }
 
+    case 'vendor': {
+        const { copied, missing } = vendorAssets(source || 'vendor');
+
+        for (const entry of copied) {
+            console.log(`  ${entry.target.padEnd(20)} from ${entry.name}`);
+        }
+
+        if (missing.length) {
+            console.log('\nNot installed, so not copied:');
+
+            for (const entry of missing) {
+                console.log(`  ${entry.name.padEnd(22)} ${entry.what}`);
+            }
+
+            console.log(`\nInstall what you need: npm install ${missing.map((e) => e.name).join(' ')}`);
+        }
+
+        console.log(`\n${copied.length} file(s) in ${source || 'vendor'}`);
+        break;
+    }
+
+    case 'check': {
+        const files = positional.length ? positional : ['.'];
+        const carveCli = new URL('../node_modules/@markup-carve/carve/dist/cli.js', import.meta.url);
+        const { spawnSync } = await import('node:child_process');
+        let failed = false;
+
+        const runCarve = (args) => {
+            const result = spawnSync(process.execPath, [carveCli.pathname, ...args], {
+                encoding: 'utf8',
+            });
+
+            if (result.status !== 0) {
+                failed = true;
+                console.log((result.stdout || result.stderr).trim());
+            }
+
+            return result.status === 0;
+        };
+
+        for (const file of files) {
+            const sources = statSync(file).isDirectory()
+                ? readdirSync(file).filter((name) => name.endsWith('.crv')).map((name) => join(file, name))
+                : [file];
+
+            for (const path of sources) {
+                runCarve(['lint', path]);
+                runCarve(['fmt', '--check', path]);
+            }
+
+            const findings = lintSource(readSource(file, options), options);
+            console.log(formatFindings(file, findings));
+            failed = failed || findings.some((finding) => finding.level === 'error');
+        }
+
+        console.log(failed ? '\ncheck: problems found' : '\ncheck: clean');
+        process.exit(failed ? 1 : 0);
+        break;
+    }
+
     case 'pdf': {
         // A deck source is printed from a copy of its own: Carve's static mode
         // unfolds tabs and code groups into sections, so every panel reaches the
@@ -258,6 +321,14 @@ switch (verb) {
                 // Unfolded tabs make a slide taller than the screen version, so
                 // let an overlong one run onto a second page instead of being cut.
                 config: { pdfMaxPagesPerSlide: 3, ...options.config },
+                // The print copy loads the plugin as well: the highlighter
+                // rebuilds a code block and drops the callout badges and diff
+                // line markers with it, and the plugin is what puts them back.
+                scripts: [
+                    ...(options.scripts || []),
+                    new URL('../dist/reveal-carve.js', import.meta.url).pathname,
+                ],
+                plugins: ['RevealCarve()', 'RevealHighlight', 'RevealNotes'],
             });
         }
 
@@ -280,15 +351,31 @@ switch (verb) {
     case 'watch': {
         const root = resolve(dirname(target));
         const rebuild = () => {
+            options.dependencies.clear();
             const count = buildOnce();
-            console.log(`[reveal-carve] rebuilt ${target} (${count} slides)`);
+            const included = options.dependencies.size;
+            console.log(
+                `[reveal-carve] rebuilt ${target} (${count} slides`
+                + `${included ? `, ${included} included file${included === 1 ? '' : 's'}` : ''})`,
+            );
         };
 
         rebuild();
+
+        // The engine reports which files a deck was actually built from, so an
+        // edit to an included partial rebuilds the deck that pulls it in - even
+        // when that partial lives outside the directory being served.
+        const watched = new Set(['.']);
+
+        for (const dependency of options.dependencies) {
+            watched.add(dirname(dependency));
+        }
+
         serve({
             root,
             port: options.port,
-            watch: ['.'],
+            watch: [...watched].filter((dir) => dir === '.' || resolve(dir).startsWith(root)),
+            extraWatch: [...options.dependencies].filter((file) => !resolve(file).startsWith(root)),
             ignore: (filename) => filename.endsWith('.html'),
             onChange: rebuild,
         });

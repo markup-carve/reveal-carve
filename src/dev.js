@@ -111,6 +111,16 @@ export function serve(options = {}) {
         }, 80);
     };
 
+    // Files a deck includes can live outside the directory being served; they
+    // are watched individually rather than by walking a tree.
+    for (const file of options.extraWatch || []) {
+        try {
+            watch(file, () => notify(file));
+        } catch {
+            log(`cannot watch ${file}`);
+        }
+    }
+
     for (const directory of options.watch || ['.']) {
         watch(join(root, directory), { recursive: true }, (event, filename) => {
             if (!filename || filename.includes('node_modules') || filename.startsWith('.')) {

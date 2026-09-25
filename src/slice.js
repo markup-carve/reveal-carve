@@ -15,7 +15,7 @@ export const DEFAULTS = {
     fragmentDirective: '^%%\\s*fragments\\s*$',
     animateDirective: '^%%\\s*animate\\s*$',
     minutesDirective: '^%%\\s*minutes:\\s*(\\d+)\\s*$',
-    tocDirective: '^%%\\s*toc\\s*$',
+    tocDirective: '^%%\\s*toc(?::\\s*(\\S+))?\\s*$',
     animateLists: false,
     revealSpoilers: false,
     splitAtHeading: 0,
@@ -281,6 +281,27 @@ export function restoreDataFences(html, classes = DATA_CLASSES) {
 }
 
 /**
+ * Mark the lines of a `{.diff}` block so a stylesheet can colour them.
+ *
+ * Carve passes the class through to the `<pre>`, but the added and removed
+ * lines are only text, and CSS cannot select a line by what it starts with.
+ */
+export function markDiffLines(html) {
+    return html.replace(
+        /<pre([^>]*class="[^"]*\bdiff\b[^"]*"[^>]*)>\s*<code([^>]*)>([\s\S]*?)<\/code>\s*<\/pre>/g,
+        (match, preAttrs, codeAttrs, body) => {
+            const lines = body.replace(/\n$/, '').split('\n').map((line) => {
+                const kind = line.startsWith('+') ? 'add' : line.startsWith('-') ? 'del' : '';
+
+                return kind ? `<span class="diff-${kind}">${line}</span>` : line;
+            });
+
+            return `<pre${preAttrs}><code${codeAttrs}>${lines.join('\n')}\n</code></pre>`;
+        },
+    );
+}
+
+/**
  * reveal's highlight plugin escapes the content of a code block unless the
  * element says otherwise, which turns Carve's callout markers into visible
  * `<b class="callout">` text - measured on the built deck. A block that carries
@@ -288,7 +309,9 @@ export function restoreDataFences(html, classes = DATA_CLASSES) {
  */
 export function keepInlineCodeMarkup(html) {
     return html.replace(/<code(?![^>]*data-noescape)([^>]*)>([\s\S]*?)<\/code>/g, (match, attrs, body) => {
-        if (!/<b class="callout"/.test(body)) {
+        // Callout badges and diff line markers are both markup this package put
+        // inside the code on purpose; everything else stays escaped.
+        if (!/<b class="callout"|<span class="diff-(add|del)"/.test(body)) {
             return match;
         }
 
@@ -334,7 +357,14 @@ export function parseSlide(source, options = {}) {
     const withAttr = takeDirective(withClass.rest, config.attrDirective);
     const withFragments = takeFlag(withAttr.rest, config.fragmentDirective);
     const withAnimate = takeFlag(withFragments.rest, config.animateDirective);
-    const withToc = takeFlag(withAnimate.rest, config.tocDirective);
+    const tocMatch = withAnimate.rest.match(new RegExp(config.tocDirective, 'm'));
+    const withToc = {
+        present: Boolean(tocMatch),
+        mode: tocMatch?.[1] || 'slides',
+        rest: tocMatch
+            ? withAnimate.rest.replace(new RegExp(config.tocDirective, 'm'), '')
+            : withAnimate.rest,
+    };
     const withMinutes = takeDirective(withToc.rest, config.minutesDirective);
 
     const [body, ...noteParts] = withMinutes.rest.split(directive(config.notesDirective));
@@ -345,6 +375,7 @@ export function parseSlide(source, options = {}) {
         animateLists: withFragments.present,
         autoAnimate: withAnimate.present,
         toc: withToc.present,
+        tocMode: withToc.mode,
         minutes: withMinutes.value ? Number(withMinutes.value) : 0,
         body: body.trim(),
         notes: noteParts.join('\n').trim(),
@@ -409,6 +440,10 @@ export function renderSlide(source, render, options = {}) {
             html = moveCodeAttributes(html);
         }
 
+        // Order matters: the diff markers have to exist before the block is
+        // exempted from the highlighter's escaping, or they arrive on the slide
+        // as visible <span> text.
+        html = markDiffLines(html);
         html = keepInlineCodeMarkup(html);
         html = flattenDiagramFences(html);
         html = restoreDataFences(html);
@@ -550,6 +585,12 @@ export function deckMinutes(source, options = {}) {
  * slides as it needs.
  */
 function agendaSlides(chunk, chunks, config) {
+    const slide = parseSlide(chunk, config);
+
+    if (slide.tocMode === 'chapters') {
+        return chapterAgenda(chunk, chunks, config);
+    }
+
     const entries = chunks
         .filter((other) => other !== chunk)
         .map((other) => {
@@ -586,6 +627,36 @@ function agendaSlides(chunk, chunks, config) {
 }
 
 /**
+ * An agenda of chapters: one entry per source file, with the minutes of every
+ * slide in it added up. For a training deck that is the useful gliederung -
+ * nobody wants forty slide titles on the wall.
+ */
+function chapterAgenda(chunk, chunks, config) {
+    const titles = chapterTitles(chunks);
+    const totals = new Map();
+
+    chunks.forEach((other, index) => {
+        const title = titles.get(index);
+
+        if (!title || other === chunk) {
+            return;
+        }
+
+        totals.set(title, (totals.get(title) || 0) + parseSlide(other, config).minutes);
+    });
+
+    if (!totals.size) {
+        return [chunk];
+    }
+
+    const entries = [...totals.entries()].map(
+        ([title, minutes]) => (minutes ? `${asListItemText(title)} [${minutes} min]` : asListItemText(title)),
+    );
+
+    return [`${chunk.trimEnd()}\n\n{.toc-list}\n${entries.map((entry) => `- ${entry}`).join('\n')}\n`];
+}
+
+/**
  * A heading becomes the text of a list item, so anything in it that Carve reads
  * as a block marker has to be escaped first. "1. Code, unescaped" otherwise
  * opens an ordered list inside the bullet, which is what an agenda of numbered
@@ -610,6 +681,29 @@ function continuationOf(chunk, config) {
 /**
  * Render a whole document to the slide markup that goes inside `.reveal .slides`.
  */
+/**
+ * A marker the build step can put between chapters, so an agenda can list the
+ * chapters rather than every slide in them. Invisible to Carve: it is a comment.
+ */
+export const CHAPTER_MARKER = '%% chapter:';
+
+export function chapterTitles(chunks) {
+    const titles = new Map();
+    let current = '';
+
+    chunks.forEach((chunk, index) => {
+        const match = chunk.match(/^%%\s*chapter:\s*(.+)$/m);
+
+        if (match) {
+            current = match[1].trim();
+        }
+
+        titles.set(index, current);
+    });
+
+    return titles;
+}
+
 export function renderDeck(source, render, options = {}) {
     const config = { ...DEFAULTS, ...options };
     const { body, definitions } = config.footnotes === false

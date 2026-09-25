@@ -72,6 +72,8 @@ reveal-carve watch slides/ deck.html --port 8800       # rebuild and reload on s
 reveal-carve lint slides/                              # deck problems, before the room sees them
 reveal-carve handout slides/ handout.md                # slides plus what you said about them
 reveal-carve agenda slides/ --budget 120               # planned minutes per slide, and the total
+reveal-carve check slides/                             # carve lint, carve fmt and the deck rules
+reveal-carve vendor deck/vendor                        # copy reveal, Carve and the renderers in
 reveal-carve pdf slides/ deck.pdf                      # print copy, built and printed
 ```
 
@@ -91,6 +93,7 @@ reveal-carve pdf slides/ deck.pdf                      # print copy, built and p
 | `--smart-quotes LOCALE` | locale-aware quotation marks, e.g. `de` |
 | `--budget N` | `agenda` fails when the planned minutes exceed N |
 | `--no-notes` | handout without the speaker notes |
+| `--no-reveal-spoilers` | print without the repeated slide that opens spoilers |
 
 In JavaScript:
 
@@ -197,6 +200,23 @@ Reveal.initialize({
 The source stays pure Carve, so `carve lint` still checks it and the Markdown
 handout still reads it. Raw HTML in the source would reach the HTML target only:
 plain text, ANSI and the handout drop it.
+
+### Code blocks: line numbers, diffs, callouts
+
+```
+{data-line-numbers}          numbers every line
+{data-line-numbers=2|4-6}    numbers them and steps through those lines
+{.diff}                      colours lines starting with + or -
+```
+
+All three are plain Carve attribute lines above the fence. Callout markers
+(`<1>` at the end of a line, with a matching `<1> text` paragraph under the
+block) keep their badge inside the code as well.
+
+One caveat worth knowing: reveal's highlighter rebuilds a code block from its
+text, which drops the markup for diffs and callouts. The plugin puts it back
+once reveal is ready, so a deck that uses either should load the plugin - the
+`pdf` command does that for its print copy on its own.
 
 ### Carve extensions
 
@@ -330,6 +350,29 @@ reveal-carve agenda slides/ --budget 120
 
 `%% toc` puts the same list on a slide, with the minutes beside each entry, so the
 agenda cannot drift away from the deck it describes.
+
+### Speaker timer
+
+`%% minutes: 5` on a slide is a plan; `carve: { timer: true }` compares it with
+the clock. The box shows elapsed against planned and how far ahead or behind you
+are, and it only appears in the speaker view - `timer: 'always'` overrides that.
+
+### Agenda by chapter
+
+`%% toc` lists every slide. `%% toc: chapters` lists the chapter files instead,
+with the minutes of each chapter added up, which is the agenda a training deck
+wants:
+
+```
+- Introduction [20 min]
+- Reading the code [40 min]
+- Upgrade strategy [30 min]
+```
+
+### Dark theme
+
+`dist/reveal-carve-dark.css` carries the same class names with values for a dark
+room. Load it instead of `reveal-carve.css`, after a dark reveal theme.
 
 ### Theme helpers
 

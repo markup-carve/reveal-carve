@@ -1,0 +1,69 @@
+/*!
+ * reveal-carve dark theme helpers.
+ *
+ * Same class names as the light one, different values: a deck should not have
+ * to change its markup to be shown in a dark room. Load this after a dark
+ * reveal theme (black, dracula, night) instead of reveal-carve.css.
+ */
+
+@import "./theme.css";
+
+:root {
+    --carve-accent: #ff6b73;
+    --carve-muted: #9aa3af;
+    --carve-ok: #4ade80;
+    --carve-soft: rgba(255, 255, 255, 0.08);
+}
+
+.reveal h1,
+.reveal h2,
+.reveal h3,
+.reveal h4 {
+    color: #f3f4f6;
+}
+
+.reveal .admonition,
+.reveal .exercise,
+.reveal blockquote,
+.reveal figure.card,
+.reveal .card {
+    background: var(--carve-soft);
+}
+
+.reveal table th {
+    border-bottom-color: var(--carve-accent);
+}
+
+.reveal table tr:nth-child(even) {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.reveal mark {
+    background: #b45309;
+    color: #fff;
+}
+
+.reveal .spoiler {
+    background: currentColor;
+}
+
+/* An error slide has to stay loud in the dark too. */
+.reveal .carve-error {
+    background: #3b0d0d;
+    color: #fecaca;
+    border-color: var(--carve-accent);
+}
+
+.reveal .carve-error pre code {
+    background: #1f1f1f;
+    color: #fecaca;
+}
+
+.reveal .swatch-chip {
+    border-color: rgba(255, 255, 255, 0.35);
+}
+
+.deck-timer {
+    background: var(--carve-soft);
+    color: var(--carve-muted);
+}
