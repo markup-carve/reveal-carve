@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<title>reveal-carve demo</title>
+<link rel="stylesheet" href="../node_modules/reveal.js/dist/reset.css">
+<link rel="stylesheet" href="../node_modules/reveal.js/dist/reveal.css">
+<link rel="stylesheet" href="../node_modules/reveal.js/dist/theme/white.css">
+<link rel="stylesheet" href="../node_modules/reveal.js/dist/plugin/highlight/monokai.css">
+<style>
+    .reveal section { text-align: left; }
+    .reveal section.center { text-align: center; }
+    .reveal .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2em; align-items: start; }
+    .reveal pre { width: 100%; box-shadow: none; font-size: 0.5em; }
+</style>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+
+<section data-carve="deck.crv"></section>
+
+</div>
+</div>
+
+<script src="../node_modules/@markup-carve/carve/dist/carve.iife.min.js"></script>
+<script src="../node_modules/reveal.js/dist/reveal.js"></script>
+<script src="../node_modules/reveal.js/dist/plugin/highlight.js"></script>
+<script src="../node_modules/reveal.js/dist/plugin/notes.js"></script>
+<script type="module">
+import RevealCarve from '../src/plugin.js';
+
+Reveal.initialize({
+    hash: true,
+    slideNumber: 'c/t',
+    plugins: [RevealCarve(), RevealHighlight, RevealNotes],
+});
+</script>
+</body>
+</html>

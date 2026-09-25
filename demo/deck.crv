@@ -1,0 +1,72 @@
+%% class: center
+
+# reveal-carve
+
+Slides written in Carve, rendered in the browser.
+
+%% notes
+
+Everything under a `%% notes` directive is a speaker note. Press S to see it.
+
+---
+
+## Why Carve
+
+- Emphasis is single-delimiter: *bold*, /italic/, `code`
+- Containers carry attributes, so a layout is markup rather than embedded HTML
+- `carve lint` and `carve fmt` check the source before it reaches a browser
+
+---
+
+## Code needs no escaping
+
+```php
+$articles = $this->Articles->find()
+    ->contain(['Users'])
+    ->all();
+```
+
+---
+
+## Two columns, no HTML
+
+{.two-col}
+:::
+{.before}
+::::
+### Before
+
+```php
+$query->order(['created' => 'DESC']);
+```
+::::
+
+{.after}
+::::
+### After
+
+```php
+$query->orderBy(['created' => 'DESC']);
+```
+::::
+:::
+
+---
+
+## Vertical stacks
+
+Press the down arrow.
+
+--
+
+### Second level
+
+Separated by two dashes instead of three.
+
+---
+
+%% attr: data-background="#f6f7f9"
+
+## Slide attributes
+
+This slide sets its own background through an `%% attr:` directive.
