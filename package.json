@@ -70,6 +70,7 @@
     "devDependencies": {
         "@markup-carve/carve": "^0.1.7",
         "esbuild": "^0.28.2",
+        "linkedom": "^0.18.13",
         "reveal.js": "^6.0.2"
     },
     "module": "./dist/reveal-carve.mjs"
