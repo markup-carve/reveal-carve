@@ -45,3 +45,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   containment, a byte budget and the list of files a deck was built from.
 - Theme styling for task lists, admonitions, definition lists, footnotes, tabs,
   folded details, spoilers, swatches, keyboard keys and block quotes.
+- `reveal-carve pdf` builds a print copy in Carve's static mode when given a
+  source, so tabs and code groups appear in full rather than one panel deep.
+- PDF export drives Chrome over the DevTools protocol and waits for reveal's
+  print layout, instead of trusting `--print-to-pdf` and a timer.

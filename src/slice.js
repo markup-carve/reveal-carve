@@ -36,12 +36,17 @@ export const DEFAULTS = {
 export function unwrapSections(html) {
     const kept = [];
 
-    // Pull the semantic sections out first so the blunt strip below cannot eat
-    // their closing tags, then put them back as asides.
+    // Three kinds of section come out of Carve, and reveal positions all of them
+    // absolutely, which drops them on top of the slide's own content:
+    //
+    //   role      the endnotes; becomes an aside, semantics intact
+    //   class     a static-mode tab or code-group panel; becomes a div
+    //   id only   the wrapper around a heading; goes away entirely
     const masked = html.replace(
-        /<section([^>]*\brole=[^>]*)>([\s\S]*?)<\/section>/g,
+        /<section([^>]*(?:\brole=|\bclass=)[^>]*)>([\s\S]*?)<\/section>/g,
         (match, attrs, body) => {
-            kept.push(`<aside${attrs}>${body}</aside>`);
+            const element = /\brole=/.test(attrs) ? 'aside' : 'div';
+            kept.push(`<${element}${attrs}>${unwrapSections(body)}</${element}>`);
 
             return `\u0000${kept.length - 1}\u0000`;
         },

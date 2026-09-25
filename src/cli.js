@@ -11,7 +11,8 @@
  */
 
 import { readFileSync, writeFileSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
+import { tmpdir } from 'node:os';
 
 import { buildPage, buildSlides, readSource } from './build.js';
 import { buildHandout } from './handout.js';
@@ -225,8 +226,37 @@ switch (verb) {
     }
 
     case 'pdf': {
-        await exportPdf(source, target);
-        console.log(`${target}: printed from ${source}`);
+        // A deck source is printed from a copy of its own: Carve's static mode
+        // unfolds tabs and code groups into sections, so every panel reaches the
+        // page instead of only the selected one, and no renderer is pulled from
+        // a CDN while headless Chrome is trying to print.
+        const fromSource = !source.endsWith('.html');
+        let deck = source;
+        let expectedPages = 0;
+
+        if (fromSource) {
+            deck = join(tmpdir(), `reveal-carve-print-${Date.now()}.html`);
+            expectedPages = buildPage({
+                source,
+                target: deck,
+                render: (text) => carve.carveToHtml(text, {
+                    sections: false,
+                    mode: 'static',
+                    ...options.carveOptions,
+                    extensions,
+                }),
+                ...options,
+                revealBase: options.revealBase
+                    ? resolve(options.revealBase)
+                    : resolve('node_modules/reveal.js/dist'),
+                // Unfolded tabs make a slide taller than the screen version, so
+                // let an overlong one run onto a second page instead of being cut.
+                config: { pdfMaxPagesPerSlide: 3, ...options.config },
+            });
+        }
+
+        const result = await exportPdf(deck, target, { expectedPages });
+        console.log(`${target}: ${result.pages} pages from ${source}`);
         break;
     }
 

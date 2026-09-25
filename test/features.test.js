@@ -298,3 +298,19 @@ test('without a version the urls are untouched', () => {
 
     assert.ok(!html.includes('?v='));
 });
+
+test('a static-mode panel keeps its class as a div', () => {
+    const html = unwrapSections(
+        '<section class="tabs-panel"><h3 class="tabs-label">A</h3><p>a</p></section>',
+    );
+
+    assert.equal(html, '<div class="tabs-panel"><h3 class="tabs-label">A</h3><p>a</p></div>');
+});
+
+test('nested heading wrappers inside a kept section are still unwrapped', () => {
+    const html = unwrapSections(
+        '<section class="tabs-panel"><section id="A"><h3>A</h3></section></section>',
+    );
+
+    assert.equal(html, '<div class="tabs-panel"><h3>A</h3></div>');
+});

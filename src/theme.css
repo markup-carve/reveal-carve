@@ -269,6 +269,25 @@
     margin-top: 0;
 }
 
+/* Static mode, which is what a PDF gets: every panel is shown, one under the
+   other, with its label as a heading. */
+.reveal .tabs:not([role="tablist"]) .tabs-panel {
+    flex: 0 0 100%;
+    border-top: 1px solid rgba(127, 127, 127, 0.25);
+}
+
+.reveal h3.tabs-label,
+.reveal h3.code-group-label {
+    display: block;
+    margin: 0 0 0.3em;
+    padding: 0;
+    background: none;
+    border: 0;
+    font-size: 0.7em;
+    color: var(--carve-accent);
+    text-transform: none;
+}
+
 /* A fragment marker the tab runtime adds; it drives steps, it is not content. */
 .reveal .carve-tab-step {
     display: none;
@@ -502,6 +521,29 @@
     .deck-footer {
         display: none;
     }
+}
+
+/* Print, which is what a handed-out deck is. Static mode unfolds tabs and code
+   groups, so a slide carries more than it does on screen: wrap long code rather
+   than letting it run off the page, and tighten the panels. */
+.print-pdf .reveal pre code {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    max-height: none;
+}
+
+.print-pdf .reveal pre {
+    font-size: 0.42em;
+}
+
+.print-pdf .reveal .tabs-panel {
+    padding: 0.4em 0.8em;
+}
+
+.print-pdf .reveal h3.tabs-label,
+.print-pdf .reveal h3.code-group-label {
+    font-size: 0.6em;
+    margin-bottom: 0.15em;
 }
 
 /* Code callouts: numbered markers in a block, bound to the list under it. */

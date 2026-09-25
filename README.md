@@ -72,7 +72,7 @@ reveal-carve watch slides/ deck.html --port 8800       # rebuild and reload on s
 reveal-carve lint slides/                              # deck problems, before the room sees them
 reveal-carve handout slides/ handout.md                # slides plus what you said about them
 reveal-carve agenda slides/ --budget 120               # planned minutes per slide, and the total
-reveal-carve pdf deck.html deck.pdf                    # printed with headless Chrome
+reveal-carve pdf slides/ deck.pdf                      # print copy, built and printed
 ```
 
 | Flag | Meaning |
@@ -243,6 +243,33 @@ renderers would make it slower, not more convincing.
 `tabs`, `details` and `spoiler` are markup too: the theme styles them, and the
 demo site ships about thirty lines of script to make tabs switch and spoilers
 reveal. Copy that from `scripts/build-site.mjs` if you want the same behavior.
+
+### PDF export
+
+```bash
+reveal-carve pdf slides/deck.crv deck.pdf
+```
+
+Given a Carve source rather than an HTML file, the PDF is built from a print copy
+of the deck in Carve's static mode. That matters for anything interactive: a tab
+group on screen shows one panel at a time, and printing the live deck would put
+only that panel on the page. In static mode the panels unfold into sections with
+their labels as headings, so the handout carries all of them. Code groups behave
+the same way.
+
+An overlong slide runs onto a second page rather than being cut, and code wraps
+instead of leaving the paper.
+
+Printing an HTML deck directly also works, and prints exactly what is on screen:
+
+```bash
+reveal-carve pdf deck.html deck.pdf
+```
+
+The export drives Chrome over the DevTools protocol and waits for reveal's print
+layout to exist. Chrome's own `--print-to-pdf` flag prints when its timer runs
+out, which produced a blank one-page PDF for a deck that had printed twelve pages
+a minute earlier, from the same file.
 
 ### Publishing an updated deck
 
