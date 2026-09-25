@@ -332,6 +332,8 @@
 
 /* Footnotes. On a slide these are an aside to the point, not a second body. */
 .reveal [role="doc-endnotes"] {
+    display: block;
+    position: static;
     font-size: 0.6em;
     color: var(--carve-muted);
     margin-top: 1em;

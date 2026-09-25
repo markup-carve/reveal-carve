@@ -251,15 +251,21 @@ test('the plugin works on a prebuilt page, with no engine present', async () => 
     assert.deepEqual(calls, []);
 });
 
-test('unwrapping keeps a section that carries a role', () => {
+test('endnotes survive unwrapping, as an aside', () => {
     const html = unwrapSections(
         '<section id="T"><h2>T</h2><p>a</p></section>'
         + '<section role="doc-endnotes" aria-label="Footnotes"><ol><li>n</li></ol></section>',
     );
 
-    assert.match(html, /<section role="doc-endnotes"/);
-    assert.ok(!html.includes('<section id="T">'));
+    // A section here would be positioned absolutely by reveal and land on top
+    // of the slide's own content.
+    assert.ok(!html.includes('<section'));
+    assert.match(html, /<aside role="doc-endnotes" aria-label="Footnotes"><ol><li>n<\/li><\/ol><\/aside>/);
     assert.match(html, /<h2>T<\/h2>/);
+});
+
+test('a slide with no endnotes is unwrapped cleanly', () => {
+    assert.equal(unwrapSections('<section id="T"><h2>T</h2></section>'), '<h2>T</h2>');
 });
 
 test('a code block with callouts opts out of the highlighter escaping', () => {

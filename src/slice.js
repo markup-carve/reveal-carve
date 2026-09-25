@@ -23,26 +23,32 @@ export const DEFAULTS = {
 
 /**
  * Carve wraps every heading in `<section id="...">`. reveal.js reads a nested
- * `<section>` as a vertical slide, so those wrappers have to go before the
- * rendered HTML is placed inside a slide. (The engine can leave them off with
- * `sections: false`; this stays for renderers that ignore the option.)
+ * `<section>` as a slide, so those wrappers have to go before the rendered HTML
+ * is placed inside one. (The engine can leave them off with `sections: false`;
+ * this stays for renderers that ignore the option.)
  *
- * Only heading wrappers go. A `<section role="doc-endnotes">` carries the
- * footnote semantics and is what a stylesheet targets, so stripping every
- * section flattened the endnotes into loose text - measured on the built deck.
+ * A `<section role="doc-endnotes">` needs different treatment again. Keeping it
+ * as a section put the footnotes on top of the rest of the slide, because
+ * reveal positions every section in the deck absolutely. Dropping it lost the
+ * role and the styling hook. So it becomes an `<aside>` carrying the same
+ * attributes: same semantics, and reveal has no opinion about it.
  */
-const HEADING_SECTION = /<section(?![^>]*\brole=)[^>]*>|<\/section>/g;
-
 export function unwrapSections(html) {
     const kept = [];
-    const masked = html.replace(/<section[^>]*\brole=[^>]*>[\s\S]*?<\/section>/g, (block) => {
-        kept.push(block);
 
-        return `\u0000${kept.length - 1}\u0000`;
-    });
+    // Pull the semantic sections out first so the blunt strip below cannot eat
+    // their closing tags, then put them back as asides.
+    const masked = html.replace(
+        /<section([^>]*\brole=[^>]*)>([\s\S]*?)<\/section>/g,
+        (match, attrs, body) => {
+            kept.push(`<aside${attrs}>${body}</aside>`);
+
+            return `\u0000${kept.length - 1}\u0000`;
+        },
+    );
 
     return masked
-        .replace(HEADING_SECTION, '')
+        .replace(/<section[^>]*>|<\/section>/g, '')
         .replace(/\u0000(\d+)\u0000/g, (_, index) => kept[Number(index)])
         .trim();
 }

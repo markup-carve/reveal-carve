@@ -110,9 +110,9 @@ $query->contain(['Authors'])               <2>
 
 %% animate
 
-## Auto-animate, first half
+## Auto-animate
 
-{.big}
+{.big data-id=claim}
 :::
 One idea
 :::
@@ -121,16 +121,17 @@ One idea
 
 %% animate
 
-## Auto-animate, second half
+{#animate-grown}
+## Auto-animate, grown
 
-{.big}
+{.big data-id=claim style="font-size: 2.4em"}
 :::
 One idea, moved and grown
 :::
 
 {.note}
 :::
-Two slides with `%% animate`. reveal matches the elements and tweens between them.
+Two slides, both with `%% animate`, and the same `data-id` on the element that should travel. Without that id reveal has nothing to pair, because the text differs.
 :::
 
 ---
