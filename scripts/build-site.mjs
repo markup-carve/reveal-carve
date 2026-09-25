@@ -13,7 +13,7 @@ import { fileURLToPath } from 'node:url';
 import * as carve from '@markup-carve/carve';
 import { fileSystemResolver } from '@markup-carve/carve/node';
 
-import { buildPage, readSource } from '../src/build.js';
+import { buildPage, themeToggle, readSource } from '../src/build.js';
 import { buildHandout } from '../src/handout.js';
 import { exportPdf } from '../src/pdf.js';
 import { resolveExtensions } from '../src/extensions.js';
@@ -164,6 +164,13 @@ cpSync(
 cpSync(join(root, 'dist'), join(out, 'vendor/reveal-carve'), { recursive: true });
 cpSync(join(root, 'demo/deck.crv'), join(out, 'deck.crv'));
 
+// Every deck ships both themes and a switch: the dark one is what a deck looks
+// like in a dark room, and there is no point publishing it untried.
+const DARK = {
+    darkTheme: 'black',
+    darkStylesheets: ['vendor/reveal-carve/reveal-carve-dark.css'],
+};
+
 // 1. The feature deck, pre-rendered by the build step.
 const slides = buildPage({
     source: join(root, 'demo/deck.crv'),
@@ -172,6 +179,7 @@ const slides = buildPage({
     title: 'reveal-carve - features',
     revealBase: 'vendor/reveal',
     stylesheets: ['vendor/reveal-carve/reveal-carve.css'],
+    ...DARK,
     footer: footerFor('demo/deck.crv'),
     rawScripts: RENDERERS,
     version,
@@ -189,9 +197,11 @@ writeFileSync(
 <title>reveal-carve - rendered in the browser</title>
 <link rel="stylesheet" href="vendor/reveal/reset.css?v=${version}">
 <link rel="stylesheet" href="vendor/reveal/reveal.css?v=${version}">
-<link rel="stylesheet" href="vendor/reveal/theme/white.css?v=${version}">
+<link rel="stylesheet" data-carve-theme="light" href="vendor/reveal/theme/white.css?v=${version}">
 <link rel="stylesheet" href="vendor/reveal/plugin/highlight/monokai.css?v=${version}">
-<link rel="stylesheet" href="vendor/reveal-carve/reveal-carve.css?v=${version}">
+<link rel="stylesheet" data-carve-theme="light" href="vendor/reveal-carve/reveal-carve.css?v=${version}">
+<link rel="stylesheet" data-carve-theme="dark" href="vendor/reveal/theme/black.css?v=${version}" disabled>
+<link rel="stylesheet" data-carve-theme="dark" href="vendor/reveal-carve/reveal-carve-dark.css?v=${version}" disabled>
 </head>
 <body>
 <div class="reveal">
@@ -202,6 +212,7 @@ writeFileSync(
 <footer class="deck-footer">
 ${footerFor('demo/deck.crv')}
 </footer>
+${themeToggle()}
 <script src="vendor/carve.iife.min.js?v=${version}"></script>
 <script src="vendor/reveal/reveal.js?v=${version}"></script>
 <script src="vendor/reveal/plugin/highlight.js?v=${version}"></script>
@@ -230,6 +241,7 @@ const showcase = buildPage({
     title: 'reveal-carve - everything on a slide',
     revealBase: 'vendor/reveal',
     stylesheets: ['vendor/reveal-carve/reveal-carve.css'],
+    ...DARK,
     footer: footerFor('demo/showcase.crv'),
     rawScripts: RENDERERS,
     version,
@@ -243,6 +255,7 @@ const language = buildPage({
     title: 'reveal-carve - the rest of the language',
     revealBase: 'vendor/reveal',
     stylesheets: ['vendor/reveal-carve/reveal-carve.css'],
+    ...DARK,
     footer: footerFor('demo/language.crv'),
     rawScripts: RENDERERS,
     elements: { card: 'figure' },
@@ -262,6 +275,7 @@ const chapters = buildPage({
     title: 'reveal-carve - chapters and includes',
     revealBase: 'vendor/reveal',
     stylesheets: ['vendor/reveal-carve/reveal-carve.css'],
+    ...DARK,
     includeRoot: join(root, 'demo'),
     ...includes,
     footer: footerFor('demo/decks'),
@@ -301,6 +315,7 @@ try {
         title: 'reveal-carve - every element, for print',
         revealBase: 'vendor/reveal',
         stylesheets: ['vendor/reveal-carve/reveal-carve.css'],
+    ...DARK,
         rawScripts: RENDERERS,
         elements: { card: 'figure' },
         config: { pdfMaxPagesPerSlide: 3 },

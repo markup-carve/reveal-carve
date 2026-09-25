@@ -24,8 +24,12 @@ const site = resolve(process.argv[2] || 'site');
 const port = 9500 + Math.floor(Math.random() * 400);
 
 // What a slide must never show. Each entry is checked against the rendered DOM.
-const CHECKS = `
+// The same rules run three times per deck: on screen, in print layout, and in
+// the dark theme. Two of the three only exist because bugs lived there - an
+// empty flowchart and a blank trailing page both printed fine on screen.
+const CHECKS = (mode) => `
 (() => {
+    const mode = ${JSON.stringify(mode)};
     const findings = [];
     const slides = [...document.querySelectorAll('.slides section')]
         .filter((slide) => !slide.querySelector('section'));
@@ -80,7 +84,78 @@ const CHECKS = `
         if (slide.scrollHeight > 800) {
             report('slide overflows', slide.scrollHeight + 'px');
         }
+
+        // A diagram that came out as an empty box. Mermaid lays a flowchart out
+        // in the slide it lives in, so a hidden slide measures its labels as
+        // zero and the SVG is a few pixels wide with nothing in it. Only a
+        // visible slide can be measured: a slide reveal keeps hidden reports
+        // zero for everything in it.
+        (slide.offsetHeight ? slide.querySelectorAll('.mermaid svg, .chart canvas') : []).forEach((drawn) => {
+            const box = drawn.getBoundingClientRect();
+
+            if (box.width < 40 || box.height < 40) {
+                report('diagram drawn empty', Math.round(box.width) + 'x' + Math.round(box.height));
+            }
+        });
+
+        if (slide.textContent.includes('Syntax error in text')) {
+            report('a renderer printed its own error', '');
+        }
+
+        if (mode === 'dark') {
+            const luminance = (color) => {
+                const parts = (color.match(/[\\d.]+/g) || []).map(Number);
+
+                return (0.2126 * parts[0] + 0.7152 * parts[1] + 0.0722 * parts[2]) / 255;
+            };
+            const backgroundOf = (node) => {
+                for (let el = node; el; el = el.parentElement) {
+                    const color = getComputedStyle(el).backgroundColor;
+                    const parts = (color.match(/[\\d.]+/g) || []).map(Number);
+
+                    if (parts.length === 3 || (parts[3] || 0) > 0.6) {
+                        return color;
+                    }
+                }
+
+                return getComputedStyle(document.body).backgroundColor;
+            };
+
+            slide.querySelectorAll('p, li, td, th, h1, h2, h3, h4, dt, dd, figcaption, .tag').forEach((node) => {
+                if (!node.textContent.trim() || node.closest('pre')) {
+                    return;
+                }
+
+                const style = getComputedStyle(node);
+
+                if (style.visibility === 'hidden' || style.opacity === '0') {
+                    return;
+                }
+
+                const contrast = Math.abs(luminance(style.color) - luminance(backgroundOf(node)));
+
+                if (contrast < 0.12) {
+                    report('too little contrast in the dark theme', node.textContent.trim().slice(0, 40));
+                }
+            });
+        }
     });
+
+    if (mode === 'print') {
+        // Anything below the last page becomes a blank page in the PDF. A six
+        // pixel tooltip host left on the body was enough.
+        const pages = [...document.querySelectorAll('.pdf-page')];
+        const past = pages.length ? document.body.scrollHeight - pages.length * pages[0].offsetHeight : 0;
+
+        if (past > 2) {
+            findings.push({
+                index: pages.length - 1,
+                title: '(document)',
+                issue: 'content sits past the last page, so the PDF gains a blank one',
+                detail: past + 'px',
+            });
+        }
+    }
 
     return { slides: slides.length, findings };
 })()
@@ -195,23 +270,40 @@ try {
     await devtools.send('Page.enable');
     await devtools.send('Runtime.enable');
 
+    const PASSES = [
+        { mode: 'screen', query: '', label: '' },
+        { mode: 'print', query: '?print-pdf', label: ' [print]' },
+        { mode: 'dark', query: '', label: ' [dark]', theme: 'dark' },
+    ];
+
     for (const deck of decks) {
-        await devtools.send('Page.navigate', { url: `http://127.0.0.1:${httpPort}/${deck}` });
-        await new Promise((done) => setTimeout(done, 2500));
+        for (const pass of PASSES) {
+            const url = `http://127.0.0.1:${httpPort}/${deck}${pass.query}`;
 
-        const result = await devtools.evaluate(CHECKS);
-        const findings = result?.findings || [];
+            await devtools.send('Page.navigate', { url });
+            await new Promise((done) => setTimeout(done, 400));
+            // The theme is a stored choice, so it is set on the deck's own
+            // origin and the page is loaded again with it in place.
+            await devtools.evaluate(
+                `localStorage.setItem('reveal-carve-theme', ${JSON.stringify(pass.theme || 'light')})`,
+            );
+            await devtools.send('Page.navigate', { url: `${url}${pass.query ? '&' : '?'}pass=${pass.mode}` });
+            await new Promise((done) => setTimeout(done, 2500));
 
-        if (!findings.length) {
-            console.log(`${deck}: ${result?.slides ?? 0} slides, clean`);
-            continue;
-        }
+            const result = await devtools.evaluate(CHECKS(pass.mode));
+            const findings = result?.findings || [];
 
-        failed = true;
-        console.log(`${deck}: ${findings.length} finding(s)`);
+            if (!findings.length) {
+                console.log(`${deck}${pass.label}: ${result?.slides ?? 0} slides, clean`);
+                continue;
+            }
 
-        for (const finding of findings) {
-            console.log(`  slide ${finding.index + 1} "${finding.title}": ${finding.issue} ${finding.detail}`);
+            failed = true;
+            console.log(`${deck}${pass.label}: ${findings.length} finding(s)`);
+
+            for (const finding of findings) {
+                console.log(`  slide ${finding.index + 1} "${finding.title}": ${finding.issue} ${finding.detail}`);
+            }
         }
     }
 

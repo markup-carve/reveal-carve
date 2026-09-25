@@ -9,7 +9,10 @@
 
 import { DEFAULTS, parseSlide } from './slice.js';
 
-export const KNOWN_DIRECTIVES = ['class', 'attr', 'notes', 'fragments', 'animate', 'minutes', 'toc'];
+// `chapter` is not written by hand: the build step puts it at the head of every
+// chapter file so an agenda can list chapters. It is linted as known all the
+// same, because linting a directory means linting text the build step wrote.
+export const KNOWN_DIRECTIVES = ['class', 'attr', 'notes', 'fragments', 'animate', 'minutes', 'toc', 'chapter'];
 
 const DIRECTIVE_LINE = /^%%\s*([a-z-]+)\s*:?/i;
 

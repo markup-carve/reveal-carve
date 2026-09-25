@@ -56,3 +56,40 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Dark theme, `{.diff}` line colouring, and `{data-line-numbers}` documented.
 - Callout badges and diff markers survive reveal's highlighter.
 - Code groups and css-mode tabs show exactly one panel again.
+- `reveal-carve init <dir>` writes a starter deck: chapters, a shared partial and
+  the commands to run it.
+- A light/dark switch in the deck: `--dark-theme`, `--dark-css` and `--dark`
+  ship both themes in one page, following the reader's system setting on the
+  first visit and remembering the choice after that.
+- Task list checkboxes are drawn by the theme - green when done, red while open -
+  and keep their colour in print.
+- `@markup-carve/reveal-carve/pdf` and `/init` are exported for use from Node.
+- `reveal-carve vendor` copies the plugin's own bundle and both stylesheets too,
+  so a vendored deck needs nothing from `node_modules`.
+- A page that loads the plugin bundle through `--js` gets `RevealCarve()` in its
+  plugin list without being told twice.
+- Size classes `small`, `smaller` and `tiny`, on a block or a whole slide.
+- Code inside a `two-col` column is set smaller and wrapped, instead of running
+  under a horizontal scrollbar nobody can reach from the third row.
+- The deck check runs three passes per deck - on screen, in print layout and in
+  the dark theme - and fails on an empty diagram, a blank trailing page or text
+  without contrast.
+- Documentation: a getting-started walkthrough and a reference page under
+  `docs/`.
+
+### Fixed
+
+- Mermaid diagrams came out empty, or as a syntax error in a printed deck: a
+  flowchart laid out inside a hidden slide measures its labels as zero. Each
+  block is rendered on its own now, and the demo pages show how.
+- The published dark stylesheet imported a file name that does not exist in
+  `dist`, so a dark deck loaded the colours and none of the layout.
+- A printed deck gained a blank last page from the tooltip host Mermaid leaves
+  on the body.
+- A long agenda put a single entry on its continuation slide; the entries are
+  spread evenly over as many slides as they need.
+- `%% chapter:`, which the build step writes itself, no longer trips the linter.
+- The development server stops watching when it is closed, so a process that
+  served a deck can exit.
+- `reveal-carve pdf` resolves `--css` and `--js` paths against the working
+  directory rather than the temp directory it builds the print copy in.

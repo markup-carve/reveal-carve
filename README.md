@@ -44,7 +44,11 @@ Two entry points over one implementation:
 
 ```bash
 npm install @markup-carve/reveal-carve @markup-carve/carve reveal.js
+npx reveal-carve init talk      # a starter deck: chapters, a partial, the commands
 ```
+
+[Getting started](docs/getting-started.md) walks from here to a published deck;
+[the reference](docs/reference.md) lists every directive, flag and option.
 
 ## Runtime plugin
 
@@ -402,6 +406,16 @@ wants:
 `dist/reveal-carve-dark.css` carries the same class names with values for a dark
 room. Load it instead of `reveal-carve.css`, after a dark reveal theme.
 
+The build step can ship both and put a switch in the corner of the deck:
+
+```bash
+reveal-carve build slides/ deck.html --dark-theme black --dark-css vendor/reveal-carve-dark.css
+```
+
+The first visit follows the reader's own system setting, the choice is
+remembered per browser, and the switch never reaches paper. `--dark` starts in
+the dark theme regardless.
+
 ### Theme helpers
 
 `dist/reveal-carve.css` carries the layout classes a technical deck keeps needing:
@@ -418,6 +432,12 @@ silently shorter deck. Pass `--strict` (or `throwOnError`) to fail the build ins
 - Vertical splitting is **on by default** (`--`); reveal's Markdown plugin needs `data-separator-vertical`.
 - Slide attributes come from `%%` directives rather than `<!-- .slide: -->` comments, because Carve has real comment syntax.
 - The Carve engine is a peer dependency rather than bundled, so a page loads one engine no matter how many plugins use it.
+
+## Documentation
+
+- [Getting started](docs/getting-started.md)
+- [Reference](docs/reference.md)
+- [Markdown or Carve](docs/markdown-vs-carve.md)
 
 ## Markdown or Carve
 

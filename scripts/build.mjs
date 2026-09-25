@@ -3,7 +3,7 @@
 // an ESM module with a default-exported factory, and a UMD file that assigns the
 // same factory to window.RevealCarve.
 
-import { copyFileSync, mkdirSync } from 'node:fs';
+import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 
 import { build } from 'esbuild';
 
@@ -41,6 +41,13 @@ await build({
 
 mkdirSync('dist', { recursive: true });
 copyFileSync('src/theme.css', 'dist/reveal-carve.css');
-copyFileSync('src/theme-dark.css', 'dist/reveal-carve-dark.css');
+// The dark theme imports the light one, and the file is renamed on the way
+// into dist - without rewriting the import the dark deck loads twelve rules
+// and none of the layout.
+writeFileSync(
+    'dist/reveal-carve-dark.css',
+    readFileSync('src/theme-dark.css', 'utf8').replace('@import "./theme.css";', '@import "./reveal-carve.css";'),
+    'utf8',
+);
 
 console.log('dist/: reveal-carve.mjs, .cjs, .js and both themes written');

@@ -30,6 +30,19 @@ export const VENDORABLE = [
         what: 'the Carve engine, for decks rendered in the browser',
     },
     {
+        // The plugin's own files. A deck that renders Carve in the browser needs
+        // the bundle; every deck needs the stylesheet.
+        name: '@markup-carve/reveal-carve',
+        from: '@markup-carve/reveal-carve/package.json',
+        self: new URL('..', import.meta.url).pathname,
+        copy: [
+            { source: 'dist/reveal-carve.js', target: 'reveal-carve.js' },
+            { source: 'dist/reveal-carve.css', target: 'reveal-carve.css' },
+            { source: 'dist/reveal-carve-dark.css', target: 'reveal-carve-dark.css' },
+        ],
+        what: 'the plugin and its theme',
+    },
+    {
         name: 'mermaid',
         from: 'mermaid/package.json',
         copy: [{ source: 'dist/mermaid.min.js', target: 'mermaid.min.js' }],
@@ -50,6 +63,12 @@ export const VENDORABLE = [
 ];
 
 function locate(entry) {
+    // This package cannot resolve itself by name from inside itself, so it says
+    // where it is.
+    if (entry.self && existsSync(join(entry.self, 'dist'))) {
+        return entry.self;
+    }
+
     // Not every package exports its package.json, so fall back to walking up
     // from whatever entry point it does export.
     try {

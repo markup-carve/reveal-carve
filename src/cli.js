@@ -22,8 +22,9 @@ import { missingRenderers, parseExtensionArgument, resolveExtensions } from './e
 import { deckMinutes } from './slice.js';
 import { exportPdf } from './pdf.js';
 import { vendorAssets } from './vendor.js';
+import { initDeck } from './init.js';
 
-const VERBS = ['build', 'watch', 'lint', 'handout', 'pdf', 'agenda', 'vendor', 'check'];
+const VERBS = ['init', 'build', 'watch', 'lint', 'handout', 'pdf', 'agenda', 'vendor', 'check'];
 
 // The Carve package publishes ESM only, so this is a dynamic import rather than
 // a require: `require('@markup-carve/carve')` fails with ERR_PACKAGE_PATH_NOT_EXPORTED.
@@ -54,6 +55,15 @@ function parseArgs(argv) {
                 break;
             case '--theme':
                 options.theme = argv[++index];
+                break;
+            case '--dark-theme':
+                options.darkTheme = argv[++index];
+                break;
+            case '--dark-css':
+                options.darkStylesheets = [...(options.darkStylesheets || []), argv[++index]];
+                break;
+            case '--dark':
+                options.defaultDark = true;
                 break;
             case '--lang':
                 options.lang = argv[++index];
@@ -133,9 +143,15 @@ function parseArgs(argv) {
     return { positional, options };
 }
 
+// A path that is not a URL is made absolute, for pages written somewhere else.
+function absoluteAsset(path) {
+    return /^(https?:)?\/\/|^data:/.test(path) ? path : resolve(path);
+}
+
 function usage() {
     console.log(`reveal-carve - Carve sources to reveal.js decks
 
+  reveal-carve init    <dir>                    write a starter deck
   reveal-carve [build] <source> <target.html>   render a deck
   reveal-carve watch   <source> <target.html>   rebuild on save, reload the browser
   reveal-carve lint    <source...>              check deck sources
@@ -148,6 +164,7 @@ function usage() {
 A source is a .crv file or a directory holding one file per chapter.
 
 Options: --title --theme --lang --reveal-base --css --js --port
+         --dark-theme NAME --dark-css FILE --dark
          --extension NAME[:VALUE|:JSON] --smart-quotes LOCALE
          --element CLASS=ELEMENT
          --footer "<html>" --footer-file FILE --version MARKER
@@ -163,6 +180,20 @@ const [source, target] = positional;
 if (options.help || (!source && verb !== 'lint')) {
     usage();
     process.exit(options.help ? 0 : 1);
+}
+
+// A scaffold needs no engine, so it is handled before the rest is loaded.
+if (verb === 'init') {
+    const written = initDeck(source);
+
+    for (const file of written) {
+        console.log(`  ${file}`);
+    }
+
+    console.log(written.length
+        ? `\n${source}: ${written.length} file(s). Next: npx reveal-carve watch ${join(source, 'slides')} ${source}/deck.html`
+        : `${source}: nothing written, the files are already there.`);
+    process.exit(0);
 }
 
 const carve = await loadCarve();
@@ -318,6 +349,10 @@ switch (verb) {
                 revealBase: options.revealBase
                     ? resolve(options.revealBase)
                     : resolve('node_modules/reveal.js/dist'),
+                // The print copy is written to a temp directory, so a relative
+                // asset path would resolve against that directory and load
+                // nothing. Local paths are made absolute; URLs are left alone.
+                stylesheets: (options.stylesheets || []).map(absoluteAsset),
                 // Unfolded tabs make a slide taller than the screen version, so
                 // let an overlong one run onto a second page instead of being cut.
                 config: { pdfMaxPagesPerSlide: 3, ...options.config },
@@ -325,7 +360,7 @@ switch (verb) {
                 // rebuilds a code block and drops the callout badges and diff
                 // line markers with it, and the plugin is what puts them back.
                 scripts: [
-                    ...(options.scripts || []),
+                    ...(options.scripts || []).map(absoluteAsset),
                     new URL('../dist/reveal-carve.js', import.meta.url).pathname,
                 ],
                 plugins: ['RevealCarve()', 'RevealHighlight', 'RevealNotes'],

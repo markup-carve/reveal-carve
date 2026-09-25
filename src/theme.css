@@ -45,12 +45,40 @@
     min-width: 0;
 }
 
+/* Code in a column is set smaller and wrapped. A horizontal scrollbar is
+   useless on a slide: nobody in the third row can drag it, and the half of the
+   line it hides is usually the half that changed. */
+.reveal .two-col pre {
+    font-size: 0.62em;
+    width: 100%;
+}
+
+.reveal .two-col pre code {
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+    overflow-x: hidden;
+}
+
 .reveal .before > :first-child {
     color: var(--carve-muted);
 }
 
 .reveal .after > :first-child {
     color: var(--carve-ok);
+}
+
+/* Size utilities. Written above any block - {.small} on a table, a list or a
+   fence - or on a whole slide with `%% class: small`. */
+.reveal .small {
+    font-size: 0.8em;
+}
+
+.reveal .smaller {
+    font-size: 0.65em;
+}
+
+.reveal .tiny {
+    font-size: 0.5em;
 }
 
 /* Callout box: {.exercise} */
@@ -177,6 +205,37 @@
 
 .reveal li:has(> input[type="checkbox"]:checked) {
     color: var(--carve-muted);
+}
+
+/* The light/dark switch, when a deck is built with a dark theme as well. It
+   sits out of the way of the slide and never reaches paper. */
+.deck-theme-toggle {
+    position: fixed;
+    top: 10px;
+    right: 12px;
+    z-index: 40;
+    width: 2em;
+    height: 2em;
+    padding: 0;
+    font-size: 15px;
+    line-height: 1;
+    color: var(--carve-muted);
+    background: var(--carve-soft);
+    border: 1px solid var(--carve-soft);
+    border-radius: 50%;
+    cursor: pointer;
+    opacity: 0.55;
+}
+
+.deck-theme-toggle:hover,
+.deck-theme-toggle:focus-visible {
+    opacity: 1;
+}
+
+@media print {
+    .deck-theme-toggle {
+        display: none;
+    }
 }
 
 /* Mermaid appends a tooltip host to the body and leaves it there. It is six

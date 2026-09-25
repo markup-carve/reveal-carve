@@ -94,6 +94,7 @@ export function serve(options = {}) {
         }
     });
 
+    const watchers = [];
     let pending = null;
 
     const notify = (changed) => {
@@ -115,14 +116,14 @@ export function serve(options = {}) {
     // are watched individually rather than by walking a tree.
     for (const file of options.extraWatch || []) {
         try {
-            watch(file, () => notify(file));
+            watchers.push(watch(file, () => notify(file)));
         } catch {
             log(`cannot watch ${file}`);
         }
     }
 
     for (const directory of options.watch || ['.']) {
-        watch(join(root, directory), { recursive: true }, (event, filename) => {
+        watchers.push(watch(join(root, directory), { recursive: true }, (event, filename) => {
             if (!filename || filename.includes('node_modules') || filename.startsWith('.')) {
                 return;
             }
@@ -132,8 +133,18 @@ export function serve(options = {}) {
             }
 
             notify(filename);
-        });
+        }));
     }
+
+    // A watcher holds the process open on its own, so stopping the server stops
+    // watching too - otherwise nothing that starts a server ever exits.
+    server.on('close', () => {
+        clearTimeout(pending);
+
+        for (const watcher of watchers) {
+            watcher.close();
+        }
+    });
 
     server.listen(port, () => log(`http://localhost:${port} - watching, Ctrl+C to stop`));
 

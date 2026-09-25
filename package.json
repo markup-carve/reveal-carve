@@ -33,6 +33,8 @@
         "./lint": "./src/lint.js",
         "./handout": "./src/handout.js",
         "./dev": "./src/dev.js",
+        "./pdf": "./src/pdf.js",
+        "./init": "./src/init.js",
         "./theme.css": "./src/theme.css",
         "./package.json": "./package.json",
         "./theme-dark.css": "./src/theme-dark.css"

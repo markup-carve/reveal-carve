@@ -106,12 +106,57 @@ function versioned(url, version) {
     return `${url}${url.includes('?') ? '&' : '?'}v=${version}`;
 }
 
+/**
+ * The light/dark switch. The choice is remembered per browser, and the first
+ * visit follows the reader's own system setting rather than the deck's default.
+ * Print asks for the stored theme too, so a PDF comes out in the theme on screen.
+ */
+export const themeToggle = (defaultDark = false) => `<button class="deck-theme-toggle" type="button" aria-label="Switch between the light and the dark theme">\u25D0</button>
+<script>
+(function () {
+    var key = 'reveal-carve-theme';
+    var stored = null;
+
+    try { stored = localStorage.getItem(key); } catch (error) { stored = null; }
+
+    var dark = stored
+        ? stored === 'dark'
+        : (window.matchMedia('(prefers-color-scheme: dark)').matches || ${defaultDark ? 'true' : 'false'});
+
+    function apply() {
+        var links = document.querySelectorAll('link[data-carve-theme]');
+
+        for (var i = 0; i < links.length; i += 1) {
+            links[i].disabled = (links[i].dataset.carveTheme === 'dark') !== dark;
+        }
+
+        document.documentElement.dataset.carveTheme = dark ? 'dark' : 'light';
+    }
+
+    apply();
+
+    document.addEventListener('click', function (event) {
+        if (!event.target.closest('.deck-theme-toggle')) {
+            return;
+        }
+
+        dark = !dark;
+        apply();
+
+        try { localStorage.setItem(key, dark ? 'dark' : 'light'); } catch (error) { /* private window */ }
+    });
+}());
+</script>`;
+
 function page(slides, options) {
     const {
         title = 'Presentation',
         lang = 'en',
         revealBase = 'node_modules/reveal.js/dist',
         theme = 'white',
+        darkTheme = '',
+        darkStylesheets = [],
+        defaultDark = false,
         stylesheets = [],
         scripts = [],
         plugins = ['RevealHighlight', 'RevealNotes'],
@@ -122,10 +167,26 @@ function page(slides, options) {
         version = '',
     } = options;
 
+    // A page that loads the plugin bundle needs it in the plugin list too, or
+    // the callout badges and diff colours the highlighter throws away are never
+    // put back. Passing `--js .../reveal-carve.js` is enough.
+    const carvePlugin = scripts.some((src) => /reveal-carve(\.min)?\.js$/.test(src));
+    const pluginList = carvePlugin && !plugins.some((name) => name.startsWith('RevealCarve'))
+        ? ['RevealCarve()', ...plugins]
+        : plugins;
+
     const stamp = (url) => versioned(url, version);
     const extraStyles = stylesheets
-        .map((href) => `<link rel="stylesheet" href="${stamp(href)}">`)
+        .map((href) => `<link rel="stylesheet" data-carve-theme="light" href="${stamp(href)}">`)
         .join('\n');
+    // A second set of stylesheets, switched by the toggle. `disabled` on a link
+    // is what keeps the unused set from painting; both are in the page so the
+    // switch costs no request.
+    const darkStyles = darkTheme
+        ? [`${revealBase}/theme/${darkTheme}.css`, ...darkStylesheets]
+            .map((href) => `<link rel="stylesheet" data-carve-theme="dark" href="${stamp(href)}"${defaultDark ? '' : ' disabled'}>`)
+            .join('\n')
+        : '';
     const extraScripts = scripts.map((src) => `<script src="${stamp(src)}"></script>`).join('\n');
     const generated = sourceName ? `\n<!-- Generated from ${sourceName}. Do not edit by hand. -->` : '';
 
@@ -137,9 +198,10 @@ function page(slides, options) {
 <title>${title}</title>
 <link rel="stylesheet" href="${stamp(`${revealBase}/reset.css`)}">
 <link rel="stylesheet" href="${stamp(`${revealBase}/reveal.css`)}">
-<link rel="stylesheet" href="${stamp(`${revealBase}/theme/${theme}.css`)}">
+<link rel="stylesheet" data-carve-theme="light" href="${stamp(`${revealBase}/theme/${theme}.css`)}"${darkTheme && defaultDark ? ' disabled' : ''}>
 <link rel="stylesheet" href="${stamp(`${revealBase}/plugin/highlight/monokai.css`)}">
 ${extraStyles}
+${darkStyles}
 </head>
 <body>${generated}
 <div class="reveal">
@@ -150,13 +212,14 @@ ${slides}
 </div>
 </div>
 ${footer ? `<footer class="deck-footer">${footer}</footer>` : ''}
+${darkTheme ? themeToggle(defaultDark) : ''}
 <script src="${stamp(`${revealBase}/reveal.js`)}"></script>
 <script src="${stamp(`${revealBase}/plugin/highlight.js`)}"></script>
 <script src="${stamp(`${revealBase}/plugin/notes.js`)}"></script>
 ${extraScripts}
 <script>
 Reveal.initialize(Object.assign(${JSON.stringify({ ...DEFAULT_CONFIG, ...config }, null, 4)}, {
-    plugins: [${plugins.join(', ')}],
+    plugins: [${pluginList.join(', ')}],
 }));
 </script>
 ${rawScripts}
