@@ -179,6 +179,25 @@ It sits outside `.slides`, so it survives every transition, and it is hidden in
 print. `footerClass` renames the element's class if `deck-footer` collides with
 your own styles.
 
+### Containers as other elements
+
+Carve renders `{.card}` plus `:::` as `<div class="card">`. When the slide wants
+real semantics, map the class to an element instead of writing raw HTML:
+
+```bash
+reveal-carve build slides/ deck.html --element card=figure --element quote=blockquote
+```
+
+```js
+Reveal.initialize({
+    carve: { elements: { card: 'figure', quote: 'blockquote' } },
+});
+```
+
+The source stays pure Carve, so `carve lint` still checks it and the Markdown
+handout still reads it. Raw HTML in the source would reach the HTML target only:
+plain text, ANSI and the handout drop it.
+
 ### Carve extensions
 
 Carve's richer features are engine extensions. Enable them by name, in the build

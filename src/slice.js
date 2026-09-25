@@ -107,6 +107,84 @@ export function animateListItems(html, options = {}) {
     });
 }
 
+/**
+ * Render a container class as a different element.
+ *
+ * Carve gives you `<div class="card">` for `{.card}` plus `:::`. Sometimes the
+ * slide wants a `<figure>`, an `<aside>` or a `<blockquote>` - semantics a
+ * screen reader and a printed handout both care about.
+ *
+ * The alternative is raw HTML in the source, which only the HTML target
+ * understands: plain text, ANSI and the Markdown handout all drop it. Mapping
+ * the class instead keeps the source pure Carve, and any other Carve tool still
+ * sees a sensible `div`.
+ *
+ * @param {string} html
+ * @param {Record<string, string>} map e.g. { card: 'figure', sidebar: 'aside' }
+ */
+export function mapElements(html, map) {
+    const names = Object.keys(map || {});
+
+    if (!names.length) {
+        return html;
+    }
+
+    let result = html;
+
+    for (const name of names) {
+        const element = map[name];
+        const opening = new RegExp(`<div([^>]*\\bclass="[^"]*\\b${name}\\b[^"]*"[^>]*)>`, 'g');
+        const positions = [];
+        let match;
+
+        while ((match = opening.exec(result)) !== null) {
+            positions.push({ start: match.index, length: match[0].length, attrs: match[1] });
+        }
+
+        // Walk backwards so earlier offsets stay valid while rewriting.
+        for (const { start, length, attrs } of positions.reverse()) {
+            const close = matchingCloseTag(result, start + length);
+
+            if (close === -1) {
+                continue;
+            }
+
+            result = result.slice(0, close)
+                + `</${element}>`
+                + result.slice(close + '</div>'.length);
+            result = result.slice(0, start)
+                + `<${element}${attrs}>`
+                + result.slice(start + length);
+        }
+    }
+
+    return result;
+}
+
+/**
+ * Index of the `</div>` that closes the `<div>` whose body starts at `from`.
+ */
+function matchingCloseTag(html, from) {
+    const tag = /<(\/?)div\b[^>]*>/g;
+    tag.lastIndex = from;
+    let depth = 0;
+    let match;
+
+    while ((match = tag.exec(html)) !== null) {
+        if (match[1] === '/') {
+            if (depth === 0) {
+                return match.index;
+            }
+
+            depth -= 1;
+        } else {
+            depth += 1;
+        }
+    }
+
+    return -1;
+}
+
 function directive(pattern) {
     return new RegExp(pattern, 'm');
 }
@@ -221,6 +299,10 @@ export function renderSlide(source, render, options = {}) {
         }
 
         html = animateListItems(html, { all: config.animateLists || slide.animateLists });
+
+        if (config.elements) {
+            html = mapElements(html, config.elements);
+        }
 
         return html;
     };
