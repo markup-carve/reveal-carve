@@ -53,7 +53,7 @@ const MERMAID = 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js';
 const MERMAID_INIT = `<script type="module">
 import mermaid from '${MERMAID.replace('.min.js', '.esm.min.mjs')}';
 mermaid.initialize({ startOnLoad: false, theme: 'neutral' });
-Reveal.on('ready', function () { mermaid.run(); });
+carveWhenReady(function () { mermaid.run(); });
 </script>`;
 
 // The renderers the diagram, chart and math extensions hand their markup to.
@@ -63,8 +63,21 @@ const RENDERERS = `${MERMAID_INIT}
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <script>
-// Same reason as Mermaid: wait for reveal, not for the document.
-Reveal.on('ready', function () {
+// Renderers must run after the slides exist, which on the runtime path is after
+// the plugin has converted them - reveal's ready event. But on a prebuilt page
+// ready can fire before this script registers, and a missed event renders
+// nothing at all, so check the state as well as listening for it.
+function carveWhenReady(callback) {
+    if (Reveal.isReady && Reveal.isReady()) {
+        callback();
+
+        return;
+    }
+
+    Reveal.on('ready', callback);
+}
+
+carveWhenReady(function () {
     document.querySelectorAll('.chart').forEach(function (holder) {
         var data = holder.querySelector('script[type="application/json"]');
         if (!data || holder.querySelector('canvas')) { return; }
