@@ -244,6 +244,23 @@ renderers would make it slower, not more convincing.
 demo site ships about thirty lines of script to make tabs switch and spoilers
 reveal. Copy that from `scripts/build-site.mjs` if you want the same behavior.
 
+### Publishing an updated deck
+
+A static host serves a deck's files under the same names with a cache lifetime of
+its own; GitHub Pages sends `max-age=600`. Until that expires the browser keeps
+the old stylesheet and the old bundle, and the reader has to hard-refresh to see
+your change.
+
+Pass `version` (or `--version`) and every local asset URL gets that marker, so a
+new build is a new URL:
+
+```bash
+reveal-carve build slides/ deck.html --version $(git rev-parse --short HEAD)
+```
+
+The HTML page itself still follows the host's cache rules, which on GitHub Pages
+means up to ten minutes. Nothing a deck can do changes that.
+
 ### Offline decks
 
 A deck presented in a room with no wifi cannot load renderers from a CDN. Vendor

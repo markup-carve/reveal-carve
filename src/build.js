@@ -86,6 +86,22 @@ export const DEFAULT_CONFIG = {
     slideNumber: 'c/t',
 };
 
+/**
+ * Append a version marker to a local URL.
+ *
+ * A static host serves a deck's assets under the same names forever, with a
+ * cache lifetime of its own - GitHub Pages sends `max-age=600`. Without a
+ * changing URL the browser keeps the old stylesheet and the old bundle for ten
+ * minutes, and the only cure the reader knows is a hard refresh.
+ */
+function versioned(url, version) {
+    if (!version || /^(https?:)?\/\//.test(url) || url.startsWith('data:')) {
+        return url;
+    }
+
+    return `${url}${url.includes('?') ? '&' : '?'}v=${version}`;
+}
+
 function page(slides, options) {
     const {
         title = 'Presentation',
@@ -99,12 +115,14 @@ function page(slides, options) {
         sourceName = '',
         footer = '',
         rawScripts = '',
+        version = '',
     } = options;
 
+    const stamp = (url) => versioned(url, version);
     const extraStyles = stylesheets
-        .map((href) => `<link rel="stylesheet" href="${href}">`)
+        .map((href) => `<link rel="stylesheet" href="${stamp(href)}">`)
         .join('\n');
-    const extraScripts = scripts.map((src) => `<script src="${src}"></script>`).join('\n');
+    const extraScripts = scripts.map((src) => `<script src="${stamp(src)}"></script>`).join('\n');
     const generated = sourceName ? `\n<!-- Generated from ${sourceName}. Do not edit by hand. -->` : '';
 
     return `<!DOCTYPE html>
@@ -113,10 +131,10 @@ function page(slides, options) {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${title}</title>
-<link rel="stylesheet" href="${revealBase}/reset.css">
-<link rel="stylesheet" href="${revealBase}/reveal.css">
-<link rel="stylesheet" href="${revealBase}/theme/${theme}.css">
-<link rel="stylesheet" href="${revealBase}/plugin/highlight/monokai.css">
+<link rel="stylesheet" href="${stamp(`${revealBase}/reset.css`)}">
+<link rel="stylesheet" href="${stamp(`${revealBase}/reveal.css`)}">
+<link rel="stylesheet" href="${stamp(`${revealBase}/theme/${theme}.css`)}">
+<link rel="stylesheet" href="${stamp(`${revealBase}/plugin/highlight/monokai.css`)}">
 ${extraStyles}
 </head>
 <body>${generated}
@@ -128,9 +146,9 @@ ${slides}
 </div>
 </div>
 ${footer ? `<footer class="deck-footer">${footer}</footer>` : ''}
-<script src="${revealBase}/reveal.js"></script>
-<script src="${revealBase}/plugin/highlight.js"></script>
-<script src="${revealBase}/plugin/notes.js"></script>
+<script src="${stamp(`${revealBase}/reveal.js`)}"></script>
+<script src="${stamp(`${revealBase}/plugin/highlight.js`)}"></script>
+<script src="${stamp(`${revealBase}/plugin/notes.js`)}"></script>
 ${extraScripts}
 <script>
 Reveal.initialize(Object.assign(${JSON.stringify({ ...DEFAULT_CONFIG, ...config }, null, 4)}, {

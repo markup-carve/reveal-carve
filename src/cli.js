@@ -83,6 +83,9 @@ function parseArgs(argv) {
                     options.elements = { ...(options.elements || {}), [name]: element };
                 }
                 break;
+            case '--version':
+                options.version = argv[++index];
+                break;
             case '--budget':
                 options.budget = Number(argv[++index]);
                 break;
@@ -140,7 +143,7 @@ A source is a .crv file or a directory holding one file per chapter.
 Options: --title --theme --lang --reveal-base --css --js --port
          --extension NAME[:VALUE|:JSON] --smart-quotes LOCALE
          --element CLASS=ELEMENT
-         --footer "<html>" --footer-file FILE
+         --footer "<html>" --footer-file FILE --version MARKER
          --split-at-heading N --animate-lists --slides-only --strict --static
          --no-includes --include-root DIR --no-notes`);
 }

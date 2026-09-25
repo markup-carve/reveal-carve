@@ -275,3 +275,20 @@ test('a plain code block is left alone', () => {
 
     assert.equal(keepInlineCodeMarkup(input), input);
 });
+
+test('a version marker is appended to local assets only', () => {
+    const html = buildPageHtml({
+        version: 'abc123',
+        stylesheets: ['local.css', 'https://cdn.example.com/remote.css'],
+    });
+
+    assert.match(html, /local\.css\?v=abc123/);
+    assert.match(html, /reveal\.css\?v=abc123/);
+    assert.ok(!html.includes('remote.css?v='));
+});
+
+test('without a version the urls are untouched', () => {
+    const html = buildPageHtml({ stylesheets: ['local.css'] });
+
+    assert.ok(!html.includes('?v='));
+});

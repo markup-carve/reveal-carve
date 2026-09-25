@@ -5,6 +5,7 @@
 // Runs locally exactly as it runs in CI, so the published page is never a
 // surprise: node scripts/build-site.mjs [outDir]
 
+import { createHash } from 'node:crypto';
 import { cpSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -40,6 +41,20 @@ const EXTENSIONS = [
 
 const extensions = resolveExtensions(EXTENSIONS, carve);
 const render = (text) => carve.carveToHtml(text, { sections: false, extensions });
+
+// One version marker for the whole site, derived from the files that actually
+// change between deploys. GitHub Pages serves everything with max-age=600, so
+// without this a reader sees yesterday's stylesheet until they hard-refresh.
+const version = createHash('sha256')
+    .update([
+        'dist/reveal-carve.js',
+        'dist/reveal-carve.css',
+        'demo/deck.crv',
+        'demo/showcase.crv',
+        'demo/language.crv',
+    ].map((file) => readFileSync(join(root, file))).join('\n'))
+    .digest('hex')
+    .slice(0, 8);
 
 // Includes are resolved by the engine, with its own root containment.
 const includes = { engine: carve, resolver: fileSystemResolver };
@@ -135,6 +150,7 @@ const slides = buildPage({
     stylesheets: ['vendor/reveal-carve/reveal-carve.css'],
     footer: footerFor('demo/deck.crv'),
     rawScripts: RENDERERS,
+    version,
 });
 
 // 2. The same source, rendered in the browser by the plugin.
@@ -147,26 +163,26 @@ writeFileSync(
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="data:,">
 <title>reveal-carve - rendered in the browser</title>
-<link rel="stylesheet" href="vendor/reveal/reset.css">
-<link rel="stylesheet" href="vendor/reveal/reveal.css">
-<link rel="stylesheet" href="vendor/reveal/theme/white.css">
-<link rel="stylesheet" href="vendor/reveal/plugin/highlight/monokai.css">
-<link rel="stylesheet" href="vendor/reveal-carve/reveal-carve.css">
+<link rel="stylesheet" href="vendor/reveal/reset.css?v=${version}">
+<link rel="stylesheet" href="vendor/reveal/reveal.css?v=${version}">
+<link rel="stylesheet" href="vendor/reveal/theme/white.css?v=${version}">
+<link rel="stylesheet" href="vendor/reveal/plugin/highlight/monokai.css?v=${version}">
+<link rel="stylesheet" href="vendor/reveal-carve/reveal-carve.css?v=${version}">
 </head>
 <body>
 <div class="reveal">
 <div class="slides">
-<section data-carve="deck.crv"></section>
+<section data-carve="deck.crv?v=${version}"></section>
 </div>
 </div>
 <footer class="deck-footer">
 ${footerFor('demo/deck.crv')}
 </footer>
-<script src="vendor/carve.iife.min.js"></script>
-<script src="vendor/reveal/reveal.js"></script>
-<script src="vendor/reveal/plugin/highlight.js"></script>
-<script src="vendor/reveal/plugin/notes.js"></script>
-<script src="vendor/reveal-carve/reveal-carve.js"></script>
+<script src="vendor/carve.iife.min.js?v=${version}"></script>
+<script src="vendor/reveal/reveal.js?v=${version}"></script>
+<script src="vendor/reveal/plugin/highlight.js?v=${version}"></script>
+<script src="vendor/reveal/plugin/notes.js?v=${version}"></script>
+<script src="vendor/reveal-carve/reveal-carve.js?v=${version}"></script>
 <script>
 Reveal.initialize({
     hash: true,
@@ -192,6 +208,7 @@ const showcase = buildPage({
     stylesheets: ['vendor/reveal-carve/reveal-carve.css'],
     footer: footerFor('demo/showcase.crv'),
     rawScripts: RENDERERS,
+    version,
 });
 
 // 4. The language deck: the rest of the constructs, plus element mapping.
@@ -210,6 +227,7 @@ const language = buildPage({
     scripts: ['vendor/reveal-carve/reveal-carve.js'],
     plugins: ['RevealCarve()', 'RevealHighlight', 'RevealNotes'],
     config: { hash: true, slideNumber: 'c/t', carve: { tabs: true } },
+    version,
 });
 
 // 5. The chapter deck, including a shared slide from demo/partials.
@@ -223,6 +241,7 @@ const chapters = buildPage({
     includeRoot: join(root, 'demo'),
     ...includes,
     footer: footerFor('demo/decks'),
+    version,
 });
 
 // 6. The handout export of the chapter deck.
