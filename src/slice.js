@@ -556,7 +556,13 @@ function agendaSlides(chunk, chunks, config) {
             const heading = headingOf(other, config);
             const minutes = parseSlide(other, config).minutes;
 
-            return heading && (minutes ? `${heading} [${minutes} min]` : heading);
+            if (!heading) {
+                return '';
+            }
+
+            const text = asListItemText(heading);
+
+            return minutes ? `${text} [${minutes} min]` : text;
         })
         .filter(Boolean);
 
@@ -577,6 +583,18 @@ function agendaSlides(chunk, chunks, config) {
     }
 
     return pages;
+}
+
+/**
+ * A heading becomes the text of a list item, so anything in it that Carve reads
+ * as a block marker has to be escaped first. "1. Code, unescaped" otherwise
+ * opens an ordered list inside the bullet, which is what an agenda of numbered
+ * section titles looked like: empty bullets with indented numbers beside them.
+ */
+function asListItemText(heading) {
+    return heading
+        .replace(/^(\s*)(\d+)([.)])/, '$1$2\\$3')
+        .replace(/^(\s*)([-*+>#])/, '$1\\$2');
 }
 
 /**

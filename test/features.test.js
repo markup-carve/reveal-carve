@@ -385,3 +385,20 @@ test('the agenda asks for two columns as a class, not an attribute', () => {
 
     assert.match(slides[0], /\{\.toc-list \.columns-2\}/);
 });
+
+
+test('a numbered heading does not open a list inside the agenda bullet', () => {
+    const slides = renderDeck(
+        '%% toc\n\n## Agenda\n\n---\n\n## 1. Code\n\n---\n\n## 2. Layout\n',
+        (text) => text,
+    );
+
+    assert.ok(slides[0].includes('- 1\\. Code'));
+    assert.ok(slides[0].includes('- 2\\. Layout'));
+});
+
+test('a heading starting with a dash is escaped too', () => {
+    const slides = renderDeck('%% toc\n\n## Agenda\n\n---\n\n## - odd title\n', (text) => text);
+
+    assert.ok(slides[0].includes('- \\- odd title'));
+});
