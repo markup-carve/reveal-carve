@@ -306,8 +306,8 @@ silently shorter deck. Pass `--strict` (or `throwOnError`) to fail the build ins
 
 ## Markdown or Carve
 
-The honest comparison, including where Markdown wins:
-[docs/markdown-vs-carve.md](docs/markdown-vs-carve.md).
+A side-by-side comparison, including the cases where Markdown is the better
+choice: [docs/markdown-vs-carve.md](docs/markdown-vs-carve.md).
 
 ## Development
 

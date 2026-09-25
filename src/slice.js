@@ -24,10 +24,27 @@ export const DEFAULTS = {
 /**
  * Carve wraps every heading in `<section id="...">`. reveal.js reads a nested
  * `<section>` as a vertical slide, so those wrappers have to go before the
- * rendered HTML is placed inside a slide.
+ * rendered HTML is placed inside a slide. (The engine can leave them off with
+ * `sections: false`; this stays for renderers that ignore the option.)
+ *
+ * Only heading wrappers go. A `<section role="doc-endnotes">` carries the
+ * footnote semantics and is what a stylesheet targets, so stripping every
+ * section flattened the endnotes into loose text - measured on the built deck.
  */
+const HEADING_SECTION = /<section(?![^>]*\brole=)[^>]*>|<\/section>/g;
+
 export function unwrapSections(html) {
-    return html.replace(/<\/?section[^>]*>/g, '').trim();
+    const kept = [];
+    const masked = html.replace(/<section[^>]*\brole=[^>]*>[\s\S]*?<\/section>/g, (block) => {
+        kept.push(block);
+
+        return `\u0000${kept.length - 1}\u0000`;
+    });
+
+    return masked
+        .replace(HEADING_SECTION, '')
+        .replace(/\u0000(\d+)\u0000/g, (_, index) => kept[Number(index)])
+        .trim();
 }
 
 /**
@@ -185,6 +202,22 @@ function matchingCloseTag(html, from) {
     return -1;
 }
 
+/**
+ * reveal's highlight plugin escapes the content of a code block unless the
+ * element says otherwise, which turns Carve's callout markers into visible
+ * `<b class="callout">` text - measured on the built deck. A block that carries
+ * markup from an extension therefore has to opt out of that escaping.
+ */
+export function keepInlineCodeMarkup(html) {
+    return html.replace(/<code(?![^>]*data-noescape)([^>]*)>([\s\S]*?)<\/code>/g, (match, attrs, body) => {
+        if (!/<b class="callout"/.test(body)) {
+            return match;
+        }
+
+        return `<code data-noescape${attrs}>${body}</code>`;
+    });
+}
+
 function directive(pattern) {
     return new RegExp(pattern, 'm');
 }
@@ -297,6 +330,8 @@ export function renderSlide(source, render, options = {}) {
         if (config.moveCodeAttributes !== false) {
             html = moveCodeAttributes(html);
         }
+
+        html = keepInlineCodeMarkup(html);
 
         html = animateListItems(html, { all: config.animateLists || slide.animateLists });
 

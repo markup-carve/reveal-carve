@@ -1,16 +1,16 @@
 # Markdown or Carve for slides
 
-reveal.js ships a Markdown plugin, and it works. This page is the honest case for
-using Carve instead, with the places Markdown wins listed too.
+reveal.js ships a Markdown plugin, and it works well. This page compares it with
+Carve so you can pick the one that fits your deck, and it includes the cases
+where Markdown is the better choice.
 
-Everything here was measured against reveal.js 6.0.2 and `@markup-carve/carve`
-0.1.7, not recalled.
+The behavior described here was checked against reveal.js 6.0.2 and
+`@markup-carve/carve` 0.1.7.
 
 ## The short version
 
-Markdown is the right choice for a deck of prose and bullets. Carve earns its
-place when the deck carries code, side-by-side comparisons, or has to stay
-correct while several people edit it over months.
+Markdown suits a deck of prose and bullets. Carve pays off when the deck carries
+code, side-by-side comparisons, or gets edited by several people over months.
 
 ## 1. Code samples
 
@@ -94,12 +94,12 @@ $table->updateQuery();
 ```
 
 Note the nesting rule: Carve containers get **wider on the inside** (`:::`
-outside, `::::` inside), the opposite of code fences. `carve fmt` fixes this for
-you, which is the point of the next section.
+outside, `::::` inside), the opposite of code fences. `carve fmt` corrects it for
+you, which leads to the next section.
 
 ## 3. The source is checkable
 
-This is the argument that matters six months in, and it has no Markdown
+Six months later this is the difference you feel most, and Markdown has no
 equivalent.
 
 | Command | What it catches |
@@ -128,10 +128,9 @@ mistakes:
 | highlight | not available | `=marked=` |
 | superscript | not available | `{^sup^}` |
 
-**This is a real cost.** Your fingers know Markdown. The first week in Carve you
-will write `**bold**` and get literal asterisks. The saving grace is that `carve
-lint` reports exactly that case, so it is a fast correction rather than a slow
-discovery.
+**This costs you something.** Your fingers know Markdown, so in the first week
+you will write `**bold**` and get literal asterisks. `carve lint` reports that
+case by name, so you correct it quickly instead of finding it on a slide.
 
 ## 5. Slide metadata
 
@@ -157,9 +156,9 @@ every other tool that reads the document:
 Markdown has no include mechanism; a shared slide is copy-paste, and the copies
 drift.
 
-Carve has `{{ path }}`. The engine resolves it in a pass of its own,
-`expandIncludes()`, with a resolver the host supplies - deliberately separate
-from rendering, because reading files a document names is a trust boundary.
+Carve has `{{ path }}`. The engine resolves it in a separate pass,
+`expandIncludes()`, with a resolver the host supplies. It sits outside rendering
+because reading files a document names is a trust boundary.
 reveal-carve drives that pass with the engine's filesystem resolver, so a deck
 gets root containment, a byte budget, a depth limit and a list of every file it
 was built from. One `house-rules.crv`, pulled into every deck that needs it.
@@ -186,11 +185,11 @@ Its whole configuration surface is separators, the two attribute-comment regexes
 `animateLists`, `smartypants`, and whatever you pass through to `marked`
 (measured against `reveal.js` 6.0.2, `dist/plugin/markdown.mjs`).
 
-**The difference is not capability, it is assembly.** Each Markdown answer works;
-you pick, install and configure five of them, and a contributor has to learn
-which combination this repository chose. Carve has one spec, one engine and one
-lint, and the constructs above are either in the language or in a named extension
-of it.
+**The difference is assembly, not capability.** Each Markdown answer works. You
+pick five of them, install and configure them, and the next contributor has to
+learn which combination this repository chose. Carve has one spec, one engine and
+one lint, and the constructs above are either in the language or in a named
+extension of it.
 
 ## 8. Where Markdown wins
 
@@ -229,8 +228,8 @@ of it.
 ## 10. Choosing
 
 Take Markdown when the deck is prose, when someone else will maintain it, or when
-you need it finished tonight.
+it has to be finished tonight.
 
 Take Carve when the deck is about code, when the same material gets presented
-more than once, or when you want the source checked rather than eyeballed. The
-dialect costs you a week; the escaping and the copy-paste cost you every time.
+more than once, or when you want the source checked by a tool. Learning the
+dialect costs you a week. Escaping and copy-paste cost you on every edit.

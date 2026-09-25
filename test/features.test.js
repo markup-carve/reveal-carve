@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { animateListItems, errorSlide, moveCodeAttributes, renderDeck, renderSlide, splitAtHeading } from '../src/slice.js';
+import { animateListItems, errorSlide, keepInlineCodeMarkup, moveCodeAttributes, renderDeck, renderSlide, splitAtHeading, unwrapSections } from '../src/slice.js';
 import { IncludeError, expandIncludes, hasIncludes } from '../src/include.js';
 import { KNOWN_DIRECTIVES, lintSource } from '../src/lint.js';
 import { buildHandout } from '../src/handout.js';
@@ -249,4 +249,29 @@ test('the plugin works on a prebuilt page, with no engine present', async () => 
     await plugin().init(deck);
 
     assert.deepEqual(calls, []);
+});
+
+test('unwrapping keeps a section that carries a role', () => {
+    const html = unwrapSections(
+        '<section id="T"><h2>T</h2><p>a</p></section>'
+        + '<section role="doc-endnotes" aria-label="Footnotes"><ol><li>n</li></ol></section>',
+    );
+
+    assert.match(html, /<section role="doc-endnotes"/);
+    assert.ok(!html.includes('<section id="T">'));
+    assert.match(html, /<h2>T<\/h2>/);
+});
+
+test('a code block with callouts opts out of the highlighter escaping', () => {
+    const html = keepInlineCodeMarkup(
+        '<pre><code class="language-php">x <b class="callout" data-callout="1">1</b></code></pre>',
+    );
+
+    assert.match(html, /<code data-noescape class="language-php">/);
+});
+
+test('a plain code block is left alone', () => {
+    const input = '<pre><code class="language-php">x</code></pre>';
+
+    assert.equal(keepInlineCodeMarkup(input), input);
 });
