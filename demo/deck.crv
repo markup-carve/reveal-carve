@@ -2,71 +2,159 @@
 
 # reveal-carve
 
-Slides written in Carve, rendered in the browser.
+Slides in Carve, rendered in the browser.
 
 %% notes
 
-Everything under a `%% notes` directive is a speaker note. Press S to see it.
+This deck is one `.crv` file. Press S for the speaker view, Escape for the overview.
 
 ---
 
-## Why Carve
+## The pitch
 
-- Emphasis is single-delimiter: *bold*, /italic/, `code`
-- Containers carry attributes, so a layout is markup rather than embedded HTML
-- `carve lint` and `carve fmt` check the source before it reaches a browser
+%% fragments
+
+- Code samples need no escaping
+- Layout is markup, not embedded HTML
+- Stepwise code highlighting from a fence attribute
+- The source is checkable before anyone presents it
+
+%% notes
+
+Each bullet arrives on its own key press because the slide carries a `%% fragments` directive.
 
 ---
 
-## Code needs no escaping
+## 1. Code, unescaped
 
 ```php
 $articles = $this->Articles->find()
     ->contain(['Users'])
+    ->where(['published' => true])
+    ->orderBy(['created' => 'DESC'])
     ->all();
 ```
 
+{.note}
+:::
+In HTML this slide would need `&gt;` eleven times. Every one of them is a chance to break the sample.
+:::
+
 ---
 
-## Two columns, no HTML
+## 2. Highlight the line you are talking about
+
+{data-line-numbers=1|2-3|4}
+```php
+$query = $this->Orders->selectQuery();
+$query->contain(['Customers'])
+    ->where(['status' => 'open']);
+$total = $query->count();
+```
+
+{.note}
+:::
+Press the right arrow: the deck walks the three steps written in the fence's attribute line.
+:::
+
+%% notes
+
+The attribute line is Carve. reveal reads it on the code element, so the plugin moves it there.
+
+---
+
+## 3. Before and after, side by side
 
 {.two-col}
 :::
 {.before}
 ::::
-### Before
+### CakePHP 4
 
 ```php
-$query->order(['created' => 'DESC']);
+$table->query()
+    ->update()
+    ->set(['done' => true]);
 ```
 ::::
 
 {.after}
 ::::
-### After
+### CakePHP 5
 
 ```php
-$query->orderBy(['created' => 'DESC']);
+$table->updateQuery()
+    ->set(['done' => true]);
 ```
 ::::
 :::
 
+{.note}
+:::
+Two containers with attributes. No `<div>` in the source.
+:::
+
 ---
 
-## Vertical stacks
+## 4. The boxes a technical deck needs
 
-Press the down arrow.
+{.exercise}
+:::
+*Exercise:* open `config/app.php`, set `errorLevel` to `E_ALL`, click through the app and read the log.
+:::
+
+Version markers ride along inline: enum support [5.0]{.tag} and enum validation [5.1]{.tag ok}.
+
+---
+
+## 5. Tables without ceremony
+
+|= Removed in 5.0 |= Replacement |
+| `Shell` | `Command` |
+| `PaginatorComponent` | `NumericPaginator` |
+| `Mailer\Email` | `Mailer` |
+
+---
+
+## 6. Vertical stacks
+
+The main line stays on the horizontal axis.
 
 --
 
-### Second level
+### Detail on demand
 
-Separated by two dashes instead of three.
+Questions that only sometimes come up live below the slide, not in the main flow.
+
+--
+
+### Another one
+
+Press the up arrow to go back.
 
 ---
 
-%% attr: data-background="#f6f7f9"
+%% attr: data-background="#1f2937" data-background-opacity="1"
+
+%% class: center
 
 ## Slide attributes
 
-This slide sets its own background through an `%% attr:` directive.
+Backgrounds, transitions and auto-animate pairs come from an `%% attr:` directive.
+
+---
+
+%% class: center
+
+## What you also get
+
+{.big}
+:::
+lint, handout, watch
+:::
+
+A deck source is checkable, exportable as a document, and rebuilt on save.
+
+%% notes
+
+Point at the README for the three commands.

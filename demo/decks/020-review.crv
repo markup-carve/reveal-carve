@@ -1,0 +1,38 @@
+## Chapter two: reading code together
+
+{data-line-numbers=1-4|2|5-7}
+```php
+foreach ($orders as $order) {
+    $customer = $this->Customers->get($order->customer_id);
+    $order->customer_name = $customer->name;
+}
+
+$orders = $this->Orders->find()
+    ->contain(['Customers'])
+    ->all();
+```
+
+{.note}
+:::
+One query per row above, one query below. The fence walks the audience through it.
+:::
+
+--
+
+### What it costs
+
+|= Rows |= Queries before |= Queries after |
+| 50 | 51 | 1 |
+| 500 | 501 | 1 |
+| 5000 | 5001 | 1 |
+
+---
+
+%% class: center
+
+## Checkpoint
+
+{.big}
+:::
+No query inside a loop.
+:::

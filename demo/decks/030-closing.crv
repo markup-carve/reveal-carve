@@ -1,0 +1,19 @@
+## Chapter three: what the tooling gives you
+
+%% fragments
+
+- `reveal-carve lint` catches a mistyped directive before the room sees it
+- `reveal-carve handout` turns this deck into a document with the spoken notes
+- `reveal-carve watch` rebuilds and reloads while you write
+
+---
+
+%% class: center
+
+## Thanks
+
+Questions welcome afterwards too.
+
+%% notes
+
+The handout export includes exactly this note, which is the point: the document says what the slide left out.

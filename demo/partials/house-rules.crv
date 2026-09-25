@@ -1,0 +1,11 @@
+%% class: center
+
+## House rules
+
+- Interrupt whenever something is unclear
+- Slides and the handout go out afterwards
+- Exercises are in pairs
+
+%% notes
+
+This slide lives in `demo/partials/house-rules.crv` and is pulled into every deck that needs it.

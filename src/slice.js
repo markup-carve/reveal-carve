@@ -12,6 +12,10 @@ export const DEFAULTS = {
     classDirective: '^%%\\s*class:\\s*(.+)$',
     attrDirective: '^%%\\s*attr:\\s*(.+)$',
     notesDirective: '^%%\\s*notes\\s*$',
+    fragmentDirective: '^%%\\s*fragments\\s*$',
+    animateLists: false,
+    splitAtHeading: 0,
+    moveCodeAttributes: true,
 };
 
 /**
@@ -55,6 +59,51 @@ export function moveCodeAttributes(html, names = CODE_ATTRIBUTES) {
     });
 }
 
+/**
+ * Carve carries an attribute onto the list, not onto its items, so a bullet list
+ * reveals in one go. This gives every item its own step instead.
+ *
+ * Two ways in, deliberately distinct:
+ *
+ * - `{.fragments}` (plural) on one list, handled here.
+ * - `%% fragments` on a slide, or the `animateLists` option, which passes
+ *   `{ all: true }` and animates every list on that slide.
+ *
+ * `{.fragment}` (singular) is left alone: in reveal that means "the whole list
+ * is one step", and hijacking it would take away a control the author has.
+ */
+export function animateListItems(html, options = {}) {
+    return html.replace(/<(ul|ol)([^>]*)>([\s\S]*?)<\/\1>/g, (match, tag, attrs, body) => {
+        const marked = /class="[^"]*\bfragments\b/.test(attrs);
+
+        if (!marked && !options.all) {
+            return match;
+        }
+
+        // A list the author already marked as a single fragment keeps that meaning.
+        if (!marked && /class="[^"]*\bfragment\b/.test(attrs)) {
+            return match;
+        }
+
+        const withoutFragment = attrs
+            .replace(/\s*class="([^"]*)"/, (_, classes) => {
+                const rest = classes.split(/\s+/).filter((name) => name && name !== 'fragments');
+
+                return rest.length ? ` class="${rest.join(' ')}"` : '';
+            });
+
+        const items = body.replace(/<li(\s[^>]*)?>/g, (openTag, itemAttrs = '') => {
+            if (/class="/.test(openTag)) {
+                return openTag.replace(/class="([^"]*)"/, 'class="$1 fragment"');
+            }
+
+            return `<li class="fragment"${itemAttrs || ''}>`;
+        });
+
+        return `<${tag}${withoutFragment}>${items}</${tag}>`;
+    });
+}
+
 function directive(pattern) {
     return new RegExp(pattern, 'm');
 }
@@ -71,6 +120,16 @@ function takeDirective(source, pattern) {
     };
 }
 
+function takeFlag(source, pattern) {
+    const expression = directive(pattern);
+
+    if (!expression.test(source)) {
+        return { present: false, rest: source };
+    }
+
+    return { present: true, rest: source.replace(expression, '') };
+}
+
 /**
  * Split one slide's source into its body, its speaker notes and the attributes
  * declared through `%%` comment directives. The directives stay valid Carve
@@ -81,12 +140,14 @@ export function parseSlide(source, options = {}) {
 
     const withClass = takeDirective(source, config.classDirective);
     const withAttr = takeDirective(withClass.rest, config.attrDirective);
+    const withFragments = takeFlag(withAttr.rest, config.fragmentDirective);
 
-    const [body, ...noteParts] = withAttr.rest.split(directive(config.notesDirective));
+    const [body, ...noteParts] = withFragments.rest.split(directive(config.notesDirective));
 
     return {
         className: withClass.value,
         attributes: withAttr.value,
+        animateLists: withFragments.present,
         body: body.trim(),
         notes: noteParts.join('\n').trim(),
     };
@@ -106,21 +167,76 @@ function openingTag(slide) {
     return parts.length ? `<section ${parts.join(' ')}>` : '<section>';
 }
 
+function escapeHtml(text) {
+    return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+}
+
+/**
+ * A slide that failed to render becomes a visible diagnostic rather than a
+ * silently missing slide. On a projector, a short deck is the worst way to learn
+ * about a typo.
+ */
+export function errorSlide(error, source) {
+    const excerpt = source.trim().split('\n').slice(0, 5).join('\n');
+
+    return `<section class="carve-error" data-carve-error>
+<h2>Carve could not render this slide</h2>
+<p><strong>${escapeHtml(error.message || error)}</strong></p>
+<pre><code>${escapeHtml(excerpt)}</code></pre>
+</section>`;
+}
+
 /**
  * Render one slide to a `<section>`; `render` takes Carve source and returns HTML.
  */
 export function renderSlide(source, render, options = {}) {
-    const slide = parseSlide(source, options);
-    const clean = (text) => {
-        const html = unwrapSections(render(text));
+    const config = { ...DEFAULTS, ...options };
+    const slide = parseSlide(source, config);
 
-        return options.moveCodeAttributes === false ? html : moveCodeAttributes(html);
+    const clean = (text) => {
+        let html = unwrapSections(render(text));
+
+        if (config.moveCodeAttributes !== false) {
+            html = moveCodeAttributes(html);
+        }
+
+        html = animateListItems(html, { all: config.animateLists || slide.animateLists });
+
+        return html;
     };
 
-    const body = slide.body ? clean(slide.body) : '';
-    const notes = slide.notes ? `\n<aside class="notes">\n${clean(slide.notes)}\n</aside>` : '';
+    try {
+        const body = slide.body ? clean(slide.body) : '';
+        const notes = slide.notes ? `\n<aside class="notes">\n${clean(slide.notes)}\n</aside>` : '';
 
-    return `${openingTag(slide)}\n${body}${notes}\n</section>`;
+        return `${openingTag(slide)}\n${body}${notes}\n</section>`;
+    } catch (error) {
+        if (config.onError) {
+            config.onError(error, source);
+        }
+
+        if (config.throwOnError) {
+            throw error;
+        }
+
+        return errorSlide(error, source);
+    }
+}
+
+/**
+ * Split a document at headings of the given level, for prose-shaped sources that
+ * would otherwise need a separator line between every slide.
+ */
+export function splitAtHeading(source, level) {
+    const marker = new RegExp(`^(?=#{${level}}\\s)`, 'm');
+
+    return source
+        .split(marker)
+        .map((chunk) => chunk.trim())
+        .filter(Boolean);
 }
 
 /**
@@ -128,11 +244,12 @@ export function renderSlide(source, render, options = {}) {
  */
 export function renderDeck(source, render, options = {}) {
     const config = { ...DEFAULTS, ...options };
-    const horizontal = new RegExp(config.separator, 'm');
+    const chunks = config.splitAtHeading
+        ? splitAtHeading(source, config.splitAtHeading)
+        : source.split(new RegExp(config.separator, 'm'));
     const vertical = new RegExp(config.verticalSeparator, 'm');
 
-    return source
-        .split(horizontal)
+    return chunks
         .map((chunk) => {
             const stack = chunk.split(vertical).filter((part) => part.trim());
 

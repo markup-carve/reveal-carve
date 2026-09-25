@@ -1,0 +1,21 @@
+%% class: center
+
+# A deck in chapters
+
+One file per chapter, ordered by file name.
+
+%% notes
+
+`demo/decks/` holds three files. The build joins them in name order, so the running order is visible in a directory listing.
+
+---
+
+{{ ../partials/house-rules.crv }}
+
+---
+
+## Why chapters
+
+- A commit touches one chapter, so the diff is readable
+- Reordering is renaming
+- A shared slide lives in one file and is included where it is needed

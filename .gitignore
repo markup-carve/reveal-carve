@@ -4,3 +4,7 @@ node_modules/
 _*.md
 /_*/
 demo/static.html
+dist/
+site/
+demo/generated.html
+demo/handout.md

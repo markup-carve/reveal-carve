@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Carve language questions
+    url: https://github.com/markup-carve/carve/issues
+    about: Syntax and spec questions belong with the language, not with this plugin.

@@ -9,6 +9,7 @@
 import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 
+import { hasIncludes, resolveIncludes } from './include.js';
 import { renderDeck } from './slice.js';
 
 /**
@@ -18,9 +19,16 @@ import { renderDeck } from './slice.js';
  */
 export function readSource(source, options = {}) {
     const extension = options.extension || '.crv';
+    const expand = (text, from) => {
+        if (options.includes === false || !hasIncludes(text)) {
+            return text;
+        }
+
+        return resolveIncludes(text, { from, root: options.includeRoot });
+    };
 
     if (!statSync(source).isDirectory()) {
-        return readFileSync(source, 'utf8');
+        return expand(readFileSync(source, 'utf8'), source);
     }
 
     const chapters = readdirSync(source)
@@ -32,7 +40,11 @@ export function readSource(source, options = {}) {
     }
 
     return chapters
-        .map((name) => readFileSync(join(source, name), 'utf8').trim())
+        .map((name) => {
+            const path = join(source, name);
+
+            return expand(readFileSync(path, 'utf8').trim(), path);
+        })
         .join('\n\n---\n\n');
 }
 

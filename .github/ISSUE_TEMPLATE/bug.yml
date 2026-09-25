@@ -1,0 +1,36 @@
+name: Bug
+description: Something renders or behaves wrong
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happens
+      description: What you saw, and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: source
+    attributes:
+      label: Carve source
+      description: The smallest deck source that shows it.
+      render: text
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      placeholder: "reveal-carve 0.1.0, @markup-carve/carve 0.1.7, reveal.js 6.0.2, node 22"
+    validations:
+      required: true
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Which path
+      options:
+        - Runtime plugin
+        - Build step / CLI
+        - Both
+    validations:
+      required: true

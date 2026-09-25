@@ -1,0 +1,134 @@
+/*!
+ * reveal-carve theme helpers - the layout classes a technical deck keeps needing.
+ * Load after a reveal theme. Colors follow the theme through currentColor where
+ * possible, and the two accents are overridable custom properties.
+ */
+
+:root {
+    --carve-accent: #d33c43;
+    --carve-muted: #6b7280;
+    --carve-ok: #1f7a4d;
+    --carve-soft: rgba(127, 127, 127, 0.1);
+}
+
+.reveal section {
+    text-align: left;
+}
+
+/* Most reveal themes uppercase headings, which mangles API names like
+   `orderBy()` in a technical deck. */
+.reveal h1,
+.reveal h2,
+.reveal h3,
+.reveal h4 {
+    text-transform: none;
+    letter-spacing: -0.01em;
+}
+
+.reveal section.center {
+    text-align: center;
+}
+
+/* Two-column comparison: {.two-col} with {.before} / {.after} inside. */
+.reveal .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.2em;
+    align-items: start;
+}
+
+.reveal .two-col > * {
+    min-width: 0;
+}
+
+.reveal .before > :first-child {
+    color: var(--carve-muted);
+}
+
+.reveal .after > :first-child {
+    color: var(--carve-ok);
+}
+
+/* Callout box: {.exercise} */
+.reveal .exercise {
+    border-left: 5px solid var(--carve-accent);
+    background: var(--carve-soft);
+    padding: 0.6em 1em;
+    border-radius: 0 6px 6px 0;
+}
+
+/* Secondary note under a statement: {.note} */
+.reveal .note {
+    color: var(--carve-muted);
+    font-size: 0.75em;
+}
+
+/* A single sentence that should land: {.big} */
+.reveal .big {
+    font-size: 1.5em;
+    font-weight: 700;
+    color: var(--carve-accent);
+}
+
+/* Version or status pill: {.tag} */
+.reveal .tag {
+    display: inline-block;
+    background: var(--carve-accent);
+    color: #fff;
+    font-size: 0.5em;
+    padding: 0.15em 0.6em;
+    border-radius: 999px;
+    vertical-align: middle;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+.reveal .tag.muted {
+    background: var(--carve-muted);
+}
+
+.reveal .tag.ok {
+    background: var(--carve-ok);
+}
+
+.reveal pre {
+    width: 100%;
+    box-shadow: none;
+    font-size: 0.5em;
+}
+
+.reveal pre code {
+    max-height: 560px;
+    border-radius: 6px;
+    padding: 1em;
+}
+
+.reveal table {
+    font-size: 0.75em;
+    border-collapse: collapse;
+    width: 100%;
+}
+
+.reveal table th {
+    border-bottom: 2px solid var(--carve-accent);
+    text-align: left;
+}
+
+.reveal table td,
+.reveal table th {
+    padding: 0.35em 0.6em;
+}
+
+/* A slide whose source failed to render. Deliberately loud. */
+.reveal .carve-error {
+    background: #fdf2f2;
+    color: #7a1c1c;
+    border: 3px solid var(--carve-accent);
+    border-radius: 8px;
+    padding: 1em 1.5em;
+}
+
+.reveal .carve-error pre code {
+    background: #fff;
+    color: #7a1c1c;
+}
