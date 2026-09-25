@@ -15,23 +15,28 @@ Constructs the first showcase left out, plus the three plugin features that are 
 ## Tabs
 
 ::: tabs
-### Composer
-
+:::: tab [Composer]
 ```bash
 composer require cakephp/cakephp:^5.2
 ```
+::::
 
-### Rector
-
+:::: tab [Rector]
 ```bash
 bin/cake upgrade rector --rules cakephp50 src
 ```
+::::
 
-### Tests
-
+:::: tab [Tests]
 ```bash
 vendor/bin/phpunit --filter ArticlesTable
 ```
+::::
+:::
+
+{.note}
+:::
+`--extension tabs`. Arrow left and right switch tabs while the strip has focus; reveal keeps the keys otherwise.
 :::
 
 ---
@@ -88,14 +93,17 @@ Palette: :color[#d33c43] accent, :color[#1f7a4d] success, :color[#6b7280] muted.
 ## Code with callouts
 
 ```php
-$query = $this->Articles->selectQuery()   // [!code focus]
-    ->contain(['Authors'])
+$query = $this->Articles->selectQuery();   <1>
+$query->contain(['Authors'])               <2>
     ->where(['published' => true]);
 ```
 
+<1> One query type, so the IDE and PHPStan know what comes next.
+<2> Eager loading, which is the whole point of the slide.
+
 {.note}
 :::
-Carve keeps the comment; reveal's highlighter keeps the line.
+`--extension codeCallouts`. The markers bind to the list under the block.
 :::
 
 ---

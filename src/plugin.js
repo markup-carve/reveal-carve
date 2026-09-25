@@ -20,6 +20,7 @@
 
 import { renderDeck, DEFAULTS } from './slice.js';
 import { missingRenderers, resolveExtensions } from './extensions.js';
+import { setupTabs } from './tabs.js';
 
 function dedent(text) {
     const lines = text.replace(/^\n+/, '').replace(/\s+$/, '').split('\n');
@@ -97,7 +98,11 @@ function rendererFrom(config) {
         );
     }
 
-    const renderOptions = { ...(config.carveOptions || {}) };
+    // Carve wraps headings in <section id>, which reveal reads as a vertical
+    // slide. The engine can leave that wrapper off, which is cleaner than
+    // stripping it afterwards; unwrapSections stays as a net for engines or
+    // custom renderers that ignore the option.
+    const renderOptions = { sections: false, ...(config.carveOptions || {}) };
     const extensions = resolveExtensions(config.extensions, engine);
 
     if (extensions.length) {
@@ -159,10 +164,13 @@ export function ensureFooter(deck, config) {
 
 async function convert(deck) {
     const config = deck.getConfig().carve || {};
-    const render = rendererFrom(config);
     const sections = deck
         .getRevealElement()
         .querySelectorAll('[data-carve]:not([data-carve-parsed])');
+
+    // The engine is only needed when there is Carve to render. A deck built
+    // ahead of time can still load this plugin for the footer and the tabs.
+    const render = sections.length ? rendererFrom(config) : null;
 
     for (const section of sections) {
         const source = await sourceOf(section);
@@ -181,6 +189,7 @@ async function convert(deck) {
     }
 
     ensureFooter(deck, config);
+    setupTabs(deck, config);
 }
 
 const plugin = () => ({

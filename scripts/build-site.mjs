@@ -15,26 +15,31 @@ import { fileSystemResolver } from '@markup-carve/carve/node';
 import { buildPage, readSource } from '../src/build.js';
 import { buildHandout } from '../src/handout.js';
 import { exportPdf } from '../src/pdf.js';
+import { resolveExtensions } from '../src/extensions.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const out = process.argv[2] || join(root, 'site');
 
-// The published demo turns on the extensions it shows off.
-const extensions = [
-    carve.mermaid(),
-    carve.chart(),
-    carve.mathBlock(),
-    carve.imgFence({ language: 'svg' }),
-    carve.details(),
-    carve.tabs(),
-    carve.listTable(),
-    carve.spoiler(),
-    carve.colorSwatch(),
-    carve.semanticSpan(),
-    carve.codeCallouts(),
-    carve.smartQuotes({ locale: 'en' }),
+// The published demo turns on the extensions it shows off. One list, used by
+// the build step and handed to the runtime page as names, so the same source
+// cannot render differently in the two paths.
+const EXTENSIONS = [
+    'mermaid',
+    'chart',
+    'mathBlock',
+    { name: 'imgFence', options: { language: 'svg' } },
+    'details',
+    { name: 'tabs', options: { mode: 'aria' } },
+    'listTable',
+    'spoiler',
+    'colorSwatch',
+    'semanticSpan',
+    'codeCallouts',
+    { name: 'smartQuotes', options: { locale: 'en' } },
 ];
-const render = (text) => carve.carveToHtml(text, { extensions });
+
+const extensions = resolveExtensions(EXTENSIONS, carve);
+const render = (text) => carve.carveToHtml(text, { sections: false, extensions });
 
 // Includes are resolved by the engine, with its own root containment.
 const includes = { engine: carve, resolver: fileSystemResolver };
@@ -42,9 +47,13 @@ const includes = { engine: carve, resolver: fileSystemResolver };
 // Mermaid draws what Carve emits. The demo site pulls it from a CDN; an offline
 // deck vendors it instead.
 const MERMAID = 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js';
+// startOnLoad is wrong for the runtime path: the plugin inserts the slides after
+// the document has loaded, so Mermaid would find nothing. Run it on reveal's
+// ready event instead, which fires after every plugin's init has resolved.
 const MERMAID_INIT = `<script type="module">
 import mermaid from '${MERMAID.replace('.min.js', '.esm.min.mjs')}';
-mermaid.initialize({ startOnLoad: true, theme: 'neutral' });
+mermaid.initialize({ startOnLoad: false, theme: 'neutral' });
+Reveal.on('ready', function () { mermaid.run(); });
 </script>`;
 
 // The renderers the diagram, chart and math extensions hand their markup to.
@@ -54,61 +63,14 @@ const RENDERERS = `${MERMAID_INIT}
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <script>
-// Carve emits <div class="chart"><script type="application/json">…; Chart.js draws it.
-document.addEventListener('DOMContentLoaded', function () {
+// Same reason as Mermaid: wait for reveal, not for the document.
+Reveal.on('ready', function () {
     document.querySelectorAll('.chart').forEach(function (holder) {
         var data = holder.querySelector('script[type="application/json"]');
         if (!data || holder.querySelector('canvas')) { return; }
         var canvas = document.createElement('canvas');
         holder.appendChild(canvas);
         new Chart(canvas, JSON.parse(data.textContent));
-    });
-
-    // Carve's tabs extension emits headings plus content; this makes them switch.
-    // Collect every panel before touching the DOM: appending as we walk would let
-    // the next heading sweep up the panel we just created.
-    document.querySelectorAll('.tabs:not([data-tabs])').forEach(function (group) {
-        var headings = [].slice.call(group.querySelectorAll(':scope > h3, :scope > h4'));
-        if (!headings.length) { return; }
-
-        var collected = headings.map(function (heading) {
-            var nodes = [];
-            var node = heading.nextSibling;
-            while (node && !(node.nodeType === 1 && /^H[1-6]$/.test(node.tagName))) {
-                nodes.push(node);
-                node = node.nextSibling;
-            }
-
-            return { label: heading.textContent, nodes: nodes, heading: heading };
-        });
-
-        var strip = document.createElement('div');
-        strip.className = 'tab-strip';
-        var panels = [];
-
-        collected.forEach(function (entry, index) {
-            var panel = document.createElement('div');
-            panel.className = 'tab-panel';
-            entry.nodes.forEach(function (node) { panel.appendChild(node); });
-            panel.hidden = index !== 0;
-            panels.push(panel);
-
-            var button = document.createElement('button');
-            button.textContent = entry.label;
-            button.setAttribute('aria-selected', String(index === 0));
-            button.addEventListener('click', function () {
-                panels.forEach(function (other, i) {
-                    other.hidden = i !== index;
-                    strip.children[i].setAttribute('aria-selected', String(i === index));
-                });
-            });
-            strip.appendChild(button);
-            entry.heading.remove();
-        });
-
-        group.prepend(strip);
-        panels.forEach(function (panel) { group.appendChild(panel); });
-        group.setAttribute('data-tabs', 'true');
     });
 
     document.querySelectorAll('.spoiler').forEach(function (spoiler) {
@@ -196,7 +158,7 @@ ${footerFor('demo/deck.crv')}
 Reveal.initialize({
     hash: true,
     slideNumber: 'c/t',
-    carve: { extensions: ['mermaid'] },
+    carve: { extensions: ${JSON.stringify(EXTENSIONS)}, tabs: true },
     plugins: [RevealCarve, RevealHighlight, RevealNotes],
 });
 </script>
@@ -230,6 +192,11 @@ const language = buildPage({
     footer: footerFor('demo/language.crv'),
     rawScripts: RENDERERS,
     elements: { card: 'figure' },
+    // The built page loads the plugin too, for the tab runtime: the aria output
+    // is the accessible shape and needs a script to drive it.
+    scripts: ['vendor/reveal-carve/reveal-carve.js'],
+    plugins: ['RevealCarve()', 'RevealHighlight', 'RevealNotes'],
+    config: { hash: true, slideNumber: 'c/t', carve: { tabs: true } },
 });
 
 // 5. The chapter deck, including a shared slide from demo/partials.
@@ -312,7 +279,7 @@ writeFileSync(
         <li><a class="card" href="showcase.html"><strong>Everything on a slide</strong><span>${showcase} slides: Mermaid diagrams, a Chart.js chart, KaTeX math, inline SVG, footnotes, task lists, admonitions, semantic spans</span></a></li>
         <li><a class="card" href="language.html"><strong>The rest of the language</strong><span>${language} slides: tabs, folded details, a table of block content, spoilers, code callouts, auto-animate, and a container rendered as a real <code>&lt;figure&gt;</code></span></a></li>
         <li><a class="card" href="chapters.html"><strong>Chapters and includes</strong><span>One file per chapter plus a shared slide pulled in with <code>{{ ... }}</code></span></a></li>
-        <li><a class="card" href="handout.md"><strong>Handout export</strong><span>The same source as a document, with the speaker notes as quotes</span></a></li>
+        <li><a class="card" href="handout.md"><strong>Handout export (Markdown)</strong><span>The same source as a Markdown document, with the speaker notes quoted under each slide</span></a></li>
         <li><a class="card" href="deck.crv"><strong>deck.crv</strong><span>The source behind the feature deck</span></a></li>
         ${pdf ? '<li><a class="card" href="features.pdf"><strong>The same deck as a PDF</strong><span>Printed by <code>reveal-carve pdf</code> through headless Chrome</span></a></li>' : ''}
     </ul>

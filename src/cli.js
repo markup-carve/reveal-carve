@@ -107,6 +107,9 @@ function parseArgs(argv) {
             case '--slides-only':
                 options.slidesOnly = true;
                 break;
+            case '--static':
+                options.carveOptions.mode = 'static';
+                break;
             case '--strict':
                 options.throwOnError = true;
                 break;
@@ -138,7 +141,7 @@ Options: --title --theme --lang --reveal-base --css --js --port
          --extension NAME[:VALUE|:JSON] --smart-quotes LOCALE
          --element CLASS=ELEMENT
          --footer "<html>" --footer-file FILE
-         --split-at-heading N --animate-lists --slides-only --strict
+         --split-at-heading N --animate-lists --slides-only --strict --static
          --no-includes --include-root DIR --no-notes`);
 }
 
@@ -160,7 +163,11 @@ options.resolver = fileSystemResolver;
 options.dependencies = new Set();
 
 const extensions = resolveExtensions(options.extensions, carve);
-const render = (text) => carve.carveToHtml(text, { ...options.carveOptions, extensions });
+const render = (text) => carve.carveToHtml(text, {
+    sections: false,
+    ...options.carveOptions,
+    extensions,
+});
 
 const pending = missingRenderers(options.extensions);
 

@@ -228,3 +228,25 @@ test('footnote handling can be switched off', () => {
 
     assert.match(slides[0], /\[\^1\]: The note/);
 });
+
+test('the plugin works on a prebuilt page, with no engine present', async () => {
+    const { default: plugin } = await import('../src/plugin.js');
+    const calls = [];
+    const element = {
+        querySelectorAll: () => [],
+        parentNode: {
+            querySelector: () => null,
+            insertBefore: () => calls.push('footer'),
+        },
+        nextSibling: null,
+    };
+    const deck = {
+        getConfig: () => ({ carve: {} }),
+        getRevealElement: () => element,
+    };
+
+    // No window.carve anywhere: this used to throw before the first slide showed.
+    await plugin().init(deck);
+
+    assert.deepEqual(calls, []);
+});

@@ -200,58 +200,81 @@
     color: var(--carve-ok);
 }
 
-/* Tabs. The extension emits headings plus their panels; a host turns them into
-   a tab strip. reveal-carve ships the styling, the demo ships the six lines of
-   script that switch them. */
+/* Tabs. Carve's extension has two output modes and this covers both: `css`
+   emits radio inputs plus labels and needs no script, `aria` emits a tablist of
+   buttons that the plugin's tab runtime drives. */
 .reveal .tabs {
     border: 1px solid rgba(127, 127, 127, 0.25);
     border-radius: 8px;
     overflow: hidden;
     margin: 0.5em 0;
+    /* Labels and panels are siblings, so wrapping flex puts the strip on one
+       row and gives every panel the full width underneath. */
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
 }
 
-.reveal .tabs[data-tabs] > :is(h1, h2, h3, h4, h5, h6) {
+.reveal .tabs-radio {
     display: none;
 }
 
-.reveal .tab-strip {
-    display: flex;
-    gap: 0;
-    background: var(--carve-soft);
-    border-bottom: 1px solid rgba(127, 127, 127, 0.25);
-}
-
-.reveal .tab-strip button {
+.reveal .tabs-label {
+    flex: 0 0 auto;
     appearance: none;
-    background: none;
+    background: var(--carve-soft);
     border: 0;
     border-bottom: 3px solid transparent;
-    padding: 0.4em 1em;
+    padding: 0.45em 1.1em;
     font: inherit;
     font-size: 0.62em;
     color: var(--carve-muted);
     cursor: pointer;
+    white-space: nowrap;
 }
 
-.reveal .tab-strip button[aria-selected="true"] {
+.reveal .tabs-radio:checked + .tabs-label,
+.reveal .tabs-label[aria-selected="true"] {
     color: var(--carve-accent);
     border-bottom-color: var(--carve-accent);
     font-weight: 700;
+    background: none;
 }
 
-.reveal .tab-panel {
-    padding: 0.6em 1em;
+.reveal .tabs-label:focus-visible {
+    outline: 2px solid var(--carve-accent);
+    outline-offset: -2px;
 }
 
-.reveal .tab-panel[hidden] {
+.reveal .tabs-panel,
+.reveal [role="tabpanel"] {
+    flex: 0 0 100%;
+    order: 1;
+    padding: 0.7em 1.1em;
+    border-top: 1px solid rgba(127, 127, 127, 0.25);
+    min-width: 0;
+}
+
+/* css mode: every panel is in the grid, the checked radio raises its own. */
+.reveal .tabs-radio:not(:checked) + .tabs-label + .tabs-panel {
     display: none;
 }
 
-.reveal .tab-panel > :first-child {
+.reveal [role="tabpanel"][hidden] {
+    display: none;
+}
+
+.reveal .tabs-panel > :first-child,
+.reveal [role="tabpanel"] > :first-child {
     margin-top: 0;
 }
 
-/* Folded detail */
+/* A fragment marker the tab runtime adds; it drives steps, it is not content. */
+.reveal .carve-tab-step {
+    display: none;
+}
+
+/* Folded detail *//* Folded detail */
 .reveal details {
     border: 1px solid rgba(127, 127, 127, 0.25);
     border-radius: 8px;
@@ -477,6 +500,51 @@
     .deck-footer {
         display: none;
     }
+}
+
+/* Code callouts: numbered markers in a block, bound to the list under it. */
+.reveal .callout {
+    display: inline-block;
+    min-width: 1.5em;
+    height: 1.5em;
+    line-height: 1.5em;
+    text-align: center;
+    border-radius: 999px;
+    background: var(--carve-accent);
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.85em;
+    font-family: inherit;
+}
+
+.reveal ol.callouts {
+    list-style: none;
+    margin: 0.5em 0 0;
+    padding: 0;
+    font-size: 0.7em;
+    counter-reset: none;
+}
+
+.reveal ol.callouts li {
+    position: relative;
+    padding-left: 2em;
+    margin-bottom: 0.3em;
+}
+
+.reveal ol.callouts li::before {
+    content: attr(value);
+    position: absolute;
+    left: 0;
+    top: 0.1em;
+    min-width: 1.5em;
+    height: 1.5em;
+    line-height: 1.5em;
+    text-align: center;
+    border-radius: 999px;
+    background: var(--carve-accent);
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.8em;
 }
 
 /* Figures, including a container mapped to one through `elements`. */
