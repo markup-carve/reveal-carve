@@ -77,6 +77,12 @@ function parseArgs(argv) {
             case '--smart-quotes':
                 options.extensions.push({ name: 'smartQuotes', options: { locale: argv[++index] } });
                 break;
+            case '--element':
+                {
+                    const [name, element] = argv[++index].split('=');
+                    options.elements = { ...(options.elements || {}), [name]: element };
+                }
+                break;
             case '--budget':
                 options.budget = Number(argv[++index]);
                 break;
@@ -130,6 +136,7 @@ A source is a .crv file or a directory holding one file per chapter.
 
 Options: --title --theme --lang --reveal-base --css --js --port
          --extension NAME[:VALUE|:JSON] --smart-quotes LOCALE
+         --element CLASS=ELEMENT
          --footer "<html>" --footer-file FILE
          --split-at-heading N --animate-lists --slides-only --strict
          --no-includes --include-root DIR --no-notes`);

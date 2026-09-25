@@ -49,6 +49,7 @@ function readOptions(section, config) {
         splitAtHeading: Number(section.getAttribute('data-split-at-heading'))
             || config.splitAtHeading
             || DEFAULTS.splitAtHeading,
+        elements: config.elements,
         moveCodeAttributes: config.moveCodeAttributes,
         throwOnError: config.throwOnError,
         onError: config.onError,
