@@ -339,6 +339,40 @@ export function splitAtHeading(source, level) {
 }
 
 /**
+ * Footnote definitions are a property of the document, and canonical formatting
+ * moves them to its end. A slide is a fragment of that document, so a reference
+ * on slide three would look for a definition that now lives on slide twelve.
+ *
+ * Both halves are collected here and handed to whichever slide refers to them.
+ */
+export function extractFootnotes(source) {
+    const definitions = new Map();
+    const pattern = /^\[\^([^\]]+)\]:[ \t]*([\s\S]*?)(?=\n{2,}(?!\s)|\n*$)/gm;
+    const body = source.replace(pattern, (match, id, text) => {
+        definitions.set(id, `[^${id}]: ${text.trim()}`);
+
+        return '';
+    });
+
+    return { body, definitions };
+}
+
+export function attachFootnotes(chunk, definitions) {
+    if (!definitions.size) {
+        return chunk;
+    }
+
+    const used = [...chunk.matchAll(/\[\^([^\]]+)\]/g)].map((match) => match[1]);
+    const needed = [...new Set(used)].filter((id) => definitions.has(id));
+
+    if (!needed.length) {
+        return chunk;
+    }
+
+    return `${chunk.trimEnd()}\n\n${needed.map((id) => definitions.get(id)).join('\n\n')}\n`;
+}
+
+/**
  * The first heading of a slide, which is what an agenda lists.
  */
 export function headingOf(source, options = {}) {
@@ -398,13 +432,17 @@ function withAgenda(chunk, chunks, config) {
  */
 export function renderDeck(source, render, options = {}) {
     const config = { ...DEFAULTS, ...options };
+    const { body, definitions } = config.footnotes === false
+        ? { body: source, definitions: new Map() }
+        : extractFootnotes(source);
     const chunks = config.splitAtHeading
-        ? splitAtHeading(source, config.splitAtHeading)
-        : source.split(new RegExp(config.separator, 'm'));
+        ? splitAtHeading(body, config.splitAtHeading)
+        : body.split(new RegExp(config.separator, 'm'));
     const vertical = new RegExp(config.verticalSeparator, 'm');
 
     return chunks
         .map((chunk) => (parseSlide(chunk, config).toc ? withAgenda(chunk, chunks, config) : chunk))
+        .map((chunk) => attachFootnotes(chunk, definitions))
         .map((chunk) => {
             const stack = chunk.split(vertical).filter((part) => part.trim());
 

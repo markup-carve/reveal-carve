@@ -18,7 +18,19 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const out = process.argv[2] || join(root, 'site');
 
 // The published demo turns on the extensions it shows off.
-const extensions = [carve.mermaid(), carve.smartQuotes({ locale: 'en' })];
+const extensions = [
+    carve.mermaid(),
+    carve.chart(),
+    carve.mathBlock(),
+    carve.imgFence({ language: 'svg' }),
+    carve.details(),
+    carve.tabs(),
+    carve.listTable(),
+    carve.spoiler(),
+    carve.colorSwatch(),
+    carve.semanticSpan(),
+    carve.smartQuotes({ locale: 'en' }),
+];
 const render = (text) => carve.carveToHtml(text, { extensions });
 
 // Mermaid draws what Carve emits. The demo site pulls it from a CDN; an offline
@@ -27,6 +39,35 @@ const MERMAID = 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js';
 const MERMAID_INIT = `<script type="module">
 import mermaid from '${MERMAID.replace('.min.js', '.esm.min.mjs')}';
 mermaid.initialize({ startOnLoad: true, theme: 'neutral' });
+</script>`;
+
+// The renderers the diagram, chart and math extensions hand their markup to.
+const RENDERERS = `${MERMAID_INIT}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script>
+// Carve emits <div class="chart"><script type="application/json">…; Chart.js draws it.
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.chart').forEach(function (holder) {
+        var data = holder.querySelector('script[type="application/json"]');
+        if (!data || holder.querySelector('canvas')) { return; }
+        var canvas = document.createElement('canvas');
+        holder.appendChild(canvas);
+        new Chart(canvas, JSON.parse(data.textContent));
+    });
+
+    // mathBlock emits \\[ … \\], which is what KaTeX's auto-render looks for.
+    if (window.renderMathInElement) {
+        renderMathInElement(document.body, {
+            delimiters: [
+                { left: '\\\\[', right: '\\\\]', display: true },
+                { left: '$$', right: '$$', display: true },
+            ],
+        });
+    }
+});
 </script>`;
 
 const REPO = 'https://github.com/markup-carve/reveal-carve';
@@ -61,7 +102,7 @@ const slides = buildPage({
     revealBase: 'vendor/reveal',
     stylesheets: ['vendor/reveal-carve/reveal-carve.css'],
     footer: footerFor('demo/deck.crv'),
-    rawScripts: MERMAID_INIT,
+    rawScripts: RENDERERS,
 });
 
 // 2. The same source, rendered in the browser by the plugin.
@@ -102,14 +143,26 @@ Reveal.initialize({
     plugins: [RevealCarve, RevealHighlight, RevealNotes],
 });
 </script>
-${MERMAID_INIT}
+${RENDERERS}
 </body>
 </html>
 `,
     'utf8',
 );
 
-// 3. The chapter deck, including a shared slide from demo/partials.
+// 3. The showcase: every Carve construct a deck can use, with its renderer.
+const showcase = buildPage({
+    source: join(root, 'demo/showcase.crv'),
+    target: join(out, 'showcase.html'),
+    render,
+    title: 'reveal-carve - everything on a slide',
+    revealBase: 'vendor/reveal',
+    stylesheets: ['vendor/reveal-carve/reveal-carve.css'],
+    footer: footerFor('demo/showcase.crv'),
+    rawScripts: RENDERERS,
+});
+
+// 4. The chapter deck, including a shared slide from demo/partials.
 const chapters = buildPage({
     source: join(root, 'demo/decks'),
     target: join(out, 'chapters.html'),
@@ -121,7 +174,7 @@ const chapters = buildPage({
     footer: footerFor('demo/decks'),
 });
 
-// 4. The handout export of the chapter deck.
+// 5. The handout export of the chapter deck.
 writeFileSync(
     join(out, 'handout.md'),
     buildHandout(
@@ -174,6 +227,7 @@ writeFileSync(
     <ul>
         <li><a class="card" href="features.html"><strong>Feature deck</strong><span>${slides} slides from ${sourceLines} lines of Carve: stepwise code highlighting, two-column comparisons, fragments, speaker notes</span></a></li>
         <li><a class="card" href="runtime.html"><strong>The same deck, rendered in your browser</strong><span>No build step: the plugin fetches deck.crv and renders it on load</span></a></li>
+        <li><a class="card" href="showcase.html"><strong>Everything on a slide</strong><span>${showcase} slides: Mermaid diagrams, a Chart.js chart, KaTeX math, inline SVG, footnotes, task lists, admonitions, semantic spans</span></a></li>
         <li><a class="card" href="chapters.html"><strong>Chapters and includes</strong><span>One file per chapter plus a shared slide pulled in with <code>{{ ... }}</code></span></a></li>
         <li><a class="card" href="handout.md"><strong>Handout export</strong><span>The same source as a document, with the speaker notes as quotes</span></a></li>
         <li><a class="card" href="deck.crv"><strong>deck.crv</strong><span>The source behind the feature deck</span></a></li>
@@ -198,4 +252,8 @@ npx reveal-carve handout slides/ handout.md   # slides plus spoken notes</code><
     'utf8',
 );
 
-console.log(`site: ${out} (features ${slides} slides, chapters ${chapters} slides)`);
+cpSync(join(root, 'demo/showcase.crv'), join(out, 'showcase.crv'));
+
+console.log(
+    `site: ${out} (features ${slides}, showcase ${showcase}, chapters ${chapters} slides)`,
+);

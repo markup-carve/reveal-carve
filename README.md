@@ -222,6 +222,27 @@ Diagram extensions (`mermaid`, `chart`, `vegaLite`, `d2`, `graphviz`, `plantuml`
 picture. reveal-carve says so on the console rather than leaving you with an empty
 rectangle on a slide.
 
+What each one emits, and what draws it:
+
+| Fence | Carve emits | Renderer on the page |
+|---|---|---|
+| ` ```mermaid ` | `<pre class="mermaid">` | Mermaid |
+| ` ```chart ` | `<div class="chart">` with JSON | Chart.js, from the JSON |
+| ` ```math ` | `<div class="math display">\[ … \]</div>` | KaTeX or MathJax |
+| ` ```svg ` | `<img src="data:image/svg+xml,…">` | none: the SVG is sanitized and inlined |
+
+The SVG fence is `img` by default; `imgFence:{"language":"svg"}` makes it ` ```svg `.
+The [showcase deck](https://markup-carve.github.io/reveal-carve/showcase.html)
+runs all four.
+
+### Footnotes on a slide
+
+A footnote definition belongs to the document, and `carve fmt` moves definitions
+to its end - which on a deck means slide twelve holds the note that slide three
+points at. reveal-carve collects the definitions and gives each one to the slide
+that references it. An unreferenced definition is dropped rather than shown on its
+own. Pass `footnotes: false` to leave the source alone.
+
 ### Planning the time
 
 ```bash

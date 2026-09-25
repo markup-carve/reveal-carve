@@ -38,3 +38,5 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `reveal-carve pdf` prints a built deck with headless Chrome.
 - Container classes can render as other elements (`--element card=figure`,
   `carve: { elements }`), so a slide gets real semantics without raw HTML.
+- Footnote definitions follow the slide that references them, instead of ending
+  up on the last slide where canonical formatting puts them.

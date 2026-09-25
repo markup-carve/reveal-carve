@@ -1,0 +1,166 @@
+%% class: center
+
+# Everything Carve can put on a slide
+
+Diagrams, charts, math, real SVG, and the parts of the language a deck actually uses.
+
+%% notes
+
+Every slide after this one is rendered from Carve source with no raw HTML anywhere.
+
+---
+
+%% toc
+
+## What is in here
+
+---
+
+## Mermaid, drawn on the slide
+
+```mermaid
+graph LR
+    A[deck.crv] --> B{reveal-carve}
+    B --> C[browser]
+    B --> D[static page]
+    B --> E[handout.md]
+```
+
+{.note}
+:::
+`--extension mermaid`. Carve emits the block, Mermaid draws the SVG.
+:::
+
+---
+
+## A sequence, same idea
+
+```mermaid
+sequenceDiagram
+    Author->>Carve: deck.crv
+    Carve->>reveal: slide markup
+    reveal->>Audience: slides
+    Author->>Handout: same source
+```
+
+---
+
+## A chart from data in the source
+
+```chart
+{
+  "type": "bar",
+  "data": {
+    "labels": ["Markdown", "Carve"],
+    "datasets": [{
+      "label": "Escapes needed in the sample above",
+      "data": [11, 0],
+      "backgroundColor": ["#9ca3af", "#d33c43"]
+    }]
+  },
+  "options": {
+    "plugins": { "legend": { "display": false } },
+    "scales": { "y": { "beginAtZero": true } }
+  }
+}
+```
+
+{.note}
+:::
+`--extension chart`. The JSON is Chart.js configuration, kept in the deck source.
+:::
+
+---
+
+## Real SVG, inline in the source
+
+```svg
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 90"
+     role="img" aria-label="Three boxes">
+  <rect x="4" y="20" width="66" height="44" rx="6" fill="#d33c43"/>
+  <rect x="86" y="20" width="66" height="44" rx="6" fill="#6b7280"/>
+  <rect x="168" y="20" width="66" height="44" rx="6" fill="#1f7a4d"/>
+  <path d="M74 42h8M156 42h8" stroke="#374151" stroke-width="3"/>
+</svg>
+```
+
+{.note}
+:::
+`--extension imgFence:{"language":"svg"}`. The SVG is sanitized and emitted as a data URI, so nothing external is loaded.
+:::
+
+---
+
+## Math
+
+```math
+t_{upgrade} = \sum_{i=1}^{n} \left( c_i \cdot d_i \right) + r
+```
+
+{.note}
+:::
+`--extension mathBlock` plus KaTeX on the page.
+:::
+
+---
+
+## Footnotes and definitions
+
+CakePHP 5 removed every deprecation that was live in 4.5[^1].
+
+:: Deprecation
+: An API that still works but is scheduled to disappear.
+:: Rector
+: The tool that applies the mechanical part of an upgrade.
+
+---
+
+## Task lists and admonitions
+
+- [x] Tests green on 4.5
+- [x] Deprecations resolved
+- [ ] PHP 8.1 in production
+- [ ] Plugins checked
+
+::: warning
+Run the upgrade tool *before* bumping the dependency. Afterwards it cannot resolve the old class names.
+:::
+
+---
+
+## The small type
+
+Press [Ctrl]{kbd} then [S]{kbd} to open the speaker view. [HTML]{abbr="HyperText Markup Language"} is rendered as an abbreviation.
+
+Text can be =highlighted=, struck ~through~, raised to x{^2^} or lowered to H{,2,}O.
+
+Brand red is :color[#d33c43], the muted tone is :color[#6b7280].
+
+---
+
+## Quotes and tables
+
+> The slides are the handout, and that is the problem.
+
+|= Feature |= Markdown |= Carve |
+| Escaping in code | required | none |
+| Columns | HTML | containers |
+| Includes | none | `{{ path }}` |
+| Lint | style only | structural |
+
+---
+
+%% class: center
+
+## All of it from one file
+
+{.big}
+:::
+No raw HTML on any slide.
+:::
+
+%% notes
+
+Point out that the same source produced the handout linked in the footer.
+
+[^1]: Migration guide 5.0, "Deprecated Features Removed".

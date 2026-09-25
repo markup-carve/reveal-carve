@@ -206,3 +206,22 @@ test('the deck author can override a default', () => {
     assert.match(html, /"slideNumber": false/);
     assert.match(html, /"transition": "none"/);
 });
+
+test('a footnote definition follows the slide that references it', () => {
+    const slides = renderDeck('A[^1]\n\n---\n\nB\n\n[^1]: The note\n', (text) => text, {});
+
+    assert.match(slides[0], /\[\^1\]: The note/);
+    assert.ok(!slides[1].includes('The note'));
+});
+
+test('an unreferenced footnote definition is dropped rather than shown alone', () => {
+    const slides = renderDeck('A\n\n[^unused]: Nobody points here\n', (text) => text, {});
+
+    assert.ok(!slides.join('').includes('Nobody points here'));
+});
+
+test('footnote handling can be switched off', () => {
+    const slides = renderDeck('A[^1]\n\n[^1]: The note\n', (text) => text, { footnotes: false });
+
+    assert.match(slides[0], /\[\^1\]: The note/);
+});
