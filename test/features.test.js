@@ -192,3 +192,17 @@ test('the built page carries a footer only when one is configured', () => {
     assert.match(withFooter, /<footer class="deck-footer"><a href="x">Overview<\/a><\/footer>/);
     assert.ok(!without.includes('deck-footer'));
 });
+
+test('a built page gets the same reveal defaults as a hand-written one', () => {
+    const html = buildPageHtml({});
+
+    assert.match(html, /"hash": true/);
+    assert.match(html, /"slideNumber": "c\/t"/);
+});
+
+test('the deck author can override a default', () => {
+    const html = buildPageHtml({ config: { slideNumber: false, transition: 'none' } });
+
+    assert.match(html, /"slideNumber": false/);
+    assert.match(html, /"transition": "none"/);
+});

@@ -55,6 +55,16 @@ export function buildSlides(source, render, options = {}) {
     return renderDeck(readSource(source, options), render, options).join('\n\n');
 }
 
+/**
+ * What a deck should do out of the box. A built page used to initialize reveal
+ * with nothing at all, so it silently lost the slide counter and deep links that
+ * a hand-written page has. Anything here is overridable through `config`.
+ */
+export const DEFAULT_CONFIG = {
+    hash: true,
+    slideNumber: 'c/t',
+};
+
 function page(slides, options) {
     const {
         title = 'Presentation',
@@ -101,7 +111,7 @@ ${footer ? `<footer class="deck-footer">${footer}</footer>` : ''}
 <script src="${revealBase}/plugin/notes.js"></script>
 ${extraScripts}
 <script>
-Reveal.initialize(Object.assign(${JSON.stringify(config, null, 4)}, {
+Reveal.initialize(Object.assign(${JSON.stringify({ ...DEFAULT_CONFIG, ...config }, null, 4)}, {
     plugins: [${plugins.join(', ')}],
 }));
 </script>

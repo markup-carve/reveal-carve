@@ -29,3 +29,5 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Ships as ESM, CJS and a UMD bundle exposing the `RevealCarve` global.
 - Optional deck footer, configured in the build step (`--footer`, `--footer-file`)
   or at runtime (`carve: { footer }`). No default content.
+- Built pages now start from the same reveal defaults a hand-written page has
+  (`hash`, `slideNumber`), overridable through `config`.
