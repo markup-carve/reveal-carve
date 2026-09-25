@@ -48,7 +48,7 @@
     ],
     "scripts": {
         "build": "node scripts/build.mjs",
-        "test": "node --test 'test/*.test.js'",
+        "test": "node --test test/*.test.js",
         "lint:demos": "node src/cli.js lint demo/decks",
         "demo": "node src/cli.js watch demo/decks demo/generated.html --title \"reveal-carve demo\" --reveal-base ../node_modules/reveal.js/dist --port 8800",
         "prepublishOnly": "npm run build && npm test"
