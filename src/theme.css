@@ -376,31 +376,30 @@
     border: 1px solid rgba(0, 0, 0, 0.2);
 }
 
-/* Blockquote: reveal's default is a grey box that fights the rest of this theme.
-   A pulled quote on a slide is read, not skimmed, so it gets room and a mark. */
+/* Blockquote as a card: reveal's own default is a grey box with a drop shadow
+   that fights everything else here, and a mark hanging outside the text edge
+   looks stray next to a table or a code block. */
 .reveal blockquote {
     position: relative;
     width: auto;
-    background: none;
+    background: var(--carve-soft);
     box-shadow: none;
     border: 0;
-    margin: 0.8em 0 0.8em 1.4em;
-    padding: 0.1em 0 0.1em 0.9em;
+    border-radius: 10px;
+    margin: 0.6em 0;
+    padding: 0.85em 1.2em 0.85em 2.4em;
     font-style: normal;
-    font-size: 1.05em;
     line-height: 1.4;
-    color: var(--carve-dark, inherit);
 }
 
 .reveal blockquote::before {
     content: "\201C";
     position: absolute;
-    left: -0.62em;
-    top: -0.18em;
-    font-size: 2.6em;
-    line-height: 1;
+    left: 0.34em;
+    top: 0.06em;
+    font: 700 2.6em/1 Georgia, "Times New Roman", serif;
     color: var(--carve-accent);
-    opacity: 0.35;
+    opacity: 0.55;
     pointer-events: none;
 }
 
@@ -412,12 +411,13 @@
     margin-bottom: 0;
 }
 
-/* An attribution line: the last paragraph when it starts with a dash. */
+/* The attribution, right-aligned under the quote. */
 .reveal blockquote footer,
 .reveal blockquote cite {
     display: block;
-    margin-top: 0.4em;
-    font-size: 0.7em;
+    text-align: right;
+    margin-top: 0.5em;
+    font-size: 0.62em;
     font-style: normal;
     color: var(--carve-muted);
 }
