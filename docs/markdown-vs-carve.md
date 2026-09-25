@@ -161,7 +161,35 @@ Carve has `{{ path }}`. carve-js does not resolve it while rendering, so
 reveal-carve does it in the build step, bounded to a root directory and refusing
 cycles. One `house-rules.crv`, pulled into every deck that needs it.
 
-## 7. Where Markdown wins
+## 7. How Markdown solves these instead
+
+Markdown is not helpless here; it just answers each of these outside the
+language. Every row below is a real, working approach, and every one is a
+separate tool with its own dialect.
+
+| Need | Markdown's answer | What it costs |
+|---|---|---|
+| Table of contents | Not in CommonMark. `markdown-it-table-of-contents`, `remark-toc`, or `doctoc`, which writes the list into the file and keeps it updated on re-runs | A preprocessor in the chain, and with doctoc a generated block living in your source |
+| Includes | Not in Markdown. `markdown-it-include`, `embedme`, or a static site generator's shortcodes (`mdBook`'s `{{#include}}`, Hugo, Jekyll) | Works only inside that one tool; the file stops rendering correctly anywhere else |
+| Attributes and classes | Not in CommonMark. `markdown-it-attrs`, Kramdown and Pandoc each ship `{.class}` with slightly different rules | Which Markdown you are writing becomes a question with a per-project answer |
+| Comments | No comment syntax. HTML comments are the convention | reveal gives `<!-- .slide: -->` a meaning, so an invisible note and a directive look identical |
+| Highlight, underline, sup/sub | GFM has `~~strike~~` only. `markdown-it-mark` and friends add the rest | Another plugin per construct |
+| Source checking | `markdownlint` checks style: heading levels, list markers, trailing spaces | It cannot know that `<!-- .slde: -->` was meant to be a directive |
+| Speaker notes | reveal's own `Note:` convention | Fine, but a Markdown-only convention: no other reader treats it as a note |
+| Timing, agenda, handout | Nothing, anywhere | A spreadsheet, or a script you write |
+
+For a reveal deck specifically, the Markdown plugin itself offers none of these.
+Its whole configuration surface is separators, the two attribute-comment regexes,
+`animateLists`, `smartypants`, and whatever you pass through to `marked`
+(measured against `reveal.js` 6.0.2, `dist/plugin/markdown.mjs`).
+
+**The difference is not capability, it is assembly.** Each Markdown answer works;
+you pick, install and configure five of them, and a contributor has to learn
+which combination this repository chose. Carve has one spec, one engine and one
+lint, and the constructs above are either in the language or in a named extension
+of it.
+
+## 8. Where Markdown wins
 
 - **No build step needed, ever.** reveal's Markdown plugin is bundled with
   reveal; Carve needs the engine on the page or a build step.
@@ -175,7 +203,7 @@ cycles. One `house-rules.crv`, pulled into every deck that needs it.
 - **A prose deck gains nothing.** If your slides are a title and three bullets,
   every advantage above is theoretical.
 
-## 8. Feature-by-feature
+## 9. Feature-by-feature
 
 | | Markdown plugin | reveal-carve |
 |---|---|---|
@@ -195,7 +223,7 @@ cycles. One `house-rules.crv`, pulled into every deck that needs it.
 | Diagrams | bring your own | Carve extensions (`--extension mermaid`) |
 | Locale typography | none | `--smart-quotes de` |
 
-## 9. Choosing
+## 10. Choosing
 
 Take Markdown when the deck is prose, when someone else will maintain it, or when
 you need it finished tonight.
