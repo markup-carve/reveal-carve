@@ -19,6 +19,7 @@
  */
 
 import { renderDeck, DEFAULTS } from './slice.js';
+import { missingRenderers, resolveExtensions } from './extensions.js';
 
 function dedent(text) {
     const lines = text.replace(/^\n+/, '').replace(/\s+$/, '').split('\n');
@@ -95,7 +96,20 @@ function rendererFrom(config) {
         );
     }
 
-    const renderOptions = config.carveOptions || {};
+    const renderOptions = { ...(config.carveOptions || {}) };
+    const extensions = resolveExtensions(config.extensions, engine);
+
+    if (extensions.length) {
+        renderOptions.extensions = [...(renderOptions.extensions || []), ...extensions];
+    }
+
+    const pending = missingRenderers(config.extensions);
+
+    if (pending.length) {
+        console.info(
+            `[reveal-carve] ${pending.join(', ')} need their own renderer on the page.`,
+        );
+    }
 
     return (text) => engine.carveToHtml(text, renderOptions);
 }

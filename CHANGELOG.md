@@ -31,3 +31,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   or at runtime (`carve: { footer }`). No default content.
 - Built pages now start from the same reveal defaults a hand-written page has
   (`hash`, `slideNumber`), overridable through `config`.
+- Carve extensions by name (`--extension`, `carve: { extensions }`), including
+  locale-aware quotation marks through `--smart-quotes`.
+- `%% animate`, `%% minutes:` and `%% toc` directives; `reveal-carve agenda`
+  reports the planned time and fails over `--budget`.
+- `reveal-carve pdf` prints a built deck with headless Chrome.

@@ -71,6 +71,8 @@ reveal-carve build slides/chapters/ deck.html          # one file per chapter
 reveal-carve watch slides/ deck.html --port 8800       # rebuild and reload on save
 reveal-carve lint slides/                              # deck problems, before the room sees them
 reveal-carve handout slides/ handout.md                # slides plus what you said about them
+reveal-carve agenda slides/ --budget 120               # planned minutes per slide, and the total
+reveal-carve pdf deck.html deck.pdf                    # printed with headless Chrome
 ```
 
 | Flag | Meaning |
@@ -85,6 +87,9 @@ reveal-carve handout slides/ handout.md                # slides plus what you sa
 | `--slides-only` | write the `<section>` markup without a page around it |
 | `--strict` | fail the build instead of rendering an error slide |
 | `--footer "<html>"`, `--footer-file` | a footer under the deck, e.g. links back to an overview |
+| `--extension NAME[:VALUE]` | enable a Carve extension, repeatable |
+| `--smart-quotes LOCALE` | locale-aware quotation marks, e.g. `de` |
+| `--budget N` | `agenda` fails when the planned minutes exceed N |
 | `--no-notes` | handout without the speaker notes |
 
 In JavaScript:
@@ -113,6 +118,9 @@ buildPage({
 | `%% fragments` | every list on this slide reveals one item at a time |
 | `{.fragments}` on a list | that one list reveals item by item |
 | `{.fragment}` on anything | reveal's own behavior, one step for the whole element |
+| `%% animate` | auto-animate this slide against the next |
+| `%% minutes: 5` | planned length, summed by `reveal-carve agenda` |
+| `%% toc` | fill this slide with an agenda of the other slides' headings |
 
 All directives are ordinary Carve comments, so the document still renders correctly
 through any other Carve tool. A mistyped one is therefore silent - which is what
@@ -171,6 +179,43 @@ It sits outside `.slides`, so it survives every transition, and it is hidden in
 print. `footerClass` renames the element's class if `deck-footer` collides with
 your own styles.
 
+### Carve extensions
+
+Carve's richer features are engine extensions. Enable them by name, in the build
+step or at runtime, and the plugin resolves them against the engine:
+
+```bash
+reveal-carve build slides/ deck.html \
+    --extension mermaid \
+    --smart-quotes de \
+    --js https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js
+```
+
+```js
+Reveal.initialize({
+    carve: { extensions: ['mermaid', { name: 'smartQuotes', options: { locale: 'de' } }] },
+    plugins: [RevealCarve()],
+});
+```
+
+Diagram extensions (`mermaid`, `chart`, `vegaLite`, `d2`, `graphviz`, `plantuml`,
+`wavedrom`, `abc`, `mathBlock`) emit markup that their own renderer turns into a
+picture. reveal-carve says so on the console rather than leaving you with an empty
+rectangle on a slide.
+
+### Planning the time
+
+```bash
+reveal-carve agenda slides/ --budget 120
+#  20 min  CakePHP 5 in one slide
+#  40 min  Reading the code together
+#  ...
+# Total: 115 min over 6 planned slides.
+```
+
+`%% toc` puts the same list on a slide, with the minutes beside each entry, so the
+agenda cannot drift away from the deck it describes.
+
 ### Theme helpers
 
 `dist/reveal-carve.css` carries the layout classes a technical deck keeps needing:
@@ -188,9 +233,14 @@ silently shorter deck. Pass `--strict` (or `throwOnError`) to fail the build ins
 - Slide attributes come from `%%` directives rather than `<!-- .slide: -->` comments, because Carve has real comment syntax.
 - The Carve engine is a peer dependency rather than bundled, so a page loads one engine no matter how many plugins use it.
 
+## Markdown or Carve
+
+The honest comparison, including where Markdown wins:
+[docs/markdown-vs-carve.md](docs/markdown-vs-carve.md).
+
 ## Development
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). Planned work is in [ROADMAP.md](ROADMAP.md).
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 

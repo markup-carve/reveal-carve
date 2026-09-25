@@ -77,6 +77,7 @@ function page(slides, options) {
         config = {},
         sourceName = '',
         footer = '',
+        rawScripts = '',
     } = options;
 
     const extraStyles = stylesheets
@@ -115,6 +116,7 @@ Reveal.initialize(Object.assign(${JSON.stringify({ ...DEFAULT_CONFIG, ...config 
     plugins: [${plugins.join(', ')}],
 }));
 </script>
+${rawScripts}
 </body>
 </html>
 `;

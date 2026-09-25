@@ -13,6 +13,9 @@ export const DEFAULTS = {
     attrDirective: '^%%\\s*attr:\\s*(.+)$',
     notesDirective: '^%%\\s*notes\\s*$',
     fragmentDirective: '^%%\\s*fragments\\s*$',
+    animateDirective: '^%%\\s*animate\\s*$',
+    minutesDirective: '^%%\\s*minutes:\\s*(\\d+)\\s*$',
+    tocDirective: '^%%\\s*toc\\s*$',
     animateLists: false,
     splitAtHeading: 0,
     moveCodeAttributes: true,
@@ -141,13 +144,19 @@ export function parseSlide(source, options = {}) {
     const withClass = takeDirective(source, config.classDirective);
     const withAttr = takeDirective(withClass.rest, config.attrDirective);
     const withFragments = takeFlag(withAttr.rest, config.fragmentDirective);
+    const withAnimate = takeFlag(withFragments.rest, config.animateDirective);
+    const withToc = takeFlag(withAnimate.rest, config.tocDirective);
+    const withMinutes = takeDirective(withToc.rest, config.minutesDirective);
 
-    const [body, ...noteParts] = withFragments.rest.split(directive(config.notesDirective));
+    const [body, ...noteParts] = withMinutes.rest.split(directive(config.notesDirective));
 
     return {
         className: withClass.value,
         attributes: withAttr.value,
         animateLists: withFragments.present,
+        autoAnimate: withAnimate.present,
+        toc: withToc.present,
+        minutes: withMinutes.value ? Number(withMinutes.value) : 0,
         body: body.trim(),
         notes: noteParts.join('\n').trim(),
     };
@@ -158,6 +167,14 @@ function openingTag(slide) {
 
     if (slide.className) {
         parts.push(`class="${slide.className}"`);
+    }
+
+    if (slide.autoAnimate) {
+        parts.push('data-auto-animate');
+    }
+
+    if (slide.minutes) {
+        parts.push(`data-minutes="${slide.minutes}"`);
     }
 
     if (slide.attributes) {
@@ -240,6 +257,61 @@ export function splitAtHeading(source, level) {
 }
 
 /**
+ * The first heading of a slide, which is what an agenda lists.
+ */
+export function headingOf(source, options = {}) {
+    const slide = parseSlide(source, options);
+    const match = slide.body.match(/^#{1,3}\s+(.+)$/m);
+
+    return match ? match[1].trim() : '';
+}
+
+/**
+ * Every slide's planned minutes, and their total. A two-hour block is then
+ * something you planned rather than something you discovered at minute 90.
+ */
+export function deckMinutes(source, options = {}) {
+    const config = { ...DEFAULTS, ...options };
+    const slides = source
+        .split(new RegExp(config.separator, 'm'))
+        .flatMap((chunk) => chunk.split(new RegExp(config.verticalSeparator, 'm')))
+        .filter((chunk) => chunk.trim());
+
+    const perSlide = slides.map((chunk) => ({
+        heading: headingOf(chunk, config),
+        minutes: parseSlide(chunk, config).minutes,
+    }));
+
+    return {
+        slides: perSlide,
+        total: perSlide.reduce((sum, slide) => sum + slide.minutes, 0),
+        planned: perSlide.filter((slide) => slide.minutes).length,
+    };
+}
+
+/**
+ * Turn a slide carrying `%% toc` into an agenda of the other slides' headings,
+ * so the running order cannot drift away from the deck it describes.
+ */
+function withAgenda(chunk, chunks, config) {
+    const headings = chunks
+        .filter((other) => other !== chunk)
+        .map((other) => {
+            const heading = headingOf(other, config);
+            const minutes = parseSlide(other, config).minutes;
+
+            return heading && (minutes ? `${heading} [${minutes} min]` : heading);
+        })
+        .filter(Boolean);
+
+    if (!headings.length) {
+        return chunk;
+    }
+
+    return `${chunk.trimEnd()}\n\n${headings.map((entry) => `- ${entry}`).join('\n')}\n`;
+}
+
+/**
  * Render a whole document to the slide markup that goes inside `.reveal .slides`.
  */
 export function renderDeck(source, render, options = {}) {
@@ -250,6 +322,7 @@ export function renderDeck(source, render, options = {}) {
     const vertical = new RegExp(config.verticalSeparator, 'm');
 
     return chunks
+        .map((chunk) => (parseSlide(chunk, config).toc ? withAgenda(chunk, chunks, config) : chunk))
         .map((chunk) => {
             const stack = chunk.split(vertical).filter((part) => part.trim());
 

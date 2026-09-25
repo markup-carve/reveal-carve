@@ -10,6 +10,14 @@ This deck is one `.crv` file. Press S for the speaker view, Escape for the overv
 
 ---
 
+%% toc
+
+## What is on this deck
+
+---
+
+%% minutes: 2
+
 ## The pitch
 
 %% fragments
@@ -141,6 +149,23 @@ Press the up arrow to go back.
 ## Slide attributes
 
 Backgrounds, transitions and auto-animate pairs come from an `%% attr:` directive.
+
+---
+
+## 7. Diagrams, from the same source
+
+```mermaid
+graph LR
+    A[deck.crv] --> B{reveal-carve}
+    B --> C[slides in the browser]
+    B --> D[static page]
+    B --> E[handout.md]
+```
+
+{.note}
+:::
+Enabled with `--extension mermaid`. Carve emits the block, Mermaid draws it.
+:::
 
 ---
 

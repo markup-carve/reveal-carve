@@ -17,7 +17,17 @@ import { buildHandout } from '../src/handout.js';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const out = process.argv[2] || join(root, 'site');
 
-const render = (text) => carve.carveToHtml(text);
+// The published demo turns on the extensions it shows off.
+const extensions = [carve.mermaid(), carve.smartQuotes({ locale: 'en' })];
+const render = (text) => carve.carveToHtml(text, { extensions });
+
+// Mermaid draws what Carve emits. The demo site pulls it from a CDN; an offline
+// deck vendors it instead.
+const MERMAID = 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js';
+const MERMAID_INIT = `<script type="module">
+import mermaid from '${MERMAID.replace('.min.js', '.esm.min.mjs')}';
+mermaid.initialize({ startOnLoad: true, theme: 'neutral' });
+</script>`;
 
 const REPO = 'https://github.com/markup-carve/reveal-carve';
 
@@ -51,6 +61,7 @@ const slides = buildPage({
     revealBase: 'vendor/reveal',
     stylesheets: ['vendor/reveal-carve/reveal-carve.css'],
     footer: footerFor('demo/deck.crv'),
+    rawScripts: MERMAID_INIT,
 });
 
 // 2. The same source, rendered in the browser by the plugin.
@@ -87,9 +98,11 @@ ${footerFor('demo/deck.crv')}
 Reveal.initialize({
     hash: true,
     slideNumber: 'c/t',
+    carve: { extensions: ['mermaid'] },
     plugins: [RevealCarve, RevealHighlight, RevealNotes],
 });
 </script>
+${MERMAID_INIT}
 </body>
 </html>
 `,

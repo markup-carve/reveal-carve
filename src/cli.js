@@ -17,8 +17,11 @@ import { buildPage, buildSlides, readSource } from './build.js';
 import { buildHandout } from './handout.js';
 import { formatFindings, lintSource } from './lint.js';
 import { serve } from './dev.js';
+import { missingRenderers, parseExtensionArgument, resolveExtensions } from './extensions.js';
+import { deckMinutes } from './slice.js';
+import { exportPdf } from './pdf.js';
 
-const VERBS = ['build', 'watch', 'lint', 'handout'];
+const VERBS = ['build', 'watch', 'lint', 'handout', 'pdf', 'agenda'];
 
 // The Carve package publishes ESM only, so this is a dynamic import rather than
 // a require: `require('@markup-carve/carve')` fails with ERR_PACKAGE_PATH_NOT_EXPORTED.
@@ -38,7 +41,7 @@ async function loadCarve() {
 
 function parseArgs(argv) {
     const positional = [];
-    const options = { stylesheets: [], scripts: [], carveOptions: {} };
+    const options = { stylesheets: [], scripts: [], carveOptions: {}, extensions: [] };
 
     for (let index = 0; index < argv.length; index += 1) {
         const arg = argv[index];
@@ -67,6 +70,15 @@ function parseArgs(argv) {
                 break;
             case '--footer-file':
                 options.footer = readFileSync(argv[++index], 'utf8').trim();
+                break;
+            case '--extension':
+                options.extensions.push(parseExtensionArgument(argv[++index]));
+                break;
+            case '--smart-quotes':
+                options.extensions.push({ name: 'smartQuotes', options: { locale: argv[++index] } });
+                break;
+            case '--budget':
+                options.budget = Number(argv[++index]);
                 break;
             case '--port':
                 options.port = Number(argv[++index]);
@@ -111,10 +123,13 @@ function usage() {
   reveal-carve watch   <source> <target.html>   rebuild on save, reload the browser
   reveal-carve lint    <source...>              check deck sources
   reveal-carve handout <source> <target.md>     export slides plus speaker notes
+  reveal-carve pdf     <deck.html> <out.pdf>    print the deck with headless Chrome
+  reveal-carve agenda  <source>                 list the slides and their planned minutes
 
 A source is a .crv file or a directory holding one file per chapter.
 
 Options: --title --theme --lang --reveal-base --css --js --port
+         --extension NAME[:VALUE|:JSON] --smart-quotes LOCALE
          --footer "<html>" --footer-file FILE
          --split-at-heading N --animate-lists --slides-only --strict
          --no-includes --include-root DIR --no-notes`);
@@ -131,7 +146,17 @@ if (options.help || (!source && verb !== 'lint')) {
 }
 
 const carve = await loadCarve();
-const render = (text) => carve.carveToHtml(text, options.carveOptions);
+const extensions = resolveExtensions(options.extensions, carve);
+const render = (text) => carve.carveToHtml(text, { ...options.carveOptions, extensions });
+
+const pending = missingRenderers(options.extensions);
+
+if (pending.length && !options.scripts.length) {
+    console.warn(
+        `[reveal-carve] ${pending.join(', ')} produce markup that needs their own renderer on the `
+        + 'page. Add it with --js, or the slide shows an empty block.',
+    );
+}
 
 function buildOnce() {
     if (options.slidesOnly) {
@@ -155,6 +180,30 @@ switch (verb) {
         }
 
         process.exit(failed ? 1 : 0);
+        break;
+    }
+
+    case 'agenda': {
+        const plan = deckMinutes(readSource(source, options), options);
+
+        for (const slide of plan.slides) {
+            const minutes = slide.minutes ? `${String(slide.minutes).padStart(3)} min` : '      -';
+            console.log(`${minutes}  ${slide.heading || '(no heading)'}`);
+        }
+
+        console.log(`\nTotal: ${plan.total} min over ${plan.planned} planned slides.`);
+
+        if (options.budget && plan.total > options.budget) {
+            console.error(`Over budget by ${plan.total - options.budget} min.`);
+            process.exit(1);
+        }
+
+        break;
+    }
+
+    case 'pdf': {
+        await exportPdf(source, target);
+        console.log(`${target}: printed from ${source}`);
         break;
     }
 

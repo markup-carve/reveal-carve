@@ -9,7 +9,7 @@
 
 import { DEFAULTS, parseSlide } from './slice.js';
 
-export const KNOWN_DIRECTIVES = ['class', 'attr', 'notes', 'fragments'];
+export const KNOWN_DIRECTIVES = ['class', 'attr', 'notes', 'fragments', 'animate', 'minutes', 'toc'];
 
 const DIRECTIVE_LINE = /^%%\s*([a-z-]+)\s*:?/i;
 
@@ -84,8 +84,11 @@ export function lintSource(source, options = {}) {
             });
         }
 
-        const longest = (slide.body.match(/^.*$/gm) || [])
-            .filter((text) => text.startsWith('    ') || /^\S.*[;{}()]/.test(text))
+        // Only lines inside a fence count: a sentence with brackets in it is prose,
+        // and an earlier heuristic that guessed from punctuation flagged exactly that.
+        const fences = slide.body.match(/^([`~]{3,})[^\n]*\n([\s\S]*?)^\1[^\n]*$/gm) || [];
+        const longest = fences
+            .flatMap((block) => block.split('\n').slice(1, -1))
             .reduce((max, text) => Math.max(max, text.length), 0);
 
         if (longest > (config.codeWidth || 78)) {
