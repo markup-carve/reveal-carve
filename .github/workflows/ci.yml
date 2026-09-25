@@ -18,3 +18,18 @@ jobs:
           node-version: ${{ matrix.node }}
       - run: npm install
       - run: npm test
+
+  decks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install
+      - run: npm run build
+      - run: node scripts/build-site.mjs site
+      # Opens every built deck in a browser and fails on what a reader would see:
+      # unrendered markup, a diagram whose renderer never drew, a slide that
+      # overflows, an error slide.
+      - run: node scripts/check-decks.mjs site
