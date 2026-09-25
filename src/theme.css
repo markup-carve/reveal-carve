@@ -139,17 +139,53 @@
     gap: 0.55em;
 }
 
+/* The box is drawn here rather than left to the browser: an open task should
+   read as open from across the room, and a native checkbox prints as a thin
+   grey outline either way. */
 .reveal li > input[type="checkbox"] {
-    width: 0.85em;
-    height: 0.85em;
+    appearance: none;
+    -webkit-appearance: none;
+    position: relative;
+    width: 1em;
+    height: 1em;
     margin: 0;
     flex: none;
-    accent-color: var(--carve-accent);
-    transform: translateY(0.05em);
+    border: 2px solid var(--carve-task-open, #d33c43);
+    border-radius: 3px;
+    background: rgba(211, 60, 67, 0.12);
+    transform: translateY(0.08em);
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+}
+
+.reveal li > input[type="checkbox"]:checked {
+    border-color: var(--carve-task-done, #1f7a4d);
+    background: var(--carve-task-done, #1f7a4d);
+}
+
+.reveal li > input[type="checkbox"]:checked::after {
+    content: "";
+    position: absolute;
+    left: 0.3em;
+    top: 0.06em;
+    width: 0.16em;
+    height: 0.46em;
+    border: solid #fff;
+    border-width: 0 0.13em 0.13em 0;
+    transform: rotate(45deg);
 }
 
 .reveal li:has(> input[type="checkbox"]:checked) {
     color: var(--carve-muted);
+}
+
+/* Mermaid appends a tooltip host to the body and leaves it there. It is six
+   pixels tall, which is enough to push one blank page onto a printed deck. */
+.mermaidTooltip {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
 }
 
 /* Admonitions: Carve renders `::: warning` as an aside with a kind class, which

@@ -66,10 +66,33 @@ const MERMAID = 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js';
 // startOnLoad is wrong for the runtime path: the plugin inserts the slides after
 // the document has loaded, so Mermaid would find nothing. Run it on reveal's
 // ready event instead, which fires after every plugin's init has resolved.
+//
+// Each block is handed to mermaid.render rather than to mermaid.run: run()
+// lays the diagram out inside the slide, and every slide but the current one is
+// display:none, so a flowchart measures its labels as zero and comes out empty.
+// render() measures in a visible scratch element of its own.
 const MERMAID_INIT = `<script type="module">
 import mermaid from '${MERMAID.replace('.min.js', '.esm.min.mjs')}';
 mermaid.initialize({ startOnLoad: false, theme: 'neutral' });
-carveWhenReady(function () { mermaid.run(); });
+carveWhenReady(async function () {
+    const blocks = document.querySelectorAll('.mermaid:not([data-processed])');
+
+    for (const [index, block] of blocks.entries()) {
+        const source = block.textContent.trim();
+
+        try {
+            const { svg, bindFunctions } = await mermaid.render('carve-mermaid-' + index, source);
+
+            block.innerHTML = svg;
+            bindFunctions?.(block);
+        } catch (error) {
+            block.innerHTML = '<pre class="mermaid-error"></pre>';
+            block.firstChild.textContent = error.message;
+        }
+
+        block.dataset.processed = 'true';
+    }
+});
 </script>`;
 
 // The renderers the diagram, chart and math extensions hand their markup to.

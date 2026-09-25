@@ -9,6 +9,28 @@ Two entry points over one implementation:
 - **Runtime plugin** - the browser renders `.crv` files as the deck loads. No build step.
 - **Build step** - Node renders the deck to a static page, with chapter directories, includes, linting and a handout export.
 
+## What it does that plain reveal.js does not
+
+- **An agenda that writes itself.** `%% toc` on a slide lists the other slides,
+  with per-slide minutes added up and long lists split evenly over two slides.
+- **Chapters as directories.** A deck is one file or a folder of numbered files;
+  includes pull shared slides in and the watcher follows them.
+- **A print mode that unfolds.** Tabs, code groups, details and spoilers are
+  interactive on screen and opened flat in the handout and the PDF, so nothing
+  hides behind a click on paper.
+- **PDF from the command line.** `reveal-carve pdf deck.crv` drives headless
+  Chrome over the DevTools protocol - no browser dialog, and repeatable.
+- **Diffs, callouts and stepwise highlighting** survive the syntax highlighter:
+  `{.diff}` colours the lines, `{.callout}` numbers them, `{data-line-numbers}`
+  steps through them.
+- **A speaker timer** from the same `%% minutes:` the agenda counts, in the
+  speaker view only.
+- **A handout export.** `reveal-carve handout` turns the deck into one Markdown
+  document, speaker notes included.
+- **Errors you can see.** A broken slide renders as a slide carrying the
+  engine's message rather than vanishing, and `reveal-carve lint` catches it
+  first.
+
 ## Why Carve for slides
 
 | | In HTML | In Carve |
@@ -250,6 +272,12 @@ What each one emits, and what draws it:
 | ` ```chart ` | `<div class="chart">` with JSON | Chart.js, from the JSON |
 | ` ```math ` | `<div class="math display">\[ … \]</div>` | KaTeX or MathJax |
 | ` ```svg ` | `<img src="data:image/svg+xml,…">` | none: the SVG is sanitized and inlined |
+
+Call `mermaid.render()` per block and write the SVG back yourself rather than
+`mermaid.run()`. Reveal keeps every slide but the current one at `display: none`,
+and a flowchart laid out in a hidden slide measures its labels as zero, so it
+comes out empty or as a syntax error in a printed copy. The demo site's
+`scripts/build-site.mjs` has the loop.
 
 The SVG fence is `img` by default; `imgFence:{"language":"svg"}` makes it ` ```svg `.
 The [showcase deck](https://markup-carve.github.io/reveal-carve/showcase.html)

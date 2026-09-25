@@ -619,7 +619,10 @@ function agendaSlides(chunk, chunks, config) {
 
     // Each class needs its own dot: `{.a b}` makes b an attribute, not a class.
     const columns = entries.length > (config.tocColumnsFrom || 6) ? ' .columns-2' : '';
-    const perSlide = config.tocPerSlide || (columns ? 24 : 12);
+    const limit = config.tocPerSlide || (columns ? 24 : 12);
+    // Spread the entries evenly instead of filling every page to the limit -
+    // 25 entries over a limit of 24 would otherwise leave a slide with one.
+    const perSlide = Math.ceil(entries.length / Math.ceil(entries.length / limit));
     const pages = [];
 
     for (let start = 0; start < entries.length; start += perSlide) {
