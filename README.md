@@ -447,7 +447,3 @@ choice: [docs/markdown-vs-carve.md](docs/markdown-vs-carve.md).
 ## Development
 
 See [CONTRIBUTING.md](CONTRIBUTING.md).
-
-## License
-
-MIT
