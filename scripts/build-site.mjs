@@ -19,6 +19,17 @@ const out = process.argv[2] || join(root, 'site');
 
 const render = (text) => carve.carveToHtml(text);
 
+const REPO = 'https://github.com/markup-carve/reveal-carve';
+
+// Every published deck says where it came from and what it was built with.
+const footerFor = (sourcePath) => [
+    '<a href="index.html">Overview</a>',
+    `<span>Built with <a href="https://markup-carve.github.io/carve/">Carve</a></span>`,
+    `<a href="${REPO}">reveal-carve on GitHub</a>`,
+    `<a href="${REPO}/blob/main/${sourcePath}">Slide source</a>`,
+].join('\n');
+
+
 mkdirSync(out, { recursive: true });
 mkdirSync(join(out, 'vendor'), { recursive: true });
 
@@ -39,6 +50,7 @@ const slides = buildPage({
     title: 'reveal-carve - features',
     revealBase: 'vendor/reveal',
     stylesheets: ['vendor/reveal-carve/reveal-carve.css'],
+    footer: footerFor('demo/deck.crv'),
 });
 
 // 2. The same source, rendered in the browser by the plugin.
@@ -63,6 +75,9 @@ writeFileSync(
 <section data-carve="deck.crv"></section>
 </div>
 </div>
+<footer class="deck-footer">
+${footerFor('demo/deck.crv')}
+</footer>
 <script src="vendor/carve.iife.min.js"></script>
 <script src="vendor/reveal/reveal.js"></script>
 <script src="vendor/reveal/plugin/highlight.js"></script>
@@ -90,6 +105,7 @@ const chapters = buildPage({
     revealBase: 'vendor/reveal',
     stylesheets: ['vendor/reveal-carve/reveal-carve.css'],
     includeRoot: join(root, 'demo'),
+    footer: footerFor('demo/decks'),
 });
 
 // 4. The handout export of the chapter deck.

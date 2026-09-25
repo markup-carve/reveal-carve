@@ -5,6 +5,22 @@ import { animateListItems, errorSlide, moveCodeAttributes, renderDeck, renderSli
 import { IncludeError, hasIncludes, resolveIncludes } from '../src/include.js';
 import { KNOWN_DIRECTIVES, lintSource } from '../src/lint.js';
 import { buildHandout } from '../src/handout.js';
+import { buildPage } from '../src/build.js';
+
+import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+
+// buildPage writes a file, so the page assertions go through a temp directory.
+function buildPageHtml(options) {
+    const dir = mkdtempSync(join(tmpdir(), 'reveal-carve-'));
+    const source = join(dir, 'deck.crv');
+    const target = join(dir, 'deck.html');
+    writeFileSync(source, '# Title\n', 'utf8');
+    buildPage({ source, target, render, ...options });
+
+    return readFileSync(target, 'utf8');
+}
 
 const render = (text) => `<p>${text.trim()}</p>`;
 
@@ -167,4 +183,12 @@ test('handout can leave the notes out', () => {
     });
 
     assert.ok(!markdown.includes('Secret'));
+});
+
+test('the built page carries a footer only when one is configured', () => {
+    const withFooter = buildPageHtml({ footer: '<a href="x">Overview</a>' });
+    const without = buildPageHtml({});
+
+    assert.match(withFooter, /<footer class="deck-footer"><a href="x">Overview<\/a><\/footer>/);
+    assert.ok(!without.includes('deck-footer'));
 });

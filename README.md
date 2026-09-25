@@ -84,6 +84,7 @@ reveal-carve handout slides/ handout.md                # slides plus what you sa
 | `--no-includes` | leave `{{ path }}` as literal text |
 | `--slides-only` | write the `<section>` markup without a page around it |
 | `--strict` | fail the build instead of rendering an error slide |
+| `--footer "<html>"`, `--footer-file` | a footer under the deck, e.g. links back to an overview |
 | `--no-notes` | handout without the speaker notes |
 
 In JavaScript:
@@ -149,11 +150,32 @@ slides/
 `{{ ../partials/house-rules.crv }}` pulls a shared slide into a deck. Includes stay
 inside `--include-root`, refuse cycles, and can be switched off.
 
+### Deck footer
+
+There is no default footer: what belongs down there is your business. Give it
+content and it appears, in the build step or at runtime.
+
+```bash
+reveal-carve build slides/deck.crv deck.html \
+    --footer '<a href="index.html">Overview</a> <span>Built with Carve</span>'
+```
+
+```js
+Reveal.initialize({
+    carve: { footer: '<a href="index.html">Overview</a>' },
+    plugins: [RevealCarve()],
+});
+```
+
+It sits outside `.slides`, so it survives every transition, and it is hidden in
+print. `footerClass` renames the element's class if `deck-footer` collides with
+your own styles.
+
 ### Theme helpers
 
 `dist/reveal-carve.css` carries the layout classes a technical deck keeps needing:
-`two-col` with `before`/`after`, `exercise`, `note`, `big`, `tag`, plus the styling
-for error slides. Load it after your reveal theme, or ignore it and bring your own.
+`two-col` with `before`/`after`, `exercise`, `note`, `big`, `tag`, the deck footer,
+plus the styling for error slides. Load it after your reveal theme, or ignore it and bring your own.
 
 ## When a slide fails to render
 

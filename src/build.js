@@ -66,6 +66,7 @@ function page(slides, options) {
         plugins = ['RevealHighlight', 'RevealNotes'],
         config = {},
         sourceName = '',
+        footer = '',
     } = options;
 
     const extraStyles = stylesheets
@@ -94,6 +95,7 @@ ${slides}
 
 </div>
 </div>
+${footer ? `<footer class="deck-footer">${footer}</footer>` : ''}
 <script src="${revealBase}/reveal.js"></script>
 <script src="${revealBase}/plugin/highlight.js"></script>
 <script src="${revealBase}/plugin/notes.js"></script>

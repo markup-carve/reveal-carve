@@ -119,6 +119,39 @@
     padding: 0.35em 0.6em;
 }
 
+/* Deck footer: sits outside the slides, so it survives every transition. */
+.deck-footer {
+    position: fixed;
+    bottom: 10px;
+    left: 20px;
+    right: 20px;
+    z-index: 10;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--carve-muted);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 14px;
+    pointer-events: none;
+}
+
+.deck-footer a {
+    color: inherit;
+    text-decoration: none;
+    border-bottom: 1px dotted currentColor;
+    pointer-events: auto;
+}
+
+.deck-footer a:hover {
+    color: var(--carve-accent);
+}
+
+@media print {
+    .deck-footer {
+        display: none;
+    }
+}
+
 /* A slide whose source failed to render. Deliberately loud. */
 .reveal .carve-error {
     background: #fdf2f2;

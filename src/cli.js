@@ -10,7 +10,7 @@
  * `build` is the default, so the verb may be left out.
  */
 
-import { writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 
 import { buildPage, buildSlides, readSource } from './build.js';
@@ -62,6 +62,12 @@ function parseArgs(argv) {
             case '--js':
                 options.scripts.push(argv[++index]);
                 break;
+            case '--footer':
+                options.footer = argv[++index];
+                break;
+            case '--footer-file':
+                options.footer = readFileSync(argv[++index], 'utf8').trim();
+                break;
             case '--port':
                 options.port = Number(argv[++index]);
                 break;
@@ -109,6 +115,7 @@ function usage() {
 A source is a .crv file or a directory holding one file per chapter.
 
 Options: --title --theme --lang --reveal-base --css --js --port
+         --footer "<html>" --footer-file FILE
          --split-at-heading N --animate-lists --slides-only --strict
          --no-includes --include-root DIR --no-notes`);
 }

@@ -43,6 +43,14 @@ function readOptions(section, config) {
             || DEFAULTS.notesDirective,
         classDirective: config.classDirective || DEFAULTS.classDirective,
         attrDirective: config.attrDirective || DEFAULTS.attrDirective,
+        fragmentDirective: config.fragmentDirective || DEFAULTS.fragmentDirective,
+        animateLists: section.hasAttribute('data-animate-lists') || Boolean(config.animateLists),
+        splitAtHeading: Number(section.getAttribute('data-split-at-heading'))
+            || config.splitAtHeading
+            || DEFAULTS.splitAtHeading,
+        moveCodeAttributes: config.moveCodeAttributes,
+        throwOnError: config.throwOnError,
+        onError: config.onError,
     };
 }
 
@@ -111,6 +119,29 @@ function forwardAttributes(from, to) {
     }
 }
 
+/**
+ * An optional deck footer, configured as `carve: { footer: '<a ...>' }`.
+ * It sits outside `.slides`, so it survives every transition. There is no
+ * default content: what belongs down there is the deck author's business.
+ */
+export function ensureFooter(deck, config) {
+    if (!config.footer) {
+        return;
+    }
+
+    const element = deck.getRevealElement();
+    const parent = element.parentNode || document.body;
+
+    if (parent.querySelector(':scope > .deck-footer')) {
+        return;
+    }
+
+    const footer = document.createElement('footer');
+    footer.className = config.footerClass || 'deck-footer';
+    footer.innerHTML = config.footer;
+    parent.insertBefore(footer, element.nextSibling);
+}
+
 async function convert(deck) {
     const config = deck.getConfig().carve || {};
     const render = rendererFrom(config);
@@ -133,6 +164,8 @@ async function convert(deck) {
 
         section.replaceWith(...generated);
     }
+
+    ensureFooter(deck, config);
 }
 
 const plugin = () => ({
