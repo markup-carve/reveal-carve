@@ -479,6 +479,94 @@
     }
 }
 
+/* Figures, including a container mapped to one through `elements`. */
+.reveal figure {
+    margin: 0.6em 0;
+    padding: 0;
+}
+
+.reveal figure.card,
+.reveal .card {
+    background: var(--carve-soft);
+    border-radius: 10px;
+    padding: 0.8em 1.1em;
+}
+
+.reveal figcaption {
+    margin-top: 0.4em;
+    font-size: 0.62em;
+    color: var(--carve-muted);
+}
+
+/* Links. reveal's default is a blue that belongs to no theme in particular. */
+.reveal a {
+    color: var(--carve-accent);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(211, 60, 67, 0.35);
+}
+
+.reveal a:hover {
+    border-bottom-color: currentColor;
+}
+
+/* Thematic break inside a slide */
+.reveal hr {
+    border: 0;
+    border-top: 1px solid rgba(127, 127, 127, 0.3);
+    margin: 0.8em 0;
+}
+
+/* The rest of Carve's semantic inline registry, which no reveal theme styles. */
+.reveal :is(samp, var, time, dfn) {
+    font-style: normal;
+}
+
+.reveal :is(samp, var) {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.85em;
+}
+
+.reveal dfn {
+    font-weight: 700;
+    border-bottom: 1px dotted currentColor;
+}
+
+.reveal :is(ins, del) {
+    text-decoration: none;
+}
+
+.reveal ins {
+    background: rgba(31, 122, 77, 0.15);
+    box-shadow: 0 0 0 0.15em rgba(31, 122, 77, 0.15);
+}
+
+.reveal del {
+    color: var(--carve-muted);
+    text-decoration: line-through;
+}
+
+.reveal :is(sup, sub) {
+    font-size: 0.62em;
+}
+
+/* Generated navigation and reference lists (toc, glossary, bibliography). */
+.reveal nav.toc,
+.reveal .glossary,
+.reveal .references {
+    font-size: 0.72em;
+}
+
+.reveal nav.toc ul {
+    list-style: none;
+    margin-left: 0;
+    padding-left: 0;
+}
+
+.reveal nav.toc ul ul {
+    margin-left: 1em;
+    color: var(--carve-muted);
+}
+
 /* A slide whose source failed to render. Deliberately loud. */
 .reveal .carve-error {
     background: #fdf2f2;
