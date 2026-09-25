@@ -105,6 +105,9 @@ function parseArgs(argv) {
             case '--include-root':
                 options.includeRoot = argv[++index];
                 break;
+            case '--no-reveal-spoilers':
+                options.revealSpoilers = false;
+                break;
             case '--no-notes':
                 options.notes = false;
                 break;
@@ -146,7 +149,7 @@ Options: --title --theme --lang --reveal-base --css --js --port
          --element CLASS=ELEMENT
          --footer "<html>" --footer-file FILE --version MARKER
          --split-at-heading N --animate-lists --slides-only --strict --static
-         --no-includes --include-root DIR --no-notes`);
+         --no-includes --include-root DIR --no-notes --no-reveal-spoilers`);
 }
 
 const argv = process.argv.slice(2);
@@ -246,6 +249,9 @@ switch (verb) {
                     extensions,
                 }),
                 ...options,
+                // A handout cannot be clicked, so a spoiler gets its answer on
+                // a repeated slide.
+                revealSpoilers: options.revealSpoilers !== false,
                 revealBase: options.revealBase
                     ? resolve(options.revealBase)
                     : resolve('node_modules/reveal.js/dist'),

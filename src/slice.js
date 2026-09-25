@@ -17,6 +17,7 @@ export const DEFAULTS = {
     minutesDirective: '^%%\\s*minutes:\\s*(\\d+)\\s*$',
     tocDirective: '^%%\\s*toc\\s*$',
     animateLists: false,
+    revealSpoilers: false,
     splitAtHeading: 0,
     moveCodeAttributes: true,
 };
@@ -251,6 +252,35 @@ export function flattenDiagramFences(html, classes = DIAGRAM_CLASSES) {
 }
 
 /**
+ * Data fences whose renderer reads JSON out of a script element.
+ *
+ * Static mode turns `<div class="chart"><script type="application/json">` into
+ * `<pre class="chart"><code>`, so Chart.js and Vega find nothing and the slide
+ * shows raw JSON. This puts the shape back.
+ */
+export const DATA_CLASSES = ['chart', 'vega-lite'];
+
+export function restoreDataFences(html, classes = DATA_CLASSES) {
+    const pattern = new RegExp(
+        `<pre[^>]*class="(${classes.join('|')})"[^>]*>\\s*<code[^>]*>([\\s\\S]*?)<\\/code>\\s*<\\/pre>`,
+        'g',
+    );
+
+    return html.replace(pattern, (match, name, body) => {
+        const json = body
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>')
+            .replace(/&quot;/g, '"')
+            .replace(/&#39;/g, "'")
+            .replace(/&amp;/g, '&')
+            .trim();
+
+        return `<div class="${name}" role="img" aria-label="${name}">`
+            + `<script type="application/json">${json}</script></div>`;
+    });
+}
+
+/**
  * reveal's highlight plugin escapes the content of a code block unless the
  * element says otherwise, which turns Carve's callout markers into visible
  * `<b class="callout">` text - measured on the built deck. A block that carries
@@ -381,6 +411,7 @@ export function renderSlide(source, render, options = {}) {
 
         html = keepInlineCodeMarkup(html);
         html = flattenDiagramFences(html);
+        html = restoreDataFences(html);
 
         html = animateListItems(html, { all: config.animateLists || slide.animateLists });
 
@@ -407,6 +438,26 @@ export function renderSlide(source, render, options = {}) {
 
         return errorSlide(error, source);
     }
+}
+
+/**
+ * A printed deck cannot be clicked, so a spoiler stays blacked out on paper and
+ * the reader never gets the answer. This repeats the slide with the spoilers
+ * open, which is what a handout should carry.
+ */
+export function withRevealedSpoilers(sectionHtml) {
+    if (!/class="[^"]*\bspoiler\b/.test(sectionHtml)) {
+        return sectionHtml;
+    }
+
+    const opened = sectionHtml.replace(
+        /^<section([^>]*)>/,
+        (match, attrs) => (/\bclass="/.test(attrs)
+            ? `<section${attrs.replace(/class="([^"]*)"/, 'class="$1 spoilers-open"')}>`
+            : `<section${attrs} class="spoilers-open">`),
+    );
+
+    return `${sectionHtml}\n${opened}`;
 }
 
 /**
@@ -536,7 +587,13 @@ export function renderDeck(source, render, options = {}) {
                 return `<section>\n${inner}\n</section>`;
             }
 
-            return stack.length ? renderSlide(stack[0], render, config) : '';
+            if (!stack.length) {
+                return '';
+            }
+
+            const slide = renderSlide(stack[0], render, config);
+
+            return config.revealSpoilers ? withRevealedSpoilers(slide) : slide;
         })
         .filter(Boolean);
 }

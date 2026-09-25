@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { animateListItems, errorSlide, flattenDiagramFences, keepInlineCodeMarkup, moveCodeAttributes, renderDeck, renderSlide, splitAtHeading, unwrapSections } from '../src/slice.js';
+import { animateListItems, errorSlide, flattenDiagramFences, keepInlineCodeMarkup, moveCodeAttributes, restoreDataFences, renderDeck, renderSlide, splitAtHeading, unwrapSections } from '../src/slice.js';
 import { IncludeError, expandIncludes, hasIncludes } from '../src/include.js';
 import { KNOWN_DIRECTIVES, lintSource } from '../src/lint.js';
 import { buildHandout } from '../src/handout.js';
@@ -327,4 +327,35 @@ test('an ordinary code block is not touched', () => {
     const input = '<pre><code class="language-php">$a &gt; 1;</code></pre>';
 
     assert.equal(flattenDiagramFences(input), input);
+});
+
+test('a slide with a spoiler is repeated with it open', () => {
+    const slides = renderDeck('body', () => '<p><span class="spoiler">x</span></p>', {
+        revealSpoilers: true,
+    });
+
+    assert.equal(slides.length, 1);
+    assert.equal(slides[0].match(/<section/g).length, 2);
+    assert.match(slides[0], /<section class="spoilers-open">/);
+});
+
+test('a slide without a spoiler is left alone', () => {
+    const slides = renderDeck('body', () => '<p>x</p>', { revealSpoilers: true });
+
+    assert.equal(slides[0].match(/<section/g).length, 1);
+});
+
+test('spoiler repetition is off unless asked for', () => {
+    const slides = renderDeck('body', () => '<p><span class="spoiler">x</span></p>', {});
+
+    assert.equal(slides[0].match(/<section/g).length, 1);
+});
+
+test('a static-mode chart fence becomes a json holder again', () => {
+    const html = restoreDataFences(
+        '<pre class="chart"><code class="language-chart">{&quot;type&quot;:&quot;bar&quot;}</code></pre>',
+    );
+
+    assert.match(html, /<div class="chart" role="img" aria-label="chart">/);
+    assert.match(html, /<script type="application\/json">\{"type":"bar"\}<\/script>/);
 });

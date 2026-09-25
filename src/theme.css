@@ -11,8 +11,12 @@
     --carve-soft: rgba(127, 127, 127, 0.1);
 }
 
-.reveal section {
+.reveal .slides section {
     text-align: left;
+    /* reveal runs its slides edge to edge; text against the edge reads badly on
+       a projector and worse on paper. */
+    padding: 0 2.5%;
+    box-sizing: border-box;
 }
 
 /* Most reveal themes uppercase headings, which mangles API names like
@@ -364,6 +368,17 @@
     font-size: 0.9em;
 }
 
+/* The repeated slide a handout gets, with every spoiler open. */
+.reveal section.spoilers-open .spoiler {
+    background: none;
+}
+
+.reveal section.spoilers-open .spoiler::after {
+    content: " (revealed)";
+    font-size: 0.62em;
+    color: var(--carve-muted);
+}
+
 /* Spoiler: hidden until asked for. */
 .reveal .spoiler {
     background: currentColor;
@@ -568,7 +583,27 @@
 
 /* Print, which is what a handed-out deck is. Static mode unfolds tabs and code
    groups, so a slide carries more than it does on screen: wrap long code rather
-   than letting it run off the page, and tighten the panels. */
+   than letting it run off the page, tighten the panels, and set the type a size
+   smaller so a full slide still fits between the margins. */
+.print-pdf .reveal {
+    font-size: 30px;
+}
+
+.print-pdf .reveal .slides section {
+    padding: 0 4%;
+}
+
+.print-pdf .reveal h1 {
+    font-size: 1.7em;
+}
+
+.print-pdf .reveal h2 {
+    font-size: 1.3em;
+}
+
+.print-pdf .reveal [role="doc-endnotes"] {
+    margin-top: 0.6em;
+}
 .print-pdf .reveal pre code {
     white-space: pre-wrap;
     overflow-wrap: anywhere;

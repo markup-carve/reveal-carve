@@ -281,6 +281,7 @@ try {
         rawScripts: RENDERERS,
         elements: { card: 'figure' },
         config: { pdfMaxPagesPerSlide: 3 },
+        revealSpoilers: true,
         version,
     });
 
