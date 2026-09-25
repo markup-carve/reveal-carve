@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { animateListItems, errorSlide, keepInlineCodeMarkup, moveCodeAttributes, renderDeck, renderSlide, splitAtHeading, unwrapSections } from '../src/slice.js';
+import { animateListItems, errorSlide, flattenDiagramFences, keepInlineCodeMarkup, moveCodeAttributes, renderDeck, renderSlide, splitAtHeading, unwrapSections } from '../src/slice.js';
 import { IncludeError, expandIncludes, hasIncludes } from '../src/include.js';
 import { KNOWN_DIRECTIVES, lintSource } from '../src/lint.js';
 import { buildHandout } from '../src/handout.js';
@@ -313,4 +313,18 @@ test('nested heading wrappers inside a kept section are still unwrapped', () => 
     );
 
     assert.equal(html, '<div class="tabs-panel"><h3>A</h3></div>');
+});
+
+test('a static-mode diagram fence is handed to its renderer as text', () => {
+    const html = flattenDiagramFences(
+        '<pre class="mermaid"><code class="language-mermaid">graph LR\n  A --&gt; B\n</code></pre>',
+    );
+
+    assert.equal(html, '<pre class="mermaid">graph LR\n  A --> B</pre>');
+});
+
+test('an ordinary code block is not touched', () => {
+    const input = '<pre><code class="language-php">$a &gt; 1;</code></pre>';
+
+    assert.equal(flattenDiagramFences(input), input);
 });

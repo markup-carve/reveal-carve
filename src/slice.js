@@ -214,6 +214,43 @@ function matchingCloseTag(html, from) {
 }
 
 /**
+ * Diagram fences that a renderer reads as text.
+ *
+ * In the engine's static mode a `mermaid` fence comes out as
+ * `<pre class="mermaid"><code class="language-mermaid">`, with the arrows
+ * escaped. Mermaid then reports a syntax error instead of drawing, which is how
+ * a printed handout ends up with a picture of an error message. Unwrapping the
+ * code element and decoding the entities gives the renderer what it expects.
+ */
+export const DIAGRAM_CLASSES = [
+    'mermaid',
+    'graphviz',
+    'd2',
+    'plantuml',
+    'wavedrom',
+    'abc',
+];
+
+export function flattenDiagramFences(html, classes = DIAGRAM_CLASSES) {
+    const pattern = new RegExp(
+        `<pre([^>]*class="(?:${classes.join('|')})"[^>]*)>\\s*<code[^>]*>([\\s\\S]*?)<\\/code>\\s*<\\/pre>`,
+        'g',
+    );
+
+    return html.replace(pattern, (match, attrs, body) => {
+        const decoded = body
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>')
+            .replace(/&quot;/g, '"')
+            .replace(/&#39;/g, "'")
+            .replace(/&amp;/g, '&')
+            .trimEnd();
+
+        return `<pre${attrs}>${decoded}</pre>`;
+    });
+}
+
+/**
  * reveal's highlight plugin escapes the content of a code block unless the
  * element says otherwise, which turns Carve's callout markers into visible
  * `<b class="callout">` text - measured on the built deck. A block that carries
@@ -343,6 +380,7 @@ export function renderSlide(source, render, options = {}) {
         }
 
         html = keepInlineCodeMarkup(html);
+        html = flattenDiagramFences(html);
 
         html = animateListItems(html, { all: config.animateLists || slide.animateLists });
 

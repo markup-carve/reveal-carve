@@ -6,7 +6,7 @@
 // surprise: node scripts/build-site.mjs [outDir]
 
 import { createHash } from 'node:crypto';
-import { cpSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -36,6 +36,7 @@ const EXTENSIONS = [
     'colorSwatch',
     'semanticSpan',
     'codeCallouts',
+    'codeGroup',
     { name: 'smartQuotes', options: { locale: 'en' } },
 ];
 
@@ -254,12 +255,40 @@ writeFileSync(
     'utf8',
 );
 
-// The PDF of the feature deck, printed the way the CLI does it. Skipped when no
-// Chrome is around, because the site is still complete without it.
+// Two PDFs: the feature deck as it looks on screen, and a handout of everything
+// in static mode, where tab groups unfold so no panel is missing from the page.
 let pdf = true;
 
 try {
-    await exportPdf(join(out, 'features.html'), join(out, 'features.pdf'));
+    await exportPdf(join(out, 'features.html'), join(out, 'features.pdf'), { settle: 2500 });
+
+    const everythingSource = join(root, 'demo/_everything');
+    mkdirSync(everythingSource, { recursive: true });
+    cpSync(join(root, 'demo/showcase.crv'), join(everythingSource, '010-showcase.crv'));
+    cpSync(join(root, 'demo/language.crv'), join(everythingSource, '020-language.crv'));
+
+    buildPage({
+        source: everythingSource,
+        target: join(out, 'everything.html'),
+        render: (text) => carve.carveToHtml(text, {
+            sections: false,
+            mode: 'static',
+            extensions,
+        }),
+        title: 'reveal-carve - every element, for print',
+        revealBase: 'vendor/reveal',
+        stylesheets: ['vendor/reveal-carve/reveal-carve.css'],
+        rawScripts: RENDERERS,
+        elements: { card: 'figure' },
+        config: { pdfMaxPagesPerSlide: 3 },
+        version,
+    });
+
+    const everything = await exportPdf(join(out, 'everything.html'), join(out, 'everything.pdf'), {
+        settle: 3000,
+    });
+    console.log(`[build-site] everything.pdf: ${everything.pages} pages`);
+    rmSync(everythingSource, { recursive: true, force: true });
 } catch (error) {
     pdf = false;
     console.warn(`[build-site] no PDF: ${error.message}`);
@@ -313,7 +342,8 @@ writeFileSync(
         <li><a class="card" href="chapters.html"><strong>Chapters and includes</strong><span>One file per chapter plus a shared slide pulled in with <code>{{ ... }}</code></span></a></li>
         <li><a class="card" href="handout.md"><strong>Handout export (Markdown)</strong><span>The same source as a Markdown document, with the speaker notes quoted under each slide</span></a></li>
         <li><a class="card" href="deck.crv"><strong>deck.crv</strong><span>The source behind the feature deck</span></a></li>
-        ${pdf ? '<li><a class="card" href="features.pdf"><strong>The same deck as a PDF</strong><span>Printed by <code>reveal-carve pdf</code> through headless Chrome</span></a></li>' : ''}
+        ${pdf ? '<li><a class="card" href="features.pdf"><strong>The feature deck as a PDF</strong><span>Printed by <code>reveal-carve pdf</code> through headless Chrome</span></a></li>' : ''}
+        ${pdf ? '<li><a class="card" href="everything.pdf"><strong>Every element, as one PDF</strong><span>Both showcase decks in static mode: tab groups unfolded, diagrams and math drawn, nothing hidden behind a click</span></a></li>' : ''}
     </ul>
 
     <h2>Use it</h2>

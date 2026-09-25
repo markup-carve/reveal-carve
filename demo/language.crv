@@ -41,6 +41,29 @@ vendor/bin/phpunit --filter ArticlesTable
 
 ---
 
+## Code groups
+
+::: code-group
+```bash [Composer]
+composer require cakephp/cakephp:^5.2
+```
+
+```json [composer.json]
+{ "require": { "cakephp/cakephp": "^5.2" } }
+```
+
+```php [Application.php]
+$this->addPlugin('Migrations');
+```
+:::
+
+{.note}
+:::
+`--extension codeGroup`. One block per file, switched on screen and unfolded in the PDF.
+:::
+
+---
+
 ## Details, folded away
 
 ::: details

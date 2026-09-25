@@ -269,6 +269,49 @@
     margin-top: 0;
 }
 
+/* Code groups share the tab markup, so they share its styling. */
+.reveal .code-group {
+    border: 1px solid rgba(127, 127, 127, 0.25);
+    border-radius: 8px;
+    overflow: hidden;
+    margin: 0.5em 0;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.reveal .code-group-radio {
+    display: none;
+}
+
+.reveal .code-group-label {
+    flex: 0 0 auto;
+    background: var(--carve-soft);
+    border-bottom: 3px solid transparent;
+    padding: 0.4em 1em;
+    font-size: 0.62em;
+    color: var(--carve-muted);
+    cursor: pointer;
+}
+
+.reveal .code-group-radio:checked + .code-group-label {
+    color: var(--carve-accent);
+    border-bottom-color: var(--carve-accent);
+    font-weight: 700;
+    background: none;
+}
+
+.reveal .code-group-panel {
+    flex: 0 0 100%;
+    order: 1;
+    padding: 0.5em 0.9em;
+    border-top: 1px solid rgba(127, 127, 127, 0.25);
+    min-width: 0;
+}
+
+.reveal .code-group-radio:not(:checked) + .code-group-label + .code-group-panel {
+    display: none;
+}
+
 /* Static mode, which is what a PDF gets: every panel is shown, one under the
    other, with its label as a heading. */
 .reveal .tabs:not([role="tablist"]) .tabs-panel {
