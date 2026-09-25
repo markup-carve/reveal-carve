@@ -543,9 +543,14 @@ export function deckMinutes(source, options = {}) {
 /**
  * Turn a slide carrying `%% toc` into an agenda of the other slides' headings,
  * so the running order cannot drift away from the deck it describes.
+ *
+ * A deck of any size overruns one slide with this, and reveal then leaves the
+ * heading alone on its own page with the list on the next. So the entries are
+ * set in columns, and a list too long for that is split across as many agenda
+ * slides as it needs.
  */
-function withAgenda(chunk, chunks, config) {
-    const headings = chunks
+function agendaSlides(chunk, chunks, config) {
+    const entries = chunks
         .filter((other) => other !== chunk)
         .map((other) => {
             const heading = headingOf(other, config);
@@ -555,11 +560,33 @@ function withAgenda(chunk, chunks, config) {
         })
         .filter(Boolean);
 
-    if (!headings.length) {
-        return chunk;
+    if (!entries.length) {
+        return [chunk];
     }
 
-    return `${chunk.trimEnd()}\n\n${headings.map((entry) => `- ${entry}`).join('\n')}\n`;
+    // Each class needs its own dot: `{.a b}` makes b an attribute, not a class.
+    const columns = entries.length > (config.tocColumnsFrom || 6) ? ' .columns-2' : '';
+    const perSlide = config.tocPerSlide || (columns ? 24 : 12);
+    const pages = [];
+
+    for (let start = 0; start < entries.length; start += perSlide) {
+        const page = entries.slice(start, start + perSlide);
+        const body = start === 0 ? chunk.trimEnd() : `${continuationOf(chunk, config)}`;
+
+        pages.push(`${body}\n\n{.toc-list${columns}}\n${page.map((entry) => `- ${entry}`).join('\n')}\n`);
+    }
+
+    return pages;
+}
+
+/**
+ * The heading a continued agenda slide carries, so page two is not a headless
+ * list of titles.
+ */
+function continuationOf(chunk, config) {
+    const heading = headingOf(chunk, config);
+
+    return heading ? `## ${heading}` : '';
 }
 
 /**
@@ -576,7 +603,7 @@ export function renderDeck(source, render, options = {}) {
     const vertical = new RegExp(config.verticalSeparator, 'm');
 
     return chunks
-        .map((chunk) => (parseSlide(chunk, config).toc ? withAgenda(chunk, chunks, config) : chunk))
+        .flatMap((chunk) => (parseSlide(chunk, config).toc ? agendaSlides(chunk, chunks, config) : [chunk]))
         .map((chunk) => attachFootnotes(chunk, definitions))
         .map((chunk) => {
             const stack = chunk.split(vertical).filter((part) => part.trim());

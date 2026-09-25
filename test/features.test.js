@@ -359,3 +359,29 @@ test('a static-mode chart fence becomes a json holder again', () => {
     assert.match(html, /<div class="chart" role="img" aria-label="chart">/);
     assert.match(html, /<script type="application\/json">\{"type":"bar"\}<\/script>/);
 });
+
+test('a long agenda is split across slides, each with the heading', () => {
+    const many = Array.from({ length: 20 }, (_, i) => `## Slide ${i + 1}`).join('\n\n---\n\n');
+    const slides = renderDeck(`%% toc\n\n## Agenda\n\n---\n\n${many}\n`, (text) => text, {
+        tocPerSlide: 8,
+    });
+
+    const agenda = slides.filter((slide) => slide.includes('Agenda'));
+
+    assert.equal(agenda.length, 3);
+    assert.match(agenda[1], /## Agenda/);
+});
+
+test('a short agenda stays on one slide and skips the columns', () => {
+    const slides = renderDeck('%% toc\n\n## Agenda\n\n---\n\n## One\n\n---\n\n## Two\n', (t) => t);
+
+    assert.equal(slides.filter((slide) => slide.includes('Agenda')).length, 1);
+    assert.ok(!slides[0].includes('columns-2'));
+});
+
+test('the agenda asks for two columns as a class, not an attribute', () => {
+    const many = Array.from({ length: 10 }, (_, i) => `## S${i}`).join('\n\n---\n\n');
+    const slides = renderDeck(`%% toc\n\n## Agenda\n\n---\n\n${many}\n`, (text) => text);
+
+    assert.match(slides[0], /\{\.toc-list \.columns-2\}/);
+});

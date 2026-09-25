@@ -624,6 +624,31 @@
     margin-bottom: 0.15em;
 }
 
+/* The agenda a `%% toc` slide carries. */
+.reveal ul.toc-list {
+    list-style: none;
+    margin-left: 0;
+    padding-left: 0;
+    font-size: 0.8em;
+}
+
+.reveal ul.toc-list.columns-2 {
+    columns: 2;
+    column-gap: 2.2em;
+}
+
+.reveal ul.toc-list li {
+    break-inside: avoid;
+    margin-bottom: 0.2em;
+    padding-left: 0.9em;
+    text-indent: -0.9em;
+}
+
+.reveal ul.toc-list li::before {
+    content: "- ";
+    color: var(--carve-accent);
+}
+
 /* Code callouts: numbered markers in a block, bound to the list under it. */
 .reveal .callout {
     display: inline-block;
