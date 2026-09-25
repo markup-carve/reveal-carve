@@ -125,10 +125,6 @@ carveWhenReady(function () {
         new Chart(canvas, JSON.parse(data.textContent));
     });
 
-    document.querySelectorAll('.spoiler').forEach(function (spoiler) {
-        spoiler.addEventListener('click', function () { spoiler.classList.toggle('revealed'); });
-    });
-
     // mathBlock emits \\[ … \\], which is what KaTeX's auto-render looks for.
     if (window.renderMathInElement) {
         renderMathInElement(document.body, {

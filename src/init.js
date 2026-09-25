@@ -101,8 +101,10 @@ itself and works with no network.
 
 ${FENCE} bash
 npx reveal-carve vendor vendor
-npx reveal-carve watch slides ${name}.html --reveal-base vendor/reveal --css vendor/reveal-carve.css --js vendor/reveal-carve.js
-npx reveal-carve build slides ${name}.html --reveal-base vendor/reveal --css vendor/reveal-carve.css --js vendor/reveal-carve.js
+npx reveal-carve watch slides ${name}.html --title "${name}" --reveal-base vendor/reveal --css vendor/reveal-carve.css --js vendor/reveal-carve.js \\
+    --dark-theme black --dark-css vendor/reveal-carve-dark.css
+npx reveal-carve build slides ${name}.html --title "${name}" --reveal-base vendor/reveal --css vendor/reveal-carve.css --js vendor/reveal-carve.js \\
+    --dark-theme black --dark-css vendor/reveal-carve-dark.css
 npx reveal-carve pdf   slides ${name}.pdf --reveal-base vendor/reveal --css vendor/reveal-carve.css
 npx reveal-carve agenda slides
 npx reveal-carve check slides

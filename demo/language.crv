@@ -15,28 +15,32 @@ Constructs the first showcase left out, plus the three plugin features that are 
 ## Tabs
 
 ::: tabs
-:::: tab [Composer]
-```bash
-composer require cakephp/cakephp:^5.2
-```
+:::: tab [Symptom]
+The upgrade runs, and half the finders are gone.
+
+- No error, no exit code
+- Only the tables with a behavior
 ::::
 
-:::: tab [Rector]
-```bash
-bin/cake upgrade rector --rules cakephp50 src
-```
+:::: tab [Cause]
+|= What ran |= Against |
+| The rule set | 4.5 sources |
+| The finder rename | Nothing it matched |
 ::::
 
-:::: tab [Tests]
-```bash
-vendor/bin/phpunit --filter ArticlesTable
-```
+:::: tab [Fix]
+1. Bump the dependency
+2. Run the rules again
+3. Re-run the touched tests
+
+> The order is the fix.
 ::::
 :::
 
 {.note}
 :::
-`--extension tabs`. Arrow left and right switch tabs while the strip has focus; reveal keeps the keys otherwise.
+`--extension tabs`. Any block goes in a tab: prose, a table, a list, a quote. Up
+and down switch tabs, left and right stay with the deck.
 :::
 
 ---

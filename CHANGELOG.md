@@ -71,6 +71,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Size classes `small`, `smaller` and `tiny`, on a block or a whole slide.
 - Code inside a `two-col` column is set smaller and wrapped, instead of running
   under a horizontal scrollbar nobody can reach from the third row.
+- Tabs, code groups, folded details and spoilers all step with up and down, on
+  the current slide, without anything being focused first. Left and right stay
+  with the deck, and nothing wraps: once the slide has no step left, the key
+  moves the deck on. A spoiler still answers to a click, from the plugin now
+  rather than from a snippet each page had to carry.
+- Panels, folded details and the blocks inside them are set at a size that fits
+  a box on a slide, aligned left, with list, table, quote and code spacing to
+  match.
 - The deck check runs three passes per deck - on screen, in print layout and in
   the dark theme - and fails on an empty diagram, a blank trailing page or text
   without contrast.
@@ -78,6 +86,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `docs/`.
 
 ### Fixed
+
+- Tab panels in aria mode rendered empty: the rule that hides every panel for
+  css mode had nothing to switch them back on, so the group was a strip of
+  labels over nothing.
+- A quote inside a panel had the opening mark printed on top of its first word.
 
 - Mermaid diagrams came out empty, or as a syntax error in a printed deck: a
   flowchart laid out inside a hidden slide measures its labels as zero. Each

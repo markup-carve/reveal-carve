@@ -79,6 +79,58 @@ them.
 | `--no-reveal-spoilers` | print without the slide that opens spoilers |
 | `--port N` | port for `watch` |
 
+## What is on without asking, and what is not
+
+Core Carve syntax always works - no flag, no extension:
+
+headings, paragraphs, `_emphasis_` and `*strong*`, inline code, fenced code with
+an attribute line, bullet, ordered and task lists, tables (`|=` marks a header
+row), block quotes, links and images, footnotes, definition lists, `:::`
+containers, `{.class key=value}` attribute lines, `%%` comments, `{{ includes }}`
+(the build step resolves them), and braced `{^sup^}` / `{~sub~}`.
+
+Everything else is an engine extension, off until a deck asks for it with
+`--extension NAME` or `carve: { extensions: [...] }`:
+
+| Extension | What it adds | Needs a renderer on the page |
+|---|---|---|
+| `tabs` | `::: tabs` with `:::: tab [Label]` | no |
+| `codeGroup` | one code block per file, switched | no |
+| `details` | a folded block | no |
+| `spoiler` | text blacked out until asked for | no |
+| `listTable` | a table written as a nested list | no |
+| `colorSwatch` | `:color[#abc]` chips | no |
+| `semanticSpan` | inline spans with a role | no |
+| `codeCallouts` | numbered markers inside a fence | no |
+| `smartQuotes` | locale-aware quotation marks | no |
+| `headingNumbers`, `headingPermalinks`, `headingLevelShift`, `headingReference` | heading numbering, anchors, level shifting | no |
+| `tableOfContents`, `tocPlacement` | a generated contents list | no |
+| `citations`, `glossary`, `index`, `wikilinks` | scholarly and wiki constructs | no |
+| `autolink`, `externalLinks` | bare URLs, and marking outbound links | no |
+| `defaultAttributes`, `tabNormalize`, `fencedRender` | attribute defaults, tab normalization, a generic fence hook | no |
+| `imgFence` | a fence that becomes an image, e.g. inline SVG | no |
+| `mermaid` | `<pre class="mermaid">` | Mermaid |
+| `chart` | `<div class="chart">` plus JSON | Chart.js |
+| `mathBlock` | display math | KaTeX or MathJax |
+| `vegaLite`, `d2`, `graphviz`, `plantuml`, `wavedrom`, `abc` | that project's diagram fence | that project's script |
+
+`reveal-carve` enables none of them on its own. The demo site runs mermaid,
+chart, mathBlock, imgFence (as ` ```svg `), details, tabs (aria mode), listTable,
+spoiler, colorSwatch, semanticSpan, codeCallouts, codeGroup and smartQuotes -
+`scripts/build-site.mjs` has the list in one place.
+
+The plugin's own behavior - the deck footer, the speaker timer, the tab and
+spoiler keys, callout badges and diff colouring surviving the highlighter - is
+not an extension and needs no flag, beyond the markup itself.
+
+## Keys
+
+| Key | On a slide with a tab or code group | Anywhere else |
+|---|---|---|
+| Up, Down | previous/next panel; past the ends, the deck | the deck's vertical navigation |
+| Left, Right | the deck | the deck |
+| Home, End | first/last panel while the strip has focus | the deck's first/last slide |
+
 ## Plugin options
 
 ```js

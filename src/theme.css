@@ -314,8 +314,19 @@
     align-items: stretch;
 }
 
-.reveal .tabs-radio {
-    display: none;
+/* The radio is not drawn, but it stays in the page and stays focusable:
+   display:none would take it out of the tab order, and then the group could
+   only be changed with a mouse. */
+.reveal .tabs-radio,
+.reveal .code-group-radio {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    opacity: 0;
+    pointer-events: none;
 }
 
 .reveal .tabs-label {
@@ -346,12 +357,90 @@
 }
 
 .reveal .tabs-panel,
-.reveal [role="tabpanel"] {
+.reveal [role="tabpanel"],
+.reveal .code-group-panel {
     flex: 0 0 100%;
     order: 1;
-    padding: 0.7em 1.1em;
+    /* A panel is a box inside a slide, not the slide itself: at the deck's own
+       type size two bullets fill it. Everything in it is set down one step and
+       aligned left, whatever the slide around it does. */
+    font-size: 0.62em;
+    line-height: 1.5;
+    text-align: left;
+    padding: 0.8em 1.1em;
     border-top: 1px solid rgba(127, 127, 127, 0.25);
     min-width: 0;
+}
+
+.reveal .tabs-panel > :first-child,
+.reveal [role="tabpanel"] > :first-child,
+.reveal .code-group-panel > :first-child {
+    margin-top: 0;
+}
+
+.reveal .tabs-panel > :last-child,
+.reveal [role="tabpanel"] > :last-child,
+.reveal .code-group-panel > :last-child {
+    margin-bottom: 0;
+}
+
+.reveal .tabs-panel p,
+.reveal [role="tabpanel"] p,
+.reveal .code-group-panel p {
+    margin: 0 0 0.5em;
+}
+
+.reveal .tabs-panel ul,
+.reveal .tabs-panel ol,
+.reveal [role="tabpanel"] ul,
+.reveal [role="tabpanel"] ol,
+.reveal .code-group-panel ul,
+.reveal .code-group-panel ol {
+    display: block;
+    margin: 0 0 0.5em;
+    padding-left: 1.2em;
+    width: auto;
+}
+
+.reveal .tabs-panel li,
+.reveal [role="tabpanel"] li,
+.reveal .code-group-panel li {
+    margin: 0 0 0.25em;
+}
+
+.reveal .tabs-panel table,
+.reveal [role="tabpanel"] table,
+.reveal .code-group-panel table {
+    font-size: 0.9em;
+    margin: 0 0 0.4em;
+}
+
+/* The quote keeps room for its mark: taking the left padding away is what
+   drops the glyph on top of the first word. */
+.reveal .tabs-panel blockquote,
+.reveal [role="tabpanel"] blockquote,
+.reveal .code-group-panel blockquote {
+    font-size: 0.95em;
+    margin: 0.5em 0;
+    padding: 0.55em 0.9em 0.55em 2.2em;
+}
+
+.reveal .tabs-panel blockquote::before,
+.reveal [role="tabpanel"] blockquote::before,
+.reveal .code-group-panel blockquote::before {
+    font-size: 2em;
+    left: 0.3em;
+    top: 0.12em;
+}
+
+/* Code in a panel is already inside a box, so it is set smaller again rather
+   than at the slide's code size. */
+.reveal .tabs-panel pre,
+.reveal [role="tabpanel"] pre,
+.reveal .code-group-panel pre {
+    font-size: 0.75em;
+    margin: 0.3em 0;
+    width: 100%;
 }
 
 /* In css mode the engine emits every radio and label first and the panels
@@ -374,6 +463,14 @@
 .reveal .code-group:has(.code-group-radio:nth-of-type(4):checked) .code-group-panel:nth-of-type(4),
 .reveal .code-group:has(.code-group-radio:nth-of-type(5):checked) .code-group-panel:nth-of-type(5),
 .reveal .code-group:has(.code-group-radio:nth-of-type(6):checked) .code-group-panel:nth-of-type(6) {
+    display: block;
+}
+
+/* aria mode has no radios either: the runtime marks the panels it hides with
+   `hidden`, so whatever is left is the one on show. Without this the rule above
+   hides every panel and the group is a strip of labels over nothing. */
+.reveal .tabs[role="tablist"] .tabs-panel:not([hidden]),
+.reveal [role="tabpanel"]:not([hidden]) {
     display: block;
 }
 
@@ -402,10 +499,6 @@
     flex-wrap: wrap;
 }
 
-.reveal .code-group-radio {
-    display: none;
-}
-
 .reveal .code-group-label {
     flex: 0 0 auto;
     background: var(--carve-soft);
@@ -414,6 +507,12 @@
     font-size: 0.62em;
     color: var(--carve-muted);
     cursor: pointer;
+}
+
+.reveal .tabs-radio:focus-visible + .tabs-label,
+.reveal .code-group-radio:focus-visible + .code-group-label {
+    outline: 2px solid var(--carve-accent);
+    outline-offset: -2px;
 }
 
 .reveal .code-group-radio:checked + .code-group-label {
@@ -457,32 +556,66 @@
     display: none;
 }
 
-/* Folded detail *//* Folded detail */
-.reveal details {
+/* Folded detail: `details` from the extension, `.details` when a container
+   carries the class. Both are a box inside the slide, so their content is set
+   at the same size a tab panel uses rather than at the deck's own. */
+.reveal details,
+.reveal .details {
     border: 1px solid rgba(127, 127, 127, 0.25);
     border-radius: 8px;
-    padding: 0.4em 0.9em;
+    padding: 0.6em 1em;
     margin: 0.5em 0;
-    font-size: 0.85em;
+    font-size: 0.62em;
+    line-height: 1.5;
+    text-align: left;
 }
 
 .reveal details > summary {
     cursor: pointer;
     font-weight: 700;
     color: var(--carve-accent);
+    font-size: 1.05em;
 }
 
-.reveal .details > :is(h1, h2, h3, h4, h5, h6):first-child {
-    margin-top: 0;
-    font-size: 1em;
+.reveal details > summary + * {
+    margin-top: 0.5em;
 }
 
-.reveal .details {
-    border: 1px solid rgba(127, 127, 127, 0.25);
-    border-radius: 8px;
-    padding: 0.5em 1em;
-    margin: 0.5em 0;
-    font-size: 0.9em;
+.reveal details > :last-child,
+.reveal .details > :last-child {
+    margin-bottom: 0;
+}
+
+.reveal details p,
+.reveal .details p {
+    margin: 0 0 0.5em;
+}
+
+.reveal details ul,
+.reveal details ol,
+.reveal .details ul,
+.reveal .details ol {
+    display: block;
+    margin: 0 0 0.5em;
+    padding-left: 1.2em;
+    width: auto;
+}
+
+.reveal details li,
+.reveal .details li {
+    margin: 0 0 0.25em;
+}
+
+.reveal details pre,
+.reveal .details pre {
+    font-size: 0.75em;
+    width: 100%;
+}
+
+.reveal details :is(h1, h2, h3, h4, h5, h6),
+.reveal .details :is(h1, h2, h3, h4, h5, h6) {
+    font-size: 1.15em;
+    margin: 0 0 0.35em;
 }
 
 /* The repeated slide a handout gets, with every spoiler open. */

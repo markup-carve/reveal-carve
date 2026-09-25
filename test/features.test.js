@@ -3,7 +3,7 @@ import { test } from 'node:test';
 
 import { animateListItems, errorSlide, flattenDiagramFences, keepInlineCodeMarkup, moveCodeAttributes, restoreDataFences, renderDeck, renderSlide, splitAtHeading, unwrapSections } from '../src/slice.js';
 import { IncludeError, expandIncludes, hasIncludes } from '../src/include.js';
-import { KNOWN_DIRECTIVES, lintSource } from '../src/lint.js';
+import { KNOWN_DIRECTIVES, formatFindings, lintSource } from '../src/lint.js';
 import { buildHandout } from '../src/handout.js';
 import { buildPage } from '../src/build.js';
 
@@ -186,6 +186,97 @@ test('handout can leave the notes out', () => {
     });
 
     assert.ok(!markdown.includes('Secret'));
+});
+
+test('handout fills a toc slide with the agenda, since nothing else will', () => {
+    const source = [
+        '# Deck',
+        '',
+        '---',
+        '',
+        '%% toc',
+        '',
+        '## Agenda',
+        '',
+        '---',
+        '',
+        '%% minutes: 5',
+        '',
+        '## 1. Numbered section',
+        '',
+        'Body.',
+        '',
+    ].join('\n');
+
+    const markdown = buildHandout(source, (text) => text.trim());
+
+    assert.match(markdown, /## Agenda/);
+    assert.match(markdown, /- Deck/);
+    // The marker is escaped, or the entry opens an ordered list inside the bullet.
+    assert.match(markdown, /- 1\\\. Numbered section \(5 min\)/);
+    assert.equal(markdown.includes('- Agenda'), false, 'the agenda listed itself');
+});
+
+test('handout agenda follows %% toc: chapters when the deck does', () => {
+    const source = [
+        '%% toc: chapters',
+        '',
+        '## Agenda',
+        '',
+        '---',
+        '',
+        '%% chapter: Intro',
+        '',
+        '%% minutes: 10',
+        '',
+        '## First',
+        '',
+        '---',
+        '',
+        '%% minutes: 5',
+        '',
+        '## Still intro',
+        '',
+        '---',
+        '',
+        '%% chapter: ORM',
+        '',
+        '%% minutes: 20',
+        '',
+        '## Queries',
+        '',
+    ].join('\n');
+
+    const markdown = buildHandout(source, (text) => text.trim());
+
+    assert.match(markdown, /- Intro \(15 min\)/);
+    assert.match(markdown, /- ORM \(20 min\)/);
+    assert.equal(markdown.includes('- First'), false, 'chapter mode listed a slide heading');
+});
+
+test('lint flags a code line too wide for a slide, and only inside a fence', () => {
+    const wide = 'x'.repeat(120);
+    const inFence = lintSource(`# Slide\n\n${'FENCE'}php\n${wide}\n${'FENCE'}\n`.replace(/FENCE/g, '```'));
+    const inProse = lintSource(`# Slide\n\nA sentence with [brackets] and ${wide}\n`);
+
+    assert.equal(inFence.some((finding) => finding.code === 'code-too-wide'), true);
+    assert.equal(inProse.some((finding) => finding.code === 'code-too-wide'), false);
+});
+
+test('lint flags a slide with no heading and a wall of text', () => {
+    const findings = lintSource(`${'word '.repeat(120)}\n`);
+    const codes = findings.map((finding) => finding.code);
+
+    assert.ok(codes.includes('slide-without-heading'), codes.join(','));
+    assert.ok(codes.includes('slide-too-long'), codes.join(','));
+});
+
+test('findings are formatted with the file, the level and the code', () => {
+    assert.equal(formatFindings('deck.crv', []), 'deck.crv: ok');
+
+    const text = formatFindings('deck.crv', lintSource('%% notez\n\nbody\n'));
+
+    assert.match(text, /^deck\.crv:\d+: warning: .*\[unknown-directive\]$/);
 });
 
 test('the built page carries a footer only when one is configured', () => {

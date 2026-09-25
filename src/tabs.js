@@ -12,22 +12,29 @@
  * deck changes slide at the same time as the tab. Measured on reveal.js 6.0.2 -
  * focus inside a button does not keep the key away from reveal.
  *
- * Arrow up and down are left alone on purpose: reveal uses them for vertical
- * slide stacks, and stealing them breaks navigation on exactly the slide where a
- * speaker needs it.
+ * Up and down switch the tab; left and right are left alone, because those are
+ * the keys a speaker uses to walk the deck and they have to keep working on
+ * every slide, including this one. The strip is marked as a vertical tablist so
+ * a screen reader announces the keys it actually has.
+ *
+ * The ends do not wrap. On the last tab, down belongs to the deck again, and on
+ * the first one so does up - otherwise a speaker who keeps pressing the key is
+ * stuck in a circle on one slide.
  */
 
-const HORIZONTAL = { ArrowLeft: -1, ArrowRight: 1 };
+import { moveDeck, setupSlideSteps, setupSpoilers } from './steps.js';
 
-function panelsOf(group) {
+export const VERTICAL = { ArrowUp: -1, ArrowDown: 1 };
+
+export function panelsOf(group) {
     return [...group.querySelectorAll(':scope > [role="tabpanel"]')];
 }
 
-function tabsOf(group) {
+export function tabsOf(group) {
     return [...group.querySelectorAll(':scope > [role="tab"]')];
 }
 
-function select(group, index, { focus = true } = {}) {
+export function select(group, index, { focus = true } = {}) {
     const tabs = tabsOf(group);
     const panels = panelsOf(group);
     const target = (index + tabs.length) % tabs.length;
@@ -49,7 +56,7 @@ function select(group, index, { focus = true } = {}) {
     group.dispatchEvent(new CustomEvent('carve:tabchange', { detail: { index: target } }));
 }
 
-function currentIndex(group) {
+export function currentIndex(group) {
     return Math.max(0, tabsOf(group).findIndex((tab) => tab.getAttribute('aria-selected') === 'true'));
 }
 
@@ -61,22 +68,32 @@ function wire(group) {
     }
 
     group.dataset.carveTabs = 'ready';
+    group.setAttribute('aria-orientation', 'vertical');
 
     tabs.forEach((tab, index) => {
         tab.addEventListener('click', () => select(group, index, { focus: false }));
 
         tab.addEventListener('keydown', (event) => {
-            const step = HORIZONTAL[event.key];
+            const step = VERTICAL[event.key];
+            const here = currentIndex(group);
+            let target = null;
 
             if (step) {
-                select(group, currentIndex(group) + step);
+                target = here + step;
             } else if (event.key === 'Home') {
-                select(group, 0);
+                target = 0;
             } else if (event.key === 'End') {
-                select(group, tabs.length - 1);
+                target = tabs.length - 1;
             } else {
                 return;
             }
+
+            // Past either end, or already there: the key is the deck's.
+            if (target < 0 || target >= tabs.length || target === here) {
+                return;
+            }
+
+            select(group, target);
 
             // Otherwise reveal changes slide on the same key press.
             event.preventDefault();
@@ -129,10 +146,85 @@ function asFragments(deck, group) {
 }
 
 /**
+ * Carve's css mode, and every code group, are radio inputs. A browser moves a
+ * radio selection with all four arrow keys and wraps at the ends, so on a slide
+ * the left and right keys switched the panel *and* moved the deck, and up and
+ * down circled forever.
+ *
+ * Same rule as the aria strip: up and down switch, the ends do not wrap, and
+ * left and right belong to the deck. Reveal cannot be left to handle those
+ * itself here - it ignores every key press whose target is an `input`, which a
+ * radio is - so the navigation is called directly.
+ */
+export function isChecked(radio) {
+    // The property is what a browser updates; the attribute is what the markup
+    // arrives with, and some DOM implementations never reflect one onto the other.
+    return radio.checked === undefined ? radio.hasAttribute('checked') : radio.checked;
+}
+
+export function setupRadioGroups(deck) {
+    const groups = deck.getRevealElement().querySelectorAll('.tabs, .code-group');
+
+    for (const group of groups) {
+        const radios = [...group.querySelectorAll('input[type="radio"]')];
+
+        if (radios.length < 2 || group.dataset.carveRadioKeys) {
+            continue;
+        }
+
+        group.dataset.carveRadioKeys = 'ready';
+
+        const navigate = {
+            ArrowLeft: () => moveDeck(deck, 'left'),
+            ArrowRight: () => moveDeck(deck, 'right'),
+            ArrowUp: () => moveDeck(deck, 'up'),
+            ArrowDown: () => moveDeck(deck, 'down'),
+        };
+
+        group.addEventListener('keydown', (event) => {
+            const step = VERTICAL[event.key];
+
+            if (!step && !navigate[event.key]) {
+                return;
+            }
+
+            // The native radio move is always wrong here: sideways it steals the
+            // deck's keys, and up or down it wraps around the group forever.
+            event.preventDefault();
+
+            const here = radios.findIndex(isChecked);
+            const target = step === undefined ? -1 : here + step;
+
+            if (target < 0 || target >= radios.length) {
+                navigate[event.key]();
+                // The deck was moved here, by hand. Reveal must not move it a
+                // second time on the way back up.
+                event.stopPropagation();
+
+                return;
+            }
+
+            // Setting the one is enough in a browser; the others are cleared
+            // explicitly so the group is right whatever the DOM is.
+            radios.forEach((radio, position) => {
+                radio.checked = position === target;
+            });
+            radios[target].focus();
+            radios[target].dispatchEvent(new CustomEvent('change', { bubbles: true }));
+            event.stopPropagation();
+        });
+    }
+}
+
+/**
  * @param {object} deck The reveal instance
  * @param {object} config The plugin's `carve` config block
  */
 export function setupTabs(deck, config = {}) {
+    setupRadioGroups(deck);
+    setupSpoilers(deck);
+    setupSlideSteps(deck);
+
     if (!config.tabs) {
         return;
     }

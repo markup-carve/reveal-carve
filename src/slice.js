@@ -671,7 +671,7 @@ function chapterAgenda(chunk, chunks, config) {
  * opens an ordered list inside the bullet, which is what an agenda of numbered
  * section titles looked like: empty bullets with indented numbers beside them.
  */
-function asListItemText(heading) {
+export function asListItemText(heading) {
     return heading
         .replace(/^(\s*)(\d+)([.)])/, '$1$2\\$3')
         .replace(/^(\s*)([-*+>#])/, '$1\\$2');

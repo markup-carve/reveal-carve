@@ -292,9 +292,16 @@ Carve emits `<pre class="graphviz">` and the like, and you add that project's
 renderer with `--js`. The demo site leaves them out on purpose - six more
 renderers would make it slower, not more convincing.
 
+### Tabs and code groups from the keyboard
+
+On a slide carrying a tab group or a code group, the up and down keys step
+through its panels. Left and right stay with the deck, and once the group is at
+its last panel, down moves the deck on as usual - so a speaker with a clicker
+never has to reach for the mouse, and never gets stuck cycling one slide.
+
 `tabs`, `details` and `spoiler` are markup too: the theme styles them, and the
-demo site ships about thirty lines of script to make tabs switch and spoilers
-reveal. Copy that from `scripts/build-site.mjs` if you want the same behavior.
+demo site ships about thirty lines of script to make spoilers reveal. Copy that
+from `scripts/build-site.mjs` if you want the same behavior.
 
 ### PDF export
 

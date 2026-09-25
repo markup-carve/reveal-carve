@@ -81,8 +81,13 @@ const CHECKS = (mode) => `
 
         slide.querySelectorAll('[data-carve-error]').forEach(() => report('error slide', ''));
 
-        if (slide.scrollHeight > 800) {
-            report('slide overflows', slide.scrollHeight + 'px');
+        // On screen a slide has one screen. In print layout reveal gives an
+        // overlong slide several pages, so the page it sits in is the limit.
+        const page = slide.closest('.pdf-page');
+        const room = page ? page.offsetHeight : 800;
+
+        if (slide.scrollHeight > room + 2) {
+            report('slide overflows', slide.scrollHeight + 'px in ' + room + 'px');
         }
 
         // A diagram that came out as an empty box. Mermaid lays a flowchart out
@@ -144,8 +149,11 @@ const CHECKS = (mode) => `
     if (mode === 'print') {
         // Anything below the last page becomes a blank page in the PDF. A six
         // pixel tooltip host left on the body was enough.
+        // The pages are not all one page tall: a slide that needs more room gets
+        // a taller one, so the heights are added up rather than counted.
         const pages = [...document.querySelectorAll('.pdf-page')];
-        const past = pages.length ? document.body.scrollHeight - pages.length * pages[0].offsetHeight : 0;
+        const used = pages.reduce((sum, page) => sum + page.offsetHeight, 0);
+        const past = pages.length ? document.body.scrollHeight - used : 0;
 
         if (past > 2) {
             findings.push({

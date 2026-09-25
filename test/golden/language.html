@@ -25,24 +25,39 @@
 <section>
 <h2 id="Tabs">Tabs</h2>
 <div class="tabs" role="tablist" aria-label="Tabs">
-<button type="button" role="tab" id="tabset-1-tab-1" aria-selected="true" aria-controls="tabset-1-panel-1" class="tabs-label">Composer</button>
-<button type="button" role="tab" id="tabset-1-tab-2" aria-selected="false" aria-controls="tabset-1-panel-2" class="tabs-label" tabindex="-1">Rector</button>
-<button type="button" role="tab" id="tabset-1-tab-3" aria-selected="false" aria-controls="tabset-1-panel-3" class="tabs-label" tabindex="-1">Tests</button>
+<button type="button" role="tab" id="tabset-1-tab-1" aria-selected="true" aria-controls="tabset-1-panel-1" class="tabs-label">Symptom</button>
+<button type="button" role="tab" id="tabset-1-tab-2" aria-selected="false" aria-controls="tabset-1-panel-2" class="tabs-label" tabindex="-1">Cause</button>
+<button type="button" role="tab" id="tabset-1-tab-3" aria-selected="false" aria-controls="tabset-1-panel-3" class="tabs-label" tabindex="-1">Fix</button>
 <div role="tabpanel" id="tabset-1-panel-1" aria-labelledby="tabset-1-tab-1" class="tabs-panel">
-<pre><code class="language-bash">composer require cakephp/cakephp:^5.2
-</code></pre>
+<p>The upgrade runs, and half the finders are gone.</p>
+<ul>
+  <li>No error, no exit code</li>
+  <li>Only the tables with a behavior</li>
+</ul>
 </div>
 <div role="tabpanel" id="tabset-1-panel-2" aria-labelledby="tabset-1-tab-2" class="tabs-panel" hidden>
-<pre><code class="language-bash">bin/cake upgrade rector --rules cakephp50 src
-</code></pre>
+<table>
+  <thead>
+    <tr><th scope="col">What ran</th><th scope="col">Against</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>The rule set</td><td>4.5 sources</td></tr>
+    <tr><td>The finder rename</td><td>Nothing it matched</td></tr>
+  </tbody>
+</table>
 </div>
 <div role="tabpanel" id="tabset-1-panel-3" aria-labelledby="tabset-1-tab-3" class="tabs-panel" hidden>
-<pre><code class="language-bash">vendor/bin/phpunit --filter ArticlesTable
-</code></pre>
+<ol>
+  <li>Bump the dependency</li>
+  <li>Run the rules again</li>
+  <li>Re-run the touched tests</li>
+</ol>
+<blockquote><p>The order is the fix.</p></blockquote>
 </div>
 </div>
 <div class="note">
-  <p><code>--extension tabs</code>. Arrow left and right switch tabs while the strip has focus; reveal keeps the keys otherwise.</p>
+  <p><code>--extension tabs</code>. Any block goes in a tab: prose, a table, a list, a quote. Up
+and down switch tabs, left and right stay with the deck.</p>
 </div>
 </section>
 

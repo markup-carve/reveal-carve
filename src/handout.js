@@ -6,7 +6,7 @@
  * renders through Carve's Markdown writer.
  */
 
-import { DEFAULTS, parseSlide } from './slice.js';
+import { asListItemText, chapterTitles, DEFAULTS, deckMinutes, parseSlide } from './slice.js';
 
 /**
  * @param {string} source Carve source of a whole deck
@@ -26,13 +26,52 @@ export function buildHandout(source, toMarkdown, options = {}) {
         .flatMap((chunk) => chunk.split(vertical))
         .filter((chunk) => chunk.trim());
 
+    // `%% toc` fills a slide in the deck; in a document the same directive has to
+    // produce the list itself, or the handout carries an empty Agenda heading.
+    const plan = deckMinutes(source, config);
+    const titles = chapterTitles(slides);
+
+    const entry = (text, minutes) => `- ${asListItemText(text)}${minutes ? ` (${minutes} min)` : ''}`;
+
+    const slideAgenda = (index) => plan.slides
+        .filter((slide, position) => slide.heading && position !== index)
+        .map((slide) => entry(slide.heading, slide.minutes));
+
+    // `%% toc: chapters` lists the chapter files, the way the deck does, so the
+    // handout and the screen agree on what the agenda says.
+    const chapterAgendaList = (index) => {
+        const totals = new Map();
+
+        slides.forEach((chunk, position) => {
+            const title = titles.get(position);
+
+            if (!title || position === index) {
+                return;
+            }
+
+            totals.set(title, (totals.get(title) || 0) + parseSlide(chunk, config).minutes);
+        });
+
+        return [...totals].map(([title, minutes]) => entry(title, minutes));
+    };
+
+    const agenda = (index, mode) => (mode === 'chapters' ? chapterAgendaList(index) : slideAgenda(index)).join('\n');
+
     return slides
-        .map((chunk) => {
+        .map((chunk, index) => {
             const slide = parseSlide(chunk, config);
             const parts = [];
 
             if (slide.body) {
                 parts.push(toMarkdown(slide.body).trim());
+            }
+
+            if (slide.toc) {
+                const list = agenda(index, slide.tocMode);
+
+                if (list) {
+                    parts.push(list);
+                }
             }
 
             if (includeNotes && slide.notes) {
