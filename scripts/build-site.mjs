@@ -10,9 +10,11 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import * as carve from '@markup-carve/carve';
+import { fileSystemResolver } from '@markup-carve/carve/node';
 
 import { buildPage, readSource } from '../src/build.js';
 import { buildHandout } from '../src/handout.js';
+import { exportPdf } from '../src/pdf.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const out = process.argv[2] || join(root, 'site');
@@ -29,9 +31,13 @@ const extensions = [
     carve.spoiler(),
     carve.colorSwatch(),
     carve.semanticSpan(),
+    carve.codeCallouts(),
     carve.smartQuotes({ locale: 'en' }),
 ];
 const render = (text) => carve.carveToHtml(text, { extensions });
+
+// Includes are resolved by the engine, with its own root containment.
+const includes = { engine: carve, resolver: fileSystemResolver };
 
 // Mermaid draws what Carve emits. The demo site pulls it from a CDN; an offline
 // deck vendors it instead.
@@ -56,6 +62,57 @@ document.addEventListener('DOMContentLoaded', function () {
         var canvas = document.createElement('canvas');
         holder.appendChild(canvas);
         new Chart(canvas, JSON.parse(data.textContent));
+    });
+
+    // Carve's tabs extension emits headings plus content; this makes them switch.
+    // Collect every panel before touching the DOM: appending as we walk would let
+    // the next heading sweep up the panel we just created.
+    document.querySelectorAll('.tabs:not([data-tabs])').forEach(function (group) {
+        var headings = [].slice.call(group.querySelectorAll(':scope > h3, :scope > h4'));
+        if (!headings.length) { return; }
+
+        var collected = headings.map(function (heading) {
+            var nodes = [];
+            var node = heading.nextSibling;
+            while (node && !(node.nodeType === 1 && /^H[1-6]$/.test(node.tagName))) {
+                nodes.push(node);
+                node = node.nextSibling;
+            }
+
+            return { label: heading.textContent, nodes: nodes, heading: heading };
+        });
+
+        var strip = document.createElement('div');
+        strip.className = 'tab-strip';
+        var panels = [];
+
+        collected.forEach(function (entry, index) {
+            var panel = document.createElement('div');
+            panel.className = 'tab-panel';
+            entry.nodes.forEach(function (node) { panel.appendChild(node); });
+            panel.hidden = index !== 0;
+            panels.push(panel);
+
+            var button = document.createElement('button');
+            button.textContent = entry.label;
+            button.setAttribute('aria-selected', String(index === 0));
+            button.addEventListener('click', function () {
+                panels.forEach(function (other, i) {
+                    other.hidden = i !== index;
+                    strip.children[i].setAttribute('aria-selected', String(i === index));
+                });
+            });
+            strip.appendChild(button);
+            entry.heading.remove();
+        });
+
+        group.prepend(strip);
+        panels.forEach(function (panel) { group.appendChild(panel); });
+        group.setAttribute('data-tabs', 'true');
+    });
+
+    document.querySelectorAll('.spoiler').forEach(function (spoiler) {
+        spoiler.addEventListener('click', function () { spoiler.classList.toggle('revealed'); });
     });
 
     // mathBlock emits \\[ … \\], which is what KaTeX's auto-render looks for.
@@ -162,7 +219,20 @@ const showcase = buildPage({
     rawScripts: RENDERERS,
 });
 
-// 4. The chapter deck, including a shared slide from demo/partials.
+// 4. The language deck: the rest of the constructs, plus element mapping.
+const language = buildPage({
+    source: join(root, 'demo/language.crv'),
+    target: join(out, 'language.html'),
+    render,
+    title: 'reveal-carve - the rest of the language',
+    revealBase: 'vendor/reveal',
+    stylesheets: ['vendor/reveal-carve/reveal-carve.css'],
+    footer: footerFor('demo/language.crv'),
+    rawScripts: RENDERERS,
+    elements: { card: 'figure' },
+});
+
+// 5. The chapter deck, including a shared slide from demo/partials.
 const chapters = buildPage({
     source: join(root, 'demo/decks'),
     target: join(out, 'chapters.html'),
@@ -171,18 +241,30 @@ const chapters = buildPage({
     revealBase: 'vendor/reveal',
     stylesheets: ['vendor/reveal-carve/reveal-carve.css'],
     includeRoot: join(root, 'demo'),
+    ...includes,
     footer: footerFor('demo/decks'),
 });
 
-// 5. The handout export of the chapter deck.
+// 6. The handout export of the chapter deck.
 writeFileSync(
     join(out, 'handout.md'),
     buildHandout(
-        readSource(join(root, 'demo/decks'), { includeRoot: join(root, 'demo') }),
+        readSource(join(root, 'demo/decks'), { includeRoot: join(root, 'demo'), ...includes }),
         (text) => carve.carveToMarkdown(text),
     ),
     'utf8',
 );
+
+// The PDF of the feature deck, printed the way the CLI does it. Skipped when no
+// Chrome is around, because the site is still complete without it.
+let pdf = true;
+
+try {
+    await exportPdf(join(out, 'features.html'), join(out, 'features.pdf'));
+} catch (error) {
+    pdf = false;
+    console.warn(`[build-site] no PDF: ${error.message}`);
+}
 
 const source = readFileSync(join(root, 'demo/deck.crv'), 'utf8');
 const sourceLines = source.split('\n').length;
@@ -228,9 +310,11 @@ writeFileSync(
         <li><a class="card" href="features.html"><strong>Feature deck</strong><span>${slides} slides from ${sourceLines} lines of Carve: stepwise code highlighting, two-column comparisons, fragments, speaker notes</span></a></li>
         <li><a class="card" href="runtime.html"><strong>The same deck, rendered in your browser</strong><span>No build step: the plugin fetches deck.crv and renders it on load</span></a></li>
         <li><a class="card" href="showcase.html"><strong>Everything on a slide</strong><span>${showcase} slides: Mermaid diagrams, a Chart.js chart, KaTeX math, inline SVG, footnotes, task lists, admonitions, semantic spans</span></a></li>
+        <li><a class="card" href="language.html"><strong>The rest of the language</strong><span>${language} slides: tabs, folded details, a table of block content, spoilers, code callouts, auto-animate, and a container rendered as a real <code>&lt;figure&gt;</code></span></a></li>
         <li><a class="card" href="chapters.html"><strong>Chapters and includes</strong><span>One file per chapter plus a shared slide pulled in with <code>{{ ... }}</code></span></a></li>
         <li><a class="card" href="handout.md"><strong>Handout export</strong><span>The same source as a document, with the speaker notes as quotes</span></a></li>
         <li><a class="card" href="deck.crv"><strong>deck.crv</strong><span>The source behind the feature deck</span></a></li>
+        ${pdf ? '<li><a class="card" href="features.pdf"><strong>The same deck as a PDF</strong><span>Printed by <code>reveal-carve pdf</code> through headless Chrome</span></a></li>' : ''}
     </ul>
 
     <h2>Use it</h2>
@@ -253,7 +337,9 @@ npx reveal-carve handout slides/ handout.md   # slides plus spoken notes</code><
 );
 
 cpSync(join(root, 'demo/showcase.crv'), join(out, 'showcase.crv'));
+cpSync(join(root, 'demo/language.crv'), join(out, 'language.crv'));
 
 console.log(
-    `site: ${out} (features ${slides}, showcase ${showcase}, chapters ${chapters} slides)`,
+    `site: ${out} (features ${slides}, showcase ${showcase}, language ${language}, `
+    + `chapters ${chapters} slides)`,
 );

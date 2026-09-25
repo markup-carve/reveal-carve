@@ -119,6 +119,333 @@
     padding: 0.35em 0.6em;
 }
 
+/* Task lists. Carve emits a checkbox inside the list item, and a reveal theme
+   still draws its own bullet in front of it, so the row reads as two markers. */
+.reveal ul:has(> li > input[type="checkbox"]),
+.reveal ol:has(> li > input[type="checkbox"]) {
+    list-style: none;
+    margin-left: 0;
+    padding-left: 0;
+}
+
+.reveal li:has(> input[type="checkbox"]) {
+    list-style: none;
+    display: flex;
+    align-items: baseline;
+    gap: 0.55em;
+}
+
+.reveal li > input[type="checkbox"] {
+    width: 0.85em;
+    height: 0.85em;
+    margin: 0;
+    flex: none;
+    accent-color: var(--carve-accent);
+    transform: translateY(0.05em);
+}
+
+.reveal li:has(> input[type="checkbox"]:checked) {
+    color: var(--carve-muted);
+}
+
+/* Admonitions: Carve renders `::: warning` as an aside with a kind class, which
+   no reveal theme styles, so the callout reads as ordinary text. */
+.reveal .admonition {
+    border-left: 5px solid var(--carve-muted);
+    background: var(--carve-soft);
+    border-radius: 0 6px 6px 0;
+    padding: 0.5em 1em;
+    margin: 0.6em 0;
+    font-size: 0.85em;
+}
+
+.reveal .admonition > :first-child {
+    margin-top: 0;
+}
+
+.reveal .admonition > :last-child {
+    margin-bottom: 0;
+}
+
+.reveal .admonition::before {
+    display: block;
+    font-size: 0.72em;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 0.2em;
+    color: var(--carve-muted);
+    content: attr(aria-label);
+}
+
+.reveal .admonition.warning,
+.reveal .admonition.caution,
+.reveal .admonition.danger {
+    border-left-color: var(--carve-accent);
+}
+
+.reveal .admonition.warning::before,
+.reveal .admonition.caution::before,
+.reveal .admonition.danger::before {
+    color: var(--carve-accent);
+}
+
+.reveal .admonition.tip,
+.reveal .admonition.note {
+    border-left-color: var(--carve-ok);
+}
+
+.reveal .admonition.tip::before,
+.reveal .admonition.note::before {
+    color: var(--carve-ok);
+}
+
+/* Tabs. The extension emits headings plus their panels; a host turns them into
+   a tab strip. reveal-carve ships the styling, the demo ships the six lines of
+   script that switch them. */
+.reveal .tabs {
+    border: 1px solid rgba(127, 127, 127, 0.25);
+    border-radius: 8px;
+    overflow: hidden;
+    margin: 0.5em 0;
+}
+
+.reveal .tabs[data-tabs] > :is(h1, h2, h3, h4, h5, h6) {
+    display: none;
+}
+
+.reveal .tab-strip {
+    display: flex;
+    gap: 0;
+    background: var(--carve-soft);
+    border-bottom: 1px solid rgba(127, 127, 127, 0.25);
+}
+
+.reveal .tab-strip button {
+    appearance: none;
+    background: none;
+    border: 0;
+    border-bottom: 3px solid transparent;
+    padding: 0.4em 1em;
+    font: inherit;
+    font-size: 0.62em;
+    color: var(--carve-muted);
+    cursor: pointer;
+}
+
+.reveal .tab-strip button[aria-selected="true"] {
+    color: var(--carve-accent);
+    border-bottom-color: var(--carve-accent);
+    font-weight: 700;
+}
+
+.reveal .tab-panel {
+    padding: 0.6em 1em;
+}
+
+.reveal .tab-panel[hidden] {
+    display: none;
+}
+
+.reveal .tab-panel > :first-child {
+    margin-top: 0;
+}
+
+/* Folded detail */
+.reveal details {
+    border: 1px solid rgba(127, 127, 127, 0.25);
+    border-radius: 8px;
+    padding: 0.4em 0.9em;
+    margin: 0.5em 0;
+    font-size: 0.85em;
+}
+
+.reveal details > summary {
+    cursor: pointer;
+    font-weight: 700;
+    color: var(--carve-accent);
+}
+
+.reveal .details > :is(h1, h2, h3, h4, h5, h6):first-child {
+    margin-top: 0;
+    font-size: 1em;
+}
+
+.reveal .details {
+    border: 1px solid rgba(127, 127, 127, 0.25);
+    border-radius: 8px;
+    padding: 0.5em 1em;
+    margin: 0.5em 0;
+    font-size: 0.9em;
+}
+
+/* Spoiler: hidden until asked for. */
+.reveal .spoiler {
+    background: currentColor;
+    border-radius: 3px;
+    transition: background 0.2s;
+    cursor: pointer;
+}
+
+.reveal .spoiler:hover,
+.reveal .spoiler:focus-within,
+.reveal .spoiler.revealed {
+    background: none;
+}
+
+/* Definition lists */
+.reveal dl {
+    margin: 0.4em 0;
+}
+
+.reveal dt {
+    font-weight: 700;
+}
+
+.reveal dd {
+    margin: 0 0 0.5em 1.2em;
+    color: var(--carve-muted);
+}
+
+/* Footnotes. On a slide these are an aside to the point, not a second body. */
+.reveal [role="doc-endnotes"] {
+    font-size: 0.6em;
+    color: var(--carve-muted);
+    margin-top: 1em;
+}
+
+.reveal [role="doc-endnotes"] hr {
+    width: 30%;
+    margin: 0 0 0.4em;
+    border: 0;
+    border-top: 1px solid currentColor;
+    opacity: 0.4;
+}
+
+.reveal [role="doc-endnotes"] ol {
+    margin: 0 0 0 1.2em;
+}
+
+.reveal [role="doc-endnotes"] p {
+    margin: 0.15em 0;
+    line-height: 1.35;
+}
+
+.reveal [role="doc-noteref"] {
+    text-decoration: none;
+}
+
+/* Charts and diagrams: keep a rendered picture inside the slide. */
+.reveal .chart,
+.reveal .mermaid {
+    display: flex;
+    justify-content: center;
+    max-height: 60vh;
+    margin: 0.4em 0;
+}
+
+.reveal .chart canvas {
+    max-height: 55vh !important;
+}
+
+.reveal .mermaid svg,
+.reveal img {
+    max-height: 55vh;
+    height: auto;
+}
+
+/* Math, which KaTeX sets at its own scale. */
+.reveal .math.display {
+    margin: 0.6em 0;
+    font-size: 0.9em;
+}
+
+/* Colour swatches */
+.reveal .swatch {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3em;
+    font-size: 0.85em;
+}
+
+.reveal .swatch-chip {
+    display: inline-block;
+    width: 0.8em;
+    height: 0.8em;
+    border-radius: 3px;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+/* Blockquote: reveal's default is a grey box that fights the rest of this theme.
+   A pulled quote on a slide is read, not skimmed, so it gets room and a mark. */
+.reveal blockquote {
+    position: relative;
+    width: auto;
+    background: none;
+    box-shadow: none;
+    border: 0;
+    margin: 0.8em 0 0.8em 1.4em;
+    padding: 0.1em 0 0.1em 0.9em;
+    font-style: normal;
+    font-size: 1.05em;
+    line-height: 1.4;
+    color: var(--carve-dark, inherit);
+}
+
+.reveal blockquote::before {
+    content: "\201C";
+    position: absolute;
+    left: -0.62em;
+    top: -0.18em;
+    font-size: 2.6em;
+    line-height: 1;
+    color: var(--carve-accent);
+    opacity: 0.35;
+    pointer-events: none;
+}
+
+.reveal blockquote p {
+    margin: 0 0 0.3em;
+}
+
+.reveal blockquote p:last-child {
+    margin-bottom: 0;
+}
+
+/* An attribution line: the last paragraph when it starts with a dash. */
+.reveal blockquote footer,
+.reveal blockquote cite {
+    display: block;
+    margin-top: 0.4em;
+    font-size: 0.7em;
+    font-style: normal;
+    color: var(--carve-muted);
+}
+
+.reveal blockquote footer::before,
+.reveal blockquote cite::before {
+    content: "- ";
+}
+
+.reveal kbd {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.8em;
+    border: 1px solid var(--carve-muted);
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    padding: 0.05em 0.35em;
+}
+
+.reveal abbr {
+    text-decoration: underline dotted;
+    cursor: help;
+}
+
+.reveal mark {
+    background: #fde68a;
+    padding: 0 0.15em;
+}
+
 /* Deck footer: sits outside the slides, so it survives every transition. */
 .deck-footer {
     position: fixed;

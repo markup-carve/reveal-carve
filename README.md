@@ -235,6 +235,37 @@ The SVG fence is `img` by default; `imgFence:{"language":"svg"}` makes it ` ```s
 The [showcase deck](https://markup-carve.github.io/reveal-carve/showcase.html)
 runs all four.
 
+`graphviz`, `d2`, `plantuml`, `wavedrom`, `vegaLite` and `abc` work the same way:
+Carve emits `<pre class="graphviz">` and the like, and you add that project's
+renderer with `--js`. The demo site leaves them out on purpose - six more
+renderers would make it slower, not more convincing.
+
+`tabs`, `details` and `spoiler` are markup too: the theme styles them, and the
+demo site ships about thirty lines of script to make tabs switch and spoilers
+reveal. Copy that from `scripts/build-site.mjs` if you want the same behavior.
+
+### Offline decks
+
+A deck presented in a room with no wifi cannot load renderers from a CDN. Vendor
+them next to the deck and point `--js` at the local copies:
+
+```bash
+npm install mermaid chart.js katex
+mkdir -p deck/vendor
+cp node_modules/mermaid/dist/mermaid.min.js deck/vendor/
+cp node_modules/chart.js/dist/chart.umd.js deck/vendor/
+cp -r node_modules/katex/dist deck/vendor/katex
+
+reveal-carve build slides/ deck/index.html \
+    --reveal-base vendor/reveal \
+    --js vendor/mermaid.min.js --js vendor/chart.umd.js \
+    --js vendor/katex/katex.min.js --css vendor/katex/katex.min.css
+```
+
+Everything else - reveal, the Carve engine, the plugin - is already local when it
+comes from `node_modules`. The SVG fence needs nothing at all: the image is
+inlined as a data URI.
+
 ### Footnotes on a slide
 
 A footnote definition belongs to the document, and `carve fmt` moves definitions

@@ -1,73 +1,66 @@
 /**
  * Include resolution for deck sources.
  *
- * `{{ path }}` is Carve syntax, but carve-js does not resolve it while rendering -
- * the directive comes out as literal text. Resolving it here is what turns a deck
- * into a slide library: a shared title slide, a reused disclaimer, one chapter
- * pulled into two decks.
+ * `{{ path }}` is Carve syntax, and the engine resolves it - but not while
+ * rendering: `carveToHtml()` leaves the directive as text. The expansion is a
+ * separate pass, `expandIncludes()`, with a resolver the host provides. That is
+ * deliberate, because reading files a document names is a trust boundary.
  *
- * Reading files named by a document is a trust boundary, so this stays inside a
- * root directory and refuses cycles.
+ * This module drives that pass with the engine's own filesystem resolver, which
+ * brings root containment, a byte budget, a depth limit and a dependency list.
+ * A build knows from `dependencies` exactly which files a deck was made of,
+ * which is what watch mode needs.
  */
 
-import { readFileSync } from 'node:fs';
-import { dirname, relative, resolve } from 'node:path';
-
-const INCLUDE = /^[ \t]*\{\{\s*([^}\n]+?)\s*\}\}[ \t]*$/gm;
+const DIRECTIVE = /^[ \t]*\{\{\s*[^}\n]+?\s*\}\}[ \t]*$/m;
 
 export class IncludeError extends Error {}
 
-function inside(root, candidate) {
-    const step = relative(root, candidate);
-
-    return step === '' || (!step.startsWith('..') && !step.startsWith('/'));
+export function hasIncludes(source) {
+    return DIRECTIVE.test(source);
 }
 
 /**
- * Replace every `{{ path }}` line with the file it names, recursively.
- *
  * @param {string} source Carve source text
  * @param {object} options
  * @param {string} options.from Path of the file the source came from
  * @param {string} [options.root] Directory includes may not escape, defaults to `from`'s directory
- * @param {number} [options.maxDepth] Nesting limit, default 10
+ * @param {object} options.engine The Carve module (`carveToHtml`, `parse`, `expandIncludes`)
+ * @param {Function} options.resolver `fileSystemResolver` from `@markup-carve/carve/node`
+ * @returns {{ source: string, dependencies: Array<object>, warnings: Array<object> }}
  */
-export function resolveIncludes(source, { from, root, maxDepth = 10, read = readFileSync } = {}) {
-    const base = resolve(root || dirname(from));
+export function expandIncludes(source, { from, root, engine, resolver, maxDepth } = {}) {
+    if (!engine?.expandIncludes || !engine?.parse || !engine?.renderCarve) {
+        throw new IncludeError(
+            'reveal-carve: this Carve engine cannot expand includes. Pass --no-includes, '
+            + 'or upgrade @markup-carve/carve.',
+        );
+    }
 
-    const expand = (text, currentFile, chain) => {
-        if (chain.length > maxDepth) {
-            throw new IncludeError(`include nesting deeper than ${maxDepth}: ${chain.join(' -> ')}`);
-        }
+    const base = root || dirnameOf(from);
+    const expanded = engine.expandIncludes(engine.parse(source), source, {
+        resolve: resolver(base),
+        sourcePath: from,
+        ...(maxDepth ? { maxDepth } : {}),
+    });
 
-        return text.replace(INCLUDE, (match, target) => {
-            const path = resolve(dirname(currentFile), target);
+    const unresolved = (expanded.dependencies || []).filter((entry) => !entry.resolved);
 
-            if (!inside(base, path)) {
-                throw new IncludeError(`include outside the root directory: ${target}`);
-            }
+    if (unresolved.length) {
+        throw new IncludeError(
+            `include could not be resolved: ${unresolved.map((entry) => entry.id).join(', ')}`,
+        );
+    }
 
-            if (chain.includes(path)) {
-                throw new IncludeError(`include cycle: ${[...chain, path].join(' -> ')}`);
-            }
-
-            let content;
-
-            try {
-                content = read(path, 'utf8');
-            } catch {
-                throw new IncludeError(`include not found: ${target} (from ${currentFile})`);
-            }
-
-            return expand(String(content).trim(), path, [...chain, path]);
-        });
+    return {
+        source: engine.renderCarve(expanded.doc),
+        dependencies: expanded.dependencies || [],
+        warnings: expanded.warnings || [],
     };
-
-    return expand(source, resolve(from), [resolve(from)]);
 }
 
-export function hasIncludes(source) {
-    INCLUDE.lastIndex = 0;
+function dirnameOf(path) {
+    const cut = String(path).lastIndexOf('/');
 
-    return INCLUDE.test(source);
+    return cut === -1 ? '.' : path.slice(0, cut);
 }

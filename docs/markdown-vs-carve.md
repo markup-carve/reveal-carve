@@ -157,9 +157,12 @@ every other tool that reads the document:
 Markdown has no include mechanism; a shared slide is copy-paste, and the copies
 drift.
 
-Carve has `{{ path }}`. carve-js does not resolve it while rendering, so
-reveal-carve does it in the build step, bounded to a root directory and refusing
-cycles. One `house-rules.crv`, pulled into every deck that needs it.
+Carve has `{{ path }}`. The engine resolves it in a pass of its own,
+`expandIncludes()`, with a resolver the host supplies - deliberately separate
+from rendering, because reading files a document names is a trust boundary.
+reveal-carve drives that pass with the engine's filesystem resolver, so a deck
+gets root containment, a byte budget, a depth limit and a list of every file it
+was built from. One `house-rules.crv`, pulled into every deck that needs it.
 
 ## 7. How Markdown solves these instead
 

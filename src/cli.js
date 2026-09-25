@@ -153,6 +153,12 @@ if (options.help || (!source && verb !== 'lint')) {
 }
 
 const carve = await loadCarve();
+const { fileSystemResolver } = await import('@markup-carve/carve/node');
+
+options.engine = carve;
+options.resolver = fileSystemResolver;
+options.dependencies = new Set();
+
 const extensions = resolveExtensions(options.extensions, carve);
 const render = (text) => carve.carveToHtml(text, { ...options.carveOptions, extensions });
 

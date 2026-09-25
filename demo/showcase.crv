@@ -141,6 +141,7 @@ Brand red is :color[#d33c43], the muted tone is :color[#6b7280].
 ## Quotes and tables
 
 > The slides are the handout, and that is the problem.
+> :cite[Every training feedback form, ever]
 
 |= Feature |= Markdown |= Carve |
 | Escaping in code | required | none |

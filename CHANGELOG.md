@@ -40,3 +40,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `carve: { elements }`), so a slide gets real semantics without raw HTML.
 - Footnote definitions follow the slide that references them, instead of ending
   up on the last slide where canonical formatting puts them.
+- Includes are expanded by the Carve engine itself (`expandIncludes` with the
+  filesystem resolver from `@markup-carve/carve/node`), which brings root
+  containment, a byte budget and the list of files a deck was built from.
+- Theme styling for task lists, admonitions, definition lists, footnotes, tabs,
+  folded details, spoilers, swatches, keyboard keys and block quotes.

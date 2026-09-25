@@ -1,0 +1,157 @@
+%% class: center
+
+# The rest of the language
+
+Constructs the first showcase left out, plus the three plugin features that are easiest to miss.
+
+---
+
+%% toc
+
+## On this deck
+
+---
+
+## Tabs
+
+::: tabs
+### Composer
+
+```bash
+composer require cakephp/cakephp:^5.2
+```
+
+### Rector
+
+```bash
+bin/cake upgrade rector --rules cakephp50 src
+```
+
+### Tests
+
+```bash
+vendor/bin/phpunit --filter ArticlesTable
+```
+:::
+
+---
+
+## Details, folded away
+
+::: details
+### The long version of why buffering changed
+
+5.0 always buffered result sets, which raised memory on large exports. 5.1 brought back `disableBufferedResults()`.
+:::
+
+{.note}
+:::
+Useful for the question you only sometimes get asked.
+:::
+
+---
+
+## A table with block content
+
+::: list-table
+- - *Step*
+  - *Command*
+  - *Guards it*
+
+- - Deprecations
+
+  - ```bash
+    bin/cake upgrade rector --rules cakephp45 src
+    ```
+
+  - Tests
+
+- - The jump
+
+  - ```bash
+    composer update -W
+    ```
+
+  - Tests, PHPStan
+:::
+
+---
+
+## Spoilers and swatches
+
+The answer to "how long does the upgrade take" is :spoiler[as long as your test suite is short].
+
+Palette: :color[#d33c43] accent, :color[#1f7a4d] success, :color[#6b7280] muted.
+
+---
+
+## Code with callouts
+
+```php
+$query = $this->Articles->selectQuery()   // [!code focus]
+    ->contain(['Authors'])
+    ->where(['published' => true]);
+```
+
+{.note}
+:::
+Carve keeps the comment; reveal's highlighter keeps the line.
+:::
+
+---
+
+%% animate
+
+## Auto-animate, first half
+
+{.big}
+:::
+One idea
+:::
+
+---
+
+%% animate
+
+## Auto-animate, second half
+
+{.big}
+:::
+One idea, moved and grown
+:::
+
+{.note}
+:::
+Two slides with `%% animate`. reveal matches the elements and tweens between them.
+:::
+
+---
+
+## Containers as real elements
+
+{.card}
+:::
+### Built with `--element card=figure`
+
+This box is a `<figure>` in the output, while the source stays `{.card}` plus a container.
+:::
+
+---
+
+## When a slide is broken
+
+{.note}
+:::
+A source error does not shorten the deck silently. It renders a slide carrying the engine's message, so you see it on the projector instead of wondering where slide nine went. `--strict` fails the build instead.
+:::
+
+---
+
+%% class: center
+
+## That is the language
+
+{.big}
+:::
+Still no raw HTML.
+:::

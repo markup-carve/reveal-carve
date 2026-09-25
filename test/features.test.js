@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 import { animateListItems, errorSlide, moveCodeAttributes, renderDeck, renderSlide, splitAtHeading } from '../src/slice.js';
-import { IncludeError, hasIncludes, resolveIncludes } from '../src/include.js';
+import { IncludeError, expandIncludes, hasIncludes } from '../src/include.js';
 import { KNOWN_DIRECTIVES, lintSource } from '../src/lint.js';
 import { buildHandout } from '../src/handout.js';
 import { buildPage } from '../src/build.js';
@@ -99,49 +99,52 @@ test('deck rendering honors splitAtHeading', () => {
     assert.equal(slides.length, 2);
 });
 
-test('resolves an include relative to the including file', () => {
-    const files = { '/deck/part.crv': 'included text' };
-    const read = (path) => {
-        if (!files[path]) {
-            throw new Error('missing');
-        }
-
-        return files[path];
+test('expands an include through the engine and reports the dependency', () => {
+    const engine = {
+        parse: (text) => ({ text }),
+        renderCarve: (doc) => doc.text.replace('{{ part.crv }}', 'included text'),
+        expandIncludes: (doc, source) => ({
+            doc,
+            dependencies: [{ id: '/deck/part.crv', resolved: true }],
+            warnings: [],
+        }),
     };
 
-    const out = resolveIncludes('before\n{{ part.crv }}\nafter\n', {
+    const out = expandIncludes('before\n{{ part.crv }}\nafter\n', {
         from: '/deck/main.crv',
-        read,
+        engine,
+        resolver: () => () => ({ source: 'included text' }),
     });
 
-    assert.match(out, /included text/);
+    assert.match(out.source, /included text/);
+    assert.deepEqual(out.dependencies, [{ id: '/deck/part.crv', resolved: true }]);
 });
 
-test('refuses an include outside the root', () => {
-    assert.throws(
-        () => resolveIncludes('{{ ../secret.crv }}\n', { from: '/deck/main.crv', read: () => 'x' }),
-        IncludeError,
-    );
-});
-
-test('refuses an include cycle', () => {
-    const read = () => '{{ main.crv }}';
-
-    assert.throws(
-        () => resolveIncludes('{{ main.crv }}\n', { from: '/deck/main.crv', read }),
-        /cycle/,
-    );
-});
-
-test('reports a missing include by name', () => {
-    assert.throws(
-        () => resolveIncludes('{{ gone.crv }}\n', {
-            from: '/deck/main.crv',
-            read: () => {
-                throw new Error('ENOENT');
-            },
+test('reports an include the engine could not resolve', () => {
+    const engine = {
+        parse: (text) => ({ text }),
+        renderCarve: (doc) => doc.text,
+        expandIncludes: () => ({
+            doc: {},
+            dependencies: [{ id: 'gone.crv', resolved: false }],
+            warnings: [],
         }),
-        /include not found: gone.crv/,
+    };
+
+    assert.throws(
+        () => expandIncludes('{{ gone.crv }}\n', {
+            from: '/deck/main.crv',
+            engine,
+            resolver: () => () => null,
+        }),
+        /could not be resolved: gone.crv/,
+    );
+});
+
+test('refuses to guess when the engine cannot expand includes', () => {
+    assert.throws(
+        () => expandIncludes('{{ a.crv }}\n', { from: '/x.crv', engine: {}, resolver: () => {} }),
+        /cannot expand includes/,
     );
 });
 

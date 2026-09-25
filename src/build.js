@@ -7,9 +7,9 @@
  */
 
 import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
-import { basename, join } from 'node:path';
+import { basename, join, resolve } from 'node:path';
 
-import { hasIncludes, resolveIncludes } from './include.js';
+import { expandIncludes, hasIncludes } from './include.js';
 import { renderDeck } from './slice.js';
 
 /**
@@ -19,12 +19,33 @@ import { renderDeck } from './slice.js';
  */
 export function readSource(source, options = {}) {
     const extension = options.extension || '.crv';
+    const dependencies = options.dependencies;
     const expand = (text, from) => {
         if (options.includes === false || !hasIncludes(text)) {
             return text;
         }
 
-        return resolveIncludes(text, { from, root: options.includeRoot });
+        if (!options.engine || !options.resolver) {
+            throw new Error(
+                'reveal-carve: includes need the engine and a resolver. Pass { engine, resolver } '
+                + 'or --no-includes.',
+            );
+        }
+
+        const expanded = expandIncludes(text, {
+            from: resolve(from),
+            root: options.includeRoot ? resolve(options.includeRoot) : undefined,
+            engine: options.engine,
+            resolver: options.resolver,
+        });
+
+        // The engine reports what a deck was actually built from, which is what
+        // watch mode should follow.
+        for (const dependency of expanded.dependencies) {
+            dependencies?.add(dependency.id);
+        }
+
+        return expanded.source;
     };
 
     if (!statSync(source).isDirectory()) {
