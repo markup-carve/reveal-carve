@@ -19,7 +19,7 @@
  */
 
 import { renderDeck, DEFAULTS } from './slice.js';
-import { missingRenderers, resolveExtensions } from './extensions.js';
+import { extensionSpec, missingRenderers, resolveExtensions } from './extensions.js';
 import { setupTabs } from './tabs.js';
 import { setupTimer } from './timer.js';
 
@@ -104,13 +104,16 @@ function rendererFrom(config) {
     // stripping it afterwards; unwrapSections stays as a net for engines or
     // custom renderers that ignore the option.
     const renderOptions = { sections: false, ...(config.carveOptions || {}) };
-    const extensions = resolveExtensions(config.extensions, engine);
+    // Same defaults as the build step: what needs no script on the page is on,
+    // and `carve: { extensions: false }` is core Carve only.
+    const spec = extensionSpec(config.extensions, config.withoutExtensions);
+    const extensions = resolveExtensions(spec, engine);
 
     if (extensions.length) {
         renderOptions.extensions = [...(renderOptions.extensions || []), ...extensions];
     }
 
-    const pending = missingRenderers(config.extensions);
+    const pending = missingRenderers(spec);
 
     if (pending.length) {
         console.info(

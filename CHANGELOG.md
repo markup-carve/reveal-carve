@@ -5,6 +5,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- The markup-only extensions are on by default: `tabs`, `codeGroup`, `details`,
+  `spoiler`, `listTable`, `colorSwatch`, `semanticSpan` and `codeCallouts`. They
+  need nothing from the page, and with them off a tab group rendered as stacked
+  paragraphs with no error to read. Anything needing its own script stays off,
+  as do `smartQuotes` (it needs a locale) and `imgFence`. Turn one off with
+  `--no-extension NAME`, all of them with `--core-only`, or at runtime with
+  `carve: { extensions: false }`.
+
 ### Added
 
 - Runtime reveal.js plugin: a `<section data-carve="file.crv">` or an inline

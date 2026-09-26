@@ -64,6 +64,8 @@ them.
 | `--css FILE`, `--js FILE` | extra stylesheets and scripts, repeatable |
 | `--footer "<html>"`, `--footer-file FILE` | a footer under every slide |
 | `--extension NAME[:VALUE|:JSON]` | enable a Carve extension, repeatable |
+| `--no-extension NAME` | turn one of the defaults off, repeatable |
+| `--core-only` | no extensions at all |
 | `--smart-quotes LOCALE` | locale-aware quotation marks |
 | `--element CLASS=ELEMENT` | render a container class as a real element |
 | `--split-at-heading N` | a new slide at every level-N heading |
@@ -89,32 +91,38 @@ row), block quotes, links and images, footnotes, definition lists, `:::`
 containers, `{.class key=value}` attribute lines, `%%` comments, `{{ includes }}`
 (the build step resolves them), and braced `{^sup^}` / `{~sub~}`.
 
-Everything else is an engine extension, off until a deck asks for it with
-`--extension NAME` or `carve: { extensions: [...] }`:
+Eight extensions are on unless a deck turns them off, because they need nothing
+from the page and their off-state reads as broken markup: `tabs`, `codeGroup`,
+`details`, `spoiler`, `listTable`, `colorSwatch`, `semanticSpan` and
+`codeCallouts`. Drop one with `--no-extension NAME`, or all of them with
+`--core-only` (`carve: { extensions: false }` at runtime).
 
-| Extension | What it adds | Needs a renderer on the page |
-|---|---|---|
-| `tabs` | `::: tabs` with `:::: tab [Label]` | no |
-| `codeGroup` | one code block per file, switched | no |
-| `details` | a folded block | no |
-| `spoiler` | text blacked out until asked for | no |
-| `listTable` | a table written as a nested list | no |
-| `colorSwatch` | `:color[#abc]` chips | no |
-| `semanticSpan` | inline spans with a role | no |
-| `codeCallouts` | numbered markers inside a fence | no |
-| `smartQuotes` | locale-aware quotation marks | no |
-| `headingNumbers`, `headingPermalinks`, `headingLevelShift`, `headingReference` | heading numbering, anchors, level shifting | no |
-| `tableOfContents`, `tocPlacement` | a generated contents list | no |
-| `citations`, `glossary`, `index`, `wikilinks` | scholarly and wiki constructs | no |
-| `autolink`, `externalLinks` | bare URLs, and marking outbound links | no |
-| `defaultAttributes`, `tabNormalize`, `fencedRender` | attribute defaults, tab normalization, a generic fence hook | no |
-| `imgFence` | a fence that becomes an image, e.g. inline SVG | no |
-| `mermaid` | `<pre class="mermaid">` | Mermaid |
-| `chart` | `<div class="chart">` plus JSON | Chart.js |
-| `mathBlock` | display math | KaTeX or MathJax |
-| `vegaLite`, `d2`, `graphviz`, `plantuml`, `wavedrom`, `abc` | that project's diagram fence | that project's script |
+The rest are off until a deck asks for them with `--extension NAME` or
+`carve: { extensions: [...] }`:
 
-`reveal-carve` enables none of them on its own. The demo site runs mermaid,
+| Extension | What it adds | On by default | Needs a renderer on the page |
+|---|---|---|---|
+| `tabs` | `::: tabs` with `:::: tab [Label]` | yes | no |
+| `codeGroup` | one code block per file, switched | yes | no |
+| `details` | a folded block | yes | no |
+| `spoiler` | text blacked out until asked for | yes | no |
+| `listTable` | a table written as a nested list | yes | no |
+| `colorSwatch` | `:color[#abc]` chips | yes | no |
+| `semanticSpan` | inline spans with a role | yes | no |
+| `codeCallouts` | numbered markers inside a fence | yes | no |
+| `smartQuotes` | locale-aware quotation marks | no, it needs a locale | no |
+| `headingNumbers`, `headingPermalinks`, `headingLevelShift`, `headingReference` | heading numbering, anchors, level shifting | no | no |
+| `tableOfContents`, `tocPlacement` | a generated contents list | no | no |
+| `citations`, `glossary`, `index`, `wikilinks` | scholarly and wiki constructs | no | no |
+| `autolink`, `externalLinks` | bare URLs, and marking outbound links | no | no |
+| `defaultAttributes`, `tabNormalize`, `fencedRender` | attribute defaults, tab normalization, a generic fence hook | no | no |
+| `imgFence` | a fence that becomes an image, e.g. inline SVG | no | no |
+| `mermaid` | `<pre class="mermaid">` | no | Mermaid |
+| `chart` | `<div class="chart">` plus JSON | no | Chart.js |
+| `mathBlock` | display math | no | KaTeX or MathJax |
+| `vegaLite`, `d2`, `graphviz`, `plantuml`, `wavedrom`, `abc` | that project's diagram fence | no | that project's script |
+
+The demo site runs mermaid,
 chart, mathBlock, imgFence (as ` ```svg `), details, tabs (aria mode), listTable,
 spoiler, colorSwatch, semanticSpan, codeCallouts, codeGroup and smartQuotes -
 `scripts/build-site.mjs` has the list in one place.

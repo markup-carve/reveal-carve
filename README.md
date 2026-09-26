@@ -116,6 +116,8 @@ reveal-carve pdf slides/ deck.pdf                      # print copy, built and p
 | `--strict` | fail the build instead of rendering an error slide |
 | `--footer "<html>"`, `--footer-file` | a footer under the deck, e.g. links back to an overview |
 | `--extension NAME[:VALUE]` | enable a Carve extension, repeatable |
+| `--no-extension NAME` | turn one of the defaults off, repeatable |
+| `--core-only` | no extensions at all, core Carve syntax only |
 | `--smart-quotes LOCALE` | locale-aware quotation marks, e.g. `de` |
 | `--budget N` | `agenda` fails when the planned minutes exceed N |
 | `--no-notes` | handout without the speaker notes |
@@ -246,8 +248,31 @@ once reveal is ready, so a deck that uses either should load the plugin - the
 
 ### Carve extensions
 
-Carve's richer features are engine extensions. Enable them by name, in the build
-step or at runtime, and the plugin resolves them against the engine:
+Tabs, code groups, folded details, spoilers, list tables, colour swatches,
+semantic spans and code callouts are **on by default**. They need nothing from
+the page - the plugin's own stylesheet covers all of them - and with them off a
+tab group renders as stacked paragraphs with its labels as prose, which looks
+like broken markup and reports no error.
+
+Off by default, because their off-state is the better one: everything that needs
+its own script (`mermaid`, `chart`, `mathBlock`, `vegaLite`, `d2`, `graphviz`,
+`plantuml`, `wavedrom`, `abc`), `smartQuotes`, which needs a locale, and
+`imgFence`, which changes what a fence is.
+
+```bash
+reveal-carve build slides/ deck.html --no-extension spoiler   # one off
+reveal-carve build slides/ deck.html --core-only              # all off
+```
+
+```js
+Reveal.initialize({
+    carve: { extensions: false },   // core Carve only
+    plugins: [RevealCarve()],
+});
+```
+
+Enable the rest by name, in the build step or at runtime, and the plugin
+resolves them against the engine:
 
 ```bash
 reveal-carve build slides/ deck.html \

@@ -20,7 +20,7 @@ import { IncludeError } from './include.js';
 import { buildHandout } from './handout.js';
 import { formatFindings, lintSource } from './lint.js';
 import { serve } from './dev.js';
-import { missingRenderers, parseExtensionArgument, resolveExtensions } from './extensions.js';
+import { extensionSpec, missingRenderers, parseExtensionArgument, resolveExtensions } from './extensions.js';
 import { deckMinutes } from './slice.js';
 import { exportPdf } from './pdf.js';
 import { vendorAssets } from './vendor.js';
@@ -46,7 +46,7 @@ async function loadCarve() {
 
 function parseArgs(argv) {
     const positional = [];
-    const options = { stylesheets: [], scripts: [], carveOptions: {}, extensions: [] };
+    const options = { stylesheets: [], scripts: [], carveOptions: {}, extensions: [], withoutExtensions: [] };
 
     for (let index = 0; index < argv.length; index += 1) {
         const arg = argv[index];
@@ -87,6 +87,12 @@ function parseArgs(argv) {
                 break;
             case '--extension':
                 options.extensions.push(parseExtensionArgument(argv[++index]));
+                break;
+            case '--no-extension':
+                options.withoutExtensions.push(argv[++index]);
+                break;
+            case '--core-only':
+                options.coreOnly = true;
                 break;
             case '--smart-quotes':
                 options.extensions.push({ name: 'smartQuotes', options: { locale: argv[++index] } });
@@ -189,7 +195,8 @@ A source is a .crv file or a directory holding one file per chapter.
 
 Options: --title --theme --lang --reveal-base --css --js --port
          --dark-theme NAME --dark-css FILE --dark
-         --extension NAME[:VALUE|:JSON] --smart-quotes LOCALE
+         --extension NAME[:VALUE|:JSON] --no-extension NAME --core-only
+         --smart-quotes LOCALE
          --element CLASS=ELEMENT
          --footer "<html>" --footer-file FILE --version MARKER
          --split-at-heading N --animate-lists --slides-only --strict --static
@@ -232,14 +239,17 @@ options.engine = carve;
 options.resolver = fileSystemResolver;
 options.dependencies = new Set();
 
-const extensions = resolveExtensions(options.extensions, carve);
+// The markup-only extensions are on unless the deck says otherwise, so a tab
+// group in a source is a tab group on the slide without a flag first.
+const spec = extensionSpec(options.coreOnly ? false : options.extensions, options.withoutExtensions);
+const extensions = resolveExtensions(spec, carve);
 const render = (text) => carve.carveToHtml(text, {
     sections: false,
     ...options.carveOptions,
     extensions,
 });
 
-const pending = missingRenderers(options.extensions);
+const pending = missingRenderers(spec);
 
 if (pending.length && !options.scripts.length) {
     console.warn(

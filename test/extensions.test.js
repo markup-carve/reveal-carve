@@ -3,6 +3,8 @@ import { test } from 'node:test';
 
 import {
     canonicalName,
+    DEFAULT_EXTENSIONS,
+    extensionSpec,
     missingRenderers,
     parseExtensionArgument,
     resolveExtensions,
@@ -95,4 +97,51 @@ test('a deck without headings leaves a toc slide untouched', () => {
     const slides = renderDeck('%% toc\n\n## Agenda\n', render);
 
     assert.match(slides[0], /Agenda/);
+});
+
+
+const nameOf = (entry) => (typeof entry === 'string' ? entry : entry.name);
+
+test('a deck that asks for nothing still gets the markup-only extensions', () => {
+    assert.deepEqual(extensionSpec().map(nameOf), DEFAULT_EXTENSIONS);
+});
+
+test('nothing that needs a script on the page is on by default', () => {
+    const defaults = new Set(DEFAULT_EXTENSIONS);
+
+    for (const name of ['mermaid', 'chart', 'mathBlock', 'vegaLite', 'graphviz', 'smartQuotes', 'imgFence']) {
+        assert.equal(defaults.has(name), false, `${name} is on by default`);
+    }
+});
+
+test('what the deck asks for wins over the default spelling of it', () => {
+    const spec = extensionSpec([{ name: 'tabs', options: { mode: 'aria' } }]);
+    const tabs = spec.filter((entry) => nameOf(entry) === 'tabs');
+
+    assert.equal(tabs.length, 1);
+    assert.deepEqual(tabs[0].options, { mode: 'aria' });
+});
+
+test('a default can be turned off by name, alias included', () => {
+    const spec = extensionSpec([], ['spoiler', 'code-group']).map(nameOf);
+
+    assert.equal(spec.includes('spoiler'), false);
+    assert.equal(spec.includes('codeGroup'), false);
+    assert.equal(spec.includes('tabs'), true);
+});
+
+test('core only means core only', () => {
+    assert.deepEqual(extensionSpec(false), []);
+    assert.deepEqual(extensionSpec(false, []), []);
+});
+
+test('a default the engine does not carry is skipped, not fatal', () => {
+    // An engine with none of them: an older Carve, or a trimmed browser build.
+    assert.deepEqual(resolveExtensions(extensionSpec(), engine), []);
+    assert.throws(() => resolveExtensions(extensionSpec(['nonsense']), engine), /unknown Carve extension/);
+});
+
+test('the renderer warning counts the defaults too, not only what was asked for', () => {
+    assert.deepEqual(missingRenderers(extensionSpec(['mermaid'])), ['mermaid']);
+    assert.deepEqual(missingRenderers(extensionSpec()), []);
 });

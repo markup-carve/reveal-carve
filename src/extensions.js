@@ -24,6 +24,32 @@ export const NEEDS_RENDERER = new Set([
 ]);
 
 /**
+ * On unless a deck says otherwise.
+ *
+ * These need nothing from the page - the stylesheet that ships with the plugin
+ * already dresses all of them - and their off-state is the confusing one: a tab
+ * group renders as stacked paragraphs with the labels as prose, which reads as
+ * broken markup and reports no error. Measured on the demo decks, turning them
+ * on costs no render time, and the browser bundle carries them either way.
+ *
+ * Deliberately not here: anything that needs its own script on the page
+ * (mermaid, chart, math and the other diagram fences), because their off-state
+ * is a readable code block and their on-state without the script is not;
+ * `smartQuotes`, which needs a locale nobody can guess; and `imgFence`, which
+ * changes what a fence is rather than how it looks.
+ */
+export const DEFAULT_EXTENSIONS = [
+    'tabs',
+    'codeGroup',
+    'details',
+    'spoiler',
+    'listTable',
+    'colorSwatch',
+    'semanticSpan',
+    'codeCallouts',
+];
+
+/**
  * Aliases for the names a deck author is likely to write.
  */
 const ALIASES = {
@@ -43,6 +69,32 @@ const ALIASES = {
 
 export function canonicalName(name) {
     return ALIASES[name] || ALIASES[name.toLowerCase()] || name;
+}
+
+/**
+ * The names a deck ends up with: the defaults, plus whatever it asked for, minus
+ * whatever it turned off. `false` for the whole spec means core Carve only.
+ *
+ * @param {Array<string|Function|{name: string, options?: object}>|false} [spec]
+ * @param {string[]} [without] Names to leave out, from `--no-extension`
+ */
+export function extensionSpec(spec, without = []) {
+    if (spec === false) {
+        return [];
+    }
+
+    const asked = spec || [];
+    const nameOf = (entry) => canonicalName(typeof entry === 'string' ? entry : entry?.name || '');
+    const chosen = new Set(asked.map(nameOf));
+    const off = new Set(without.map((name) => canonicalName(name)));
+    // A default is optional: an older engine, or a trimmed browser build, may
+    // not carry it, and that is not a reason to fail a deck nobody asked to use
+    // it. A name the deck asked for by hand still fails loudly.
+    const defaults = DEFAULT_EXTENSIONS
+        .filter((name) => !chosen.has(name) && !off.has(name))
+        .map((name) => ({ name, optional: true }));
+
+    return [...defaults, ...asked.filter((entry) => !off.has(nameOf(entry)))];
 }
 
 /**
@@ -69,6 +121,10 @@ export function resolveExtensions(spec, engine) {
         const factory = engine?.[name];
 
         if (typeof factory !== 'function') {
+            if (entry?.optional) {
+                return null;
+            }
+
             throw new Error(
                 `reveal-carve: unknown Carve extension "${name}". `
                 + 'Check the name against the engine\'s exports.',
@@ -76,7 +132,7 @@ export function resolveExtensions(spec, engine) {
         }
 
         return factory(options);
-    });
+    }).filter(Boolean);
 }
 
 /**
