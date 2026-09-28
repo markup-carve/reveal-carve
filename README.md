@@ -50,6 +50,26 @@ npx reveal-carve init talk      # a starter deck: chapters, a partial, the comma
 [Getting started](docs/getting-started.md) walks from here to a published deck;
 [the reference](docs/reference.md) lists every directive, flag and option.
 
+## Training starter
+
+```bash
+npx reveal-carve init workshop --preset training
+cd workshop
+npm install
+npm start
+```
+
+Open <http://localhost:8800>. The starter includes a timed workshop, code
+comparisons, an exercise and solution, Mermaid diagrams and KaTeX formulas.
+It uses local assets and offers light and dark styles. `npm run pdf` exports
+the slides; `npm run handout` writes a Markdown document with speaker notes.
+PDF export needs Chrome or Chromium and Node 22 or later.
+
+For an existing deck, install `mermaid` and `katex`, then pass
+`--with mermaid,katex` to `build`, `watch` or source-based `pdf`. The command
+copies renderer assets beside the output and waits for rendering before print
+layout. See [the training guide](docs/training.md) for layouts and commands.
+
 ## Runtime plugin
 
 ```html

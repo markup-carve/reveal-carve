@@ -12,6 +12,7 @@ import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 
 const require = createRequire(import.meta.url);
+const projectRequire = () => createRequire(join(process.cwd(), 'package.json'));
 
 /**
  * Each entry: the package, the files to copy, and what it is for.
@@ -62,7 +63,7 @@ export const VENDORABLE = [
     },
 ];
 
-function locate(entry) {
+function locate(entry, resolver = projectRequire()) {
     // This package cannot resolve itself by name from inside itself, so it says
     // where it is.
     if (entry.self && existsSync(join(entry.self, 'dist'))) {
@@ -72,13 +73,13 @@ function locate(entry) {
     // Not every package exports its package.json, so fall back to walking up
     // from whatever entry point it does export.
     try {
-        return dirname(require.resolve(entry.from));
+        return dirname(resolver.resolve(entry.from));
     } catch {
         // continue
     }
 
     try {
-        const main = require.resolve(entry.name);
+        const main = resolver.resolve(entry.name);
         const marker = `node_modules/${entry.name}`;
         const cut = main.lastIndexOf(marker);
 
@@ -105,7 +106,7 @@ export function vendorAssets(target, options = {}) {
     const missing = [];
 
     for (const entry of wanted) {
-        const base = locate(entry);
+        const base = locate(entry) || locate(entry, require);
 
         if (!base) {
             missing.push(entry);

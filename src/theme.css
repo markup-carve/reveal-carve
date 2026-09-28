@@ -1115,3 +1115,37 @@ body.reveal-viewport.speaker-view .deck-timer,
     background: #fff;
     color: #7a1c1c;
 }
+
+/* Layouts share colors with the selected reveal theme. */
+.reveal .slides section.layout-title,
+.reveal .slides section.layout-section {
+    text-align: left;
+    border-left: 0.18em solid currentColor;
+    padding-left: 1em;
+    box-sizing: border-box;
+}
+
+.reveal .layout-title h1 { font-size: 2.4em; }
+.reveal .layout-section h2 { font-size: 2em; }
+.reveal .layout-code {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    gap: 1.5em;
+    align-items: center;
+    text-align: left;
+}
+.reveal .layout-code > * { min-width: 0; }
+.reveal .layout-code pre { width: 100%; margin: 0; font-size: 0.45em; }
+.reveal .layout-code .explanation { font-size: 0.75em; }
+.carve-renderer-error {
+    position: fixed;
+    inset: 0 0 auto;
+    z-index: 100;
+    padding: 1em;
+    white-space: pre-wrap;
+    background: #fff;
+    color: #900;
+}
+@media (max-width: 600px) {
+    .reveal .layout-code { grid-template-columns: 1fr; }
+}

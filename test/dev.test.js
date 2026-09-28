@@ -22,7 +22,7 @@ writeFileSync(join(root, 'index.html'), '<html><body>deck</body></html>', 'utf8'
 writeFileSync(join(root, 'deck.crv'), '# Slide\n', 'utf8');
 
 const port = 8900 + Math.floor(Math.random() * 90);
-const server = serve({ root, port, watch: ['.'], log: () => {} });
+const server = serve({ root, port, watch: [root], log: () => {} });
 
 await new Promise((done) => server.once('listening', done));
 

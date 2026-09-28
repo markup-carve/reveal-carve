@@ -123,7 +123,7 @@ export function serve(options = {}) {
     }
 
     for (const directory of options.watch || ['.']) {
-        watchers.push(watch(join(root, directory), { recursive: true }, (event, filename) => {
+        watchers.push(watch(resolve(root, directory), { recursive: true }, (event, filename) => {
             if (!filename || filename.includes('node_modules') || filename.startsWith('.')) {
                 return;
             }
