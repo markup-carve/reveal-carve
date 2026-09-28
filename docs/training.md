@@ -11,7 +11,8 @@ npm start
 
 Open <http://localhost:8800>. The starter includes a 30-minute lesson about
 planning a workshop. Edit the files under `slides/` to replace it with your
-content. Shared slides belong in `slides/partials/`.
+content. `deck.crv` includes those chapters and holds the title, language,
+themes and renderer list. Shared slides belong in `slides/partials/`.
 
 ## Commands
 

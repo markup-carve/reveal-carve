@@ -7,6 +7,8 @@
  * appear, and you find out while presenting.
  */
 
+import { readFrontmatter } from './frontmatter.js';
+
 import { DEFAULTS, parseSlide } from './slice.js';
 
 // `chapter` is not written by hand: the build step puts it at the head of every
@@ -33,6 +35,11 @@ function slideLines(source, separator) {
  * @returns {Array<{level: 'error'|'warning', line: number, code: string, message: string}>}
  */
 export function lintSource(source, options = {}) {
+    try {
+        source = readFrontmatter(source).source;
+    } catch (error) {
+        return [{ level: 'error', line: 1, code: 'frontmatter', message: error.message }];
+    }
     const config = { ...DEFAULTS, ...options };
     const findings = [];
     const { lines } = slideLines(source, config.separator);

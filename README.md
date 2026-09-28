@@ -70,6 +70,27 @@ For an existing deck, install `mermaid` and `katex`, then pass
 copies renderer assets beside the output and waits for rendering before print
 layout. See [the training guide](docs/training.md) for layouts and commands.
 
+## Deck frontmatter
+
+A single entry `.crv` file can carry its title, language and rendering settings:
+
+```yaml
+---
+title: Planning a workshop
+lang: en
+reveal:
+  theme: white
+  darkTheme: black
+  renderers: [mermaid, katex]
+---
+```
+
+Put slide content after the closing fence. Explicit CLI options override these
+settings; `--no-renderers` clears the renderer list. Build, watch and source PDF
+read metadata before splitting slides. Watch re-reads it on every rebuild.
+For chapters, use an entry file with includes. See [frontmatter](docs/frontmatter.crv)
+for formats, validation and browser-plugin behavior.
+
 ## Runtime plugin
 
 ```html

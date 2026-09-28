@@ -1,0 +1,26 @@
+---yaml
+title: Planning a workshop
+lang: en
+reveal:
+  theme: white
+  darkTheme: black
+  renderers:
+    - mermaid
+    - katex
+---
+
+%% chapter: Opening
+
+{{ slides/010-opening.crv }}
+
+---
+
+%% chapter: Explain
+
+{{ slides/020-explain.crv }}
+
+---
+
+%% chapter: Practice
+
+{{ slides/030-practice.crv }}

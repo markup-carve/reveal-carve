@@ -10,6 +10,7 @@ import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { basename, join, resolve } from 'node:path';
 
 import { expandIncludes, hasIncludes } from './include.js';
+import { readFrontmatter, mergeDeckOptions, FrontmatterError } from './frontmatter.js';
 import { rendererAssets } from './renderers.js';
 import { renderDeck } from './slice.js';
 
@@ -19,6 +20,10 @@ import { renderDeck } from './slice.js';
  * separator, so the order is readable from the directory listing.
  */
 export function readSource(source, options = {}) {
+    return readDeckSource(source, options).source;
+}
+
+export function readDeckSource(source, options = {}) {
     const extension = options.extension || '.crv';
     const dependencies = options.dependencies;
     const expand = (text, from) => {
@@ -50,7 +55,8 @@ export function readSource(source, options = {}) {
     };
 
     if (!statSync(source).isDirectory()) {
-        return expand(readFileSync(source, 'utf8'), source);
+        const deck = readFrontmatter(readFileSync(source, 'utf8'));
+        return { ...deck, source: expand(deck.source, source) };
     }
 
     const chapters = readdirSync(source)
@@ -61,10 +67,14 @@ export function readSource(source, options = {}) {
         throw new Error(`no ${extension} files in ${source}`);
     }
 
-    return chapters
+    const text = chapters
         .map((name) => {
             const path = join(source, name);
-            const text = expand(readFileSync(path, 'utf8').trim(), path);
+            const chapter = readFrontmatter(readFileSync(path, 'utf8'));
+            if (Object.keys(chapter.options).length) {
+                throw new FrontmatterError(`${path}: deck settings require a single entry .crv file; use includes for chapters.`);
+            }
+            const text = expand(chapter.source.trim(), path);
             // The file name, minus its ordering prefix, names the chapter for
             // `%% toc: chapters`. It is a Carve comment, so it renders to nothing.
             const title = name.replace(/\.[^.]+$/, '').replace(/^\d+[-_]?/, '').replace(/[-_]/g, ' ');
@@ -72,6 +82,7 @@ export function readSource(source, options = {}) {
             return `%% chapter: ${title}\n\n${text}`;
         })
         .join('\n\n---\n\n');
+    return { source: text, options: {} };
 }
 
 /**
@@ -149,6 +160,10 @@ export const themeToggle = (defaultDark = false) => `<button class="deck-theme-t
 }());
 </script>`;
 
+function escapeHtml(value) {
+    return String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
+}
+
 function page(slides, options) {
     const {
         title = 'Presentation',
@@ -194,11 +209,11 @@ function page(slides, options) {
     const generated = sourceName ? `\n<!-- Generated from ${sourceName}. Do not edit by hand. -->` : '';
 
     return `<!DOCTYPE html>
-<html lang="${lang}">
+<html lang="${escapeHtml(lang)}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${title}</title>
+<title>${escapeHtml(title)}</title>
 <link rel="stylesheet" href="${stamp(`${revealBase}/reset.css`)}">
 <link rel="stylesheet" href="${stamp(`${revealBase}/reveal.css`)}">
 <link rel="stylesheet" data-carve-theme="light" href="${stamp(`${revealBase}/theme/${theme}.css`)}"${darkTheme && defaultDark ? ' disabled' : ''}>
@@ -237,8 +252,9 @@ ${rawScripts}
  * Returns the number of top-level slides.
  */
 export function buildPage({ source, target, render, ...options }) {
-    const text = readSource(source, options);
-    const slides = renderDeck(text, render, options);
+    const deck = readDeckSource(source, options);
+    options = mergeDeckOptions(deck.options, options);
+    const slides = renderDeck(deck.source, render, options);
     const managed = rendererAssets(target, options.renderers || [], options.rendererDirectory);
 
     writeFileSync(
