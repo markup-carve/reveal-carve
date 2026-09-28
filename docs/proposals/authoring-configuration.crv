@@ -1,0 +1,130 @@
+# Proposal: reuse Carve layouts before adding syntax
+
+Status: draft for discussion. This document changes no parser behavior,
+configuration handling or styling.
+
+## Recommendation
+
+Keep column structure in ordinary Carve containers. Do not add `%% layout`,
+`%% left` or `%% right` directives now. Their benefit is fewer container fences;
+the cost is another structural syntax to parse, lint, export and explain.
+
+The next authoring improvement should document and style the existing patterns.
+Treat deck-level frontmatter as a separate convenience, with lower priority than
+making shared layouts work consistently.
+
+## Two existing column behaviors
+
+Carve's [columns recipe](https://github.com/markup-carve/carve/blob/main/docs/recipes.md)
+uses ordinary containers and attributes:
+
+```carve
+{data-columns="2"}
+::: columns
+First run of text.
+
+Second run of text.
+:::
+```
+
+The [shared stylesheet](https://github.com/markup-carve/carve-css/blob/main/src/recipes.css)
+uses CSS multicolumn flow. It keeps individual blocks together and collapses to
+one column on narrow screens. It does not assign a particular paragraph to the
+left or right column. The source is portable Carve; the visual layout requires
+the recipe stylesheet and its `.carve` scope.
+
+For a comparison with fixed sides, reveal-carve already has a grid. This is
+supported source, with the class on the container opener:
+
+```carve
+## Adjust the balance
+
+:::: two-col
+::: before
+### Before
+
+20 minutes explaining.
+
+5 minutes practicing.
+:::
+
+::: after
+### After
+
+10 minutes explaining.
+
+15 minutes practicing.
+:::
+::::
+```
+
+Both forms use Carve's existing container grammar. The `two-col` styling belongs
+to reveal-carve today; it should not be described as a shared ecosystem recipe.
+Slidev's named layouts are more concise for fixed slots, but copying that model
+would give Carve authors a second way to express an existing structure.
+
+## Proposed next implementation
+
+Document the difference between flowing columns and fixed comparison panels.
+Use named container openers in examples where they remove an extra attribute
+line without changing the structure.
+
+Support the shared columns recipe in the reveal theme through a scoped styling
+adapter or a reviewed import. Preserve its class name, `data-columns` attribute
+and flow behavior. Check the `.carve` scope, theme variables and interactions
+with reveal's sizing before choosing between those approaches. Keep the current
+`two-col`, `before` and `after` classes working.
+
+A fixed-panel recipe shared across Carve hosts could be useful later. Propose it
+in carve-css if other hosts need it, using the existing container grammar.
+Do not reinterpret the current flowing-columns recipe as a fixed grid.
+
+Acceptance would cover both layouts in light and dark themes, runtime and built
+slides, PDF and Markdown handouts. Verify reading order and that neither panel
+is lost in export. Check narrow viewports against reveal's scaled slide canvas;
+a CSS viewport breakpoint alone may not give the intended result. No core Carve
+parser change should be needed.
+
+## Is frontmatter worthwhile here?
+
+Possibly, for deck configuration. Carve already preserves frontmatter in its
+document AST, but leaves its contents uninterpreted. reveal-carve would still
+need to define and validate a configuration schema.
+
+An illustrative future schema could be:
+
+```yaml
+---
+title: Planning a workshop
+reveal:
+  theme: white
+  darkTheme: black
+  renderers:
+    - mermaid
+    - katex
+---
+```
+
+These keys are a proposal, not supported settings. They describe the deck rather
+than where its paragraphs belong. Column structure would stay in the body.
+
+The training starter already puts repeated options in `deck.mjs`. Frontmatter
+would move those options closer to the source, but does not unlock a missing
+capability. Defer implementation until that extra configuration location solves
+a recurring authoring problem.
+
+Before implementing it, settle one entry document for chapter-based decks,
+precedence (explicit CLI/API options over metadata over defaults), supported
+formats, unknown-key errors and a finite allowlist of settings. Exclude arbitrary
+scripts, executable values and paths from the initial schema. Make build, watch,
+source PDF and runtime behavior explicit for every supported setting.
+
+Extract frontmatter before slide splitting: its `---` fences otherwise overlap
+with the existing slide separator. Do not add per-slide frontmatter or treat
+chapter and include metadata as implicit global overrides.
+
+## Review decision
+
+Proceed with existing layout examples and shared styling support first. Defer
+new column directives and deck frontmatter. Revisit frontmatter when a concrete
+workflow shows that maintaining `deck.mjs` is the source of repeated work.
