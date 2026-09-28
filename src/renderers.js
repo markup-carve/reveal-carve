@@ -5,6 +5,7 @@ import { vendorAssets } from './vendor.js';
 const prepared = new Set();
 
 export function rendererNames(value = []) {
+    if (value === '') throw new Error('--with requires a value: mermaid,katex.');
     const names = [...new Set(typeof value === 'string' ? value.split(',') : value)];
     for (const name of names) {
         if (!['mermaid', 'katex'].includes(name)) {

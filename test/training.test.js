@@ -40,6 +40,7 @@ test('invalid presets and renderer selections fail before writing a starter', (t
     const dir = temporary(t);
     assert.throws(() => initDeck(dir, { preset: 'unknown' }), /Unknown preset/);
     assert.throws(() => initDeck(dir, { preset: 'training', renderers: ['katex'] }), /needs --with/);
+    assert.throws(() => rendererNames(''), /requires a value/);
     assert.throws(() => rendererNames('mermaid,unknown'), /Unknown renderer/);
     assert.deepEqual(rendererNames('mermaid,mermaid,katex'), ['mermaid', 'katex']);
     assert.deepEqual(rendererAssets(join(dir, 'deck.html'), []), { scripts: [], stylesheets: [], plugin: '' });
