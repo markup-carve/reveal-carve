@@ -73,13 +73,15 @@ Support the shared columns recipe in the reveal theme through a scoped styling
 adapter or a reviewed import. Preserve its class name, `data-columns` attribute
 and flow behavior. Check the `.carve` scope, theme variables and interactions
 with reveal's sizing before choosing between those approaches. Keep the current
-`two-col`, `before` and `after` classes working.
+`two-col`, `before` and `after` classes working. Preserve the `layout-code` grid
+and its `code` and `explanation` children too.
 
 A fixed-panel recipe shared across Carve hosts could be useful later. Propose it
 in carve-css if other hosts need it, using the existing container grammar.
 Do not reinterpret the current flowing-columns recipe as a fixed grid.
 
-Acceptance would cover both layouts in light and dark themes, runtime and built
+Acceptance would cover flowing columns, fixed comparisons and `layout-code`
+in light and dark themes, runtime and built
 slides, PDF and Markdown handouts. Verify reading order and that neither panel
 is lost in export. Check narrow viewports against reveal's scaled slide canvas;
 a CSS viewport breakpoint alone may not give the intended result. No core Carve
@@ -109,8 +111,9 @@ These keys are a proposal, not supported settings. They describe the deck rather
 than where its paragraphs belong. Column structure would stay in the body.
 
 The training starter already puts repeated options in `deck.mjs`. Frontmatter
-would move those options closer to the source, but does not unlock a missing
-capability. Defer implementation until that extra configuration location solves
+would move the title, theme choice and renderer selection closer to the source.
+Asset paths and the vendoring step would remain in `deck.mjs`, so frontmatter
+would not replace that file or unlock a missing capability. Defer implementation until that extra configuration location solves
 a recurring authoring problem.
 
 Before implementing it, settle one entry document for chapter-based decks,
