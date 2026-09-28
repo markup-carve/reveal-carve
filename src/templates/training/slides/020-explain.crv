@@ -1,0 +1,97 @@
+%% class: layout-section
+
+%% minutes: 1
+
+## Make room for practice
+
+Start with the time available, then choose what fits.
+
+---
+
+%% minutes: 4
+
+## From a topic to a lesson
+
+```mermaid
+flowchart LR
+    A[Choose a topic] --> B[Explain one idea]
+    B --> C[Practice together]
+    C --> D[Review the result]
+```
+
+%% notes
+
+Use the review to decide whether the next lesson needs another example.
+
+---
+
+%% minutes: 3
+
+## Budget the session
+
+```math
+T = E + P + R
+```
+
+For a 30-minute session: 10 minutes of explanation, 15 of practice,
+and 5 for review.
+
+---
+
+%% minutes: 3
+
+## Adjust the balance
+
+{.two-col}
+:::
+:::: before
+### Before
+
+```js
+const session = {
+  explain: 20,
+  practice: 5,
+  review: 5,
+};
+```
+::::
+
+:::: after
+### After
+
+```js
+const session = {
+  explain: 10,
+  practice: 15,
+  review: 5,
+};
+```
+::::
+:::
+
+---
+
+%% minutes: 2
+
+## Check the total
+
+{.layout-code}
+:::
+:::: code
+```js
+const times = Object.values(session);
+const total = times.reduce(
+  (sum, minutes) => sum + minutes,
+  0,
+);
+
+console.log(total); // 30
+```
+::::
+
+:::: explanation
+Add every activity before adding another topic.
+
+Leave time for the review even when the explanation runs long.
+::::
+:::

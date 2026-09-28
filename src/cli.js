@@ -24,6 +24,7 @@ import { extensionSpec, missingRenderers, parseExtensionArgument, resolveExtensi
 import { deckMinutes } from './slice.js';
 import { exportPdf } from './pdf.js';
 import { vendorAssets } from './vendor.js';
+import { rendererNames } from './renderers.js';
 import { initDeck } from './init.js';
 
 const VERBS = ['init', 'build', 'watch', 'lint', 'handout', 'pdf', 'agenda', 'vendor', 'check'];
@@ -52,6 +53,12 @@ function parseArgs(argv) {
         const arg = argv[index];
 
         switch (arg) {
+            case '--preset':
+                options.preset = argv[++index];
+                break;
+            case '--with':
+                options.renderers = rendererNames(argv[++index] ?? '');
+                break;
             case '--title':
                 options.title = argv[++index];
                 break;
@@ -193,7 +200,8 @@ function usage() {
 
 A source is a .crv file or a directory holding one file per chapter.
 
-Options: --title --theme --lang --reveal-base --css --js --port
+Options: --preset training --with mermaid,katex
+         --title --theme --lang --reveal-base --css --js --port
          --dark-theme NAME --dark-css FILE --dark
          --extension NAME[:VALUE|:JSON] --no-extension NAME --core-only
          --smart-quotes LOCALE
@@ -205,7 +213,13 @@ Options: --title --theme --lang --reveal-base --css --js --port
 
 const argv = process.argv.slice(2);
 const verb = VERBS.includes(argv[0]) ? argv.shift() : 'build';
-const { positional, options } = parseArgs(argv);
+let positional, options;
+try {
+    ({ positional, options } = parseArgs(argv));
+} catch (error) {
+    console.error(`reveal-carve: ${error.message}`);
+    process.exit(1);
+}
 const [source, target] = positional;
 
 if (options.help || (!source && verb !== 'lint')) {
@@ -215,18 +229,25 @@ if (options.help || (!source && verb !== 'lint')) {
 
 // A scaffold needs no engine, so it is handled before the rest is loaded.
 if (verb === 'init') {
-    const written = initDeck(source);
+    let written;
+    try {
+        written = initDeck(source, options);
+    } catch (error) {
+        console.error(`reveal-carve: ${error.message}`);
+        process.exit(1);
+    }
 
     for (const file of written) {
         console.log(`  ${file}`);
     }
 
-    console.log(written.length
-        ? `\n${source}: ${written.length} file(s). Next:\n`
-            + `  cd ${source}\n`
-            + '  npx reveal-carve vendor vendor\n'
+    const next = options.preset === 'training'
+        ? '  npm install\n  npm start\n'
+        : '  npx reveal-carve vendor vendor\n'
             + '  npx reveal-carve watch slides deck.html --reveal-base vendor/reveal'
-            + ' --css vendor/reveal-carve.css --js vendor/reveal-carve.js\n'
+            + ' --css vendor/reveal-carve.css --js vendor/reveal-carve.js\n';
+    console.log(written.length
+        ? `\n${source}: ${written.length} file(s). Next:\n  cd ${source}\n${next}`
             + '\nThe README in there has the rest.'
         : `${source}: nothing written, the files are already there.`);
     process.exit(0);
@@ -241,6 +262,9 @@ options.dependencies = new Set();
 
 // The markup-only extensions are on unless the deck says otherwise, so a tab
 // group in a source is a tab group on the slide without a flag first.
+for (const name of options.renderers || []) {
+    options.extensions.push(name === 'katex' ? 'mathBlock' : name);
+}
 const spec = extensionSpec(options.coreOnly ? false : options.extensions, options.withoutExtensions);
 const extensions = resolveExtensions(spec, carve);
 const render = (text) => carve.carveToHtml(text, {
@@ -249,7 +273,8 @@ const render = (text) => carve.carveToHtml(text, {
     extensions,
 });
 
-const pending = missingRenderers(spec);
+const managedExtensions = (options.renderers || []).map((name) => name === 'katex' ? 'mathBlock' : name);
+const pending = missingRenderers(spec).filter((name) => !managedExtensions.includes(name));
 
 if (pending.length && !options.scripts.length) {
     console.warn(
@@ -305,7 +330,9 @@ try {
         }
 
         case 'vendor': {
-            const { copied, missing } = vendorAssets(source || 'vendor');
+            const { copied, missing } = vendorAssets(source || 'vendor', {
+                only: options.renderers ? ['reveal.js', '@markup-carve/carve', '@markup-carve/reveal-carve', ...options.renderers] : undefined,
+            });
 
             for (const entry of copied) {
                 console.log(`  ${entry.target.padEnd(20)} from ${entry.name}`);
@@ -406,6 +433,8 @@ try {
                     // The print copy is written to a temp directory, so a relative
                     // asset path would resolve against that directory and load
                     // nothing. Local paths are made absolute; URLs are left alone.
+                    darkStylesheets: (options.darkStylesheets || []).map(absoluteAsset),
+                    rendererDirectory: resolve('vendor'),
                     stylesheets: (options.stylesheets || []).map(absoluteAsset),
                     // Unfolded tabs make a slide taller than the screen version, so
                     // let an overlong one run onto a second page instead of being cut.
@@ -465,7 +494,7 @@ try {
                 port: options.port,
                 watch: [...watched].filter((dir) => dir === '.' || resolve(dir).startsWith(root)),
                 extraWatch: [...options.dependencies].filter((file) => !resolve(file).startsWith(root)),
-                ignore: (filename) => filename.endsWith('.html'),
+                ignore: (filename) => filename.endsWith('.html') || /(^|[/\\])vendor([/\\]|$)/.test(filename),
                 onChange: rebuild,
             });
             break;

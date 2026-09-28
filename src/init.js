@@ -4,7 +4,9 @@
  * deck starts from something that already shows the parts worth knowing about.
  */
 
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, writeFileSync, readFileSync, readdirSync } from 'node:fs';
+import { rendererNames } from './renderers.js';
+import { fileURLToPath } from 'node:url';
 import { basename, join } from 'node:path';
 
 const FENCE = '```';
@@ -120,14 +122,42 @@ Shared slides live in \`slides/partials/\` and come in with \`{{ partials/name.c
  * @param {string} target Directory to create the deck in
  * @returns {string[]} The files written, relative to the target
  */
-export function initDeck(target) {
+export function initDeck(target, options = {}) {
+    if (options.preset && options.preset !== 'training') {
+        throw new Error(`Unknown preset: ${options.preset}. Choose training.`);
+    }
+    if (options.renderers && options.preset !== 'training') {
+        throw new Error('--with on init requires --preset training.');
+    }
     const name = basename(target) || 'deck';
-    const files = [
+    let files = [
         ['slides/010-opening.crv', OPENING(name.replace(/[-_]/g, ' '))],
         ['slides/020-chapter.crv', CHAPTER],
         ['slides/partials/thanks.crv', PARTIAL],
         ['README.md', README(name)],
     ];
+    if (options.preset === 'training') {
+        const names = rendererNames(options.renderers || ['mermaid', 'katex']);
+        if (!names.includes('mermaid') || !names.includes('katex')) {
+            throw new Error('The training preset needs --with mermaid,katex for its examples.');
+        }
+        const directory = fileURLToPath(new URL('./templates/training/', import.meta.url));
+        const collect = (base = '') => readdirSync(join(directory, base), { withFileTypes: true })
+            .flatMap((entry) => entry.isDirectory() ? collect(join(base, entry.name))
+                : [[join(base, entry.name), readFileSync(join(directory, base, entry.name), 'utf8')]]);
+        files = collect().map(([path, content]) => [path === 'gitignore' ? '.gitignore' : path, content]);
+        const version = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version;
+        files.push(['package.json', JSON.stringify({
+            name: 'carve-training-deck', private: true, type: 'module',
+            scripts: Object.fromEntries(['start', 'build', 'pdf', 'handout', 'agenda', 'check']
+                .map((command) => [command, `node deck.mjs ${command === 'start' ? 'watch' : command}`])),
+            dependencies: {
+                '@markup-carve/reveal-carve': `^${version}`,
+                '@markup-carve/carve': '^0.1.7', 'reveal.js': '^6.0.2',
+                mermaid: '^11.0.0', katex: '^0.16.0',
+            },
+        }, null, 2) + '\n']);
+    }
     const written = [];
 
     for (const [path, content] of files) {

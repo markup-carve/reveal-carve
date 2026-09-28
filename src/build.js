@@ -10,6 +10,7 @@ import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { basename, join, resolve } from 'node:path';
 
 import { expandIncludes, hasIncludes } from './include.js';
+import { rendererAssets } from './renderers.js';
 import { renderDeck } from './slice.js';
 
 /**
@@ -165,6 +166,7 @@ function page(slides, options) {
         footer = '',
         rawScripts = '',
         version = '',
+        managed = { scripts: [], stylesheets: [], plugin: '' },
     } = options;
 
     // A page that loads the plugin bundle needs it in the plugin list too, or
@@ -187,7 +189,8 @@ function page(slides, options) {
             .map((href) => `<link rel="stylesheet" data-carve-theme="dark" href="${stamp(href)}"${defaultDark ? '' : ' disabled'}>`)
             .join('\n')
         : '';
-    const extraScripts = scripts.map((src) => `<script src="${stamp(src)}"></script>`).join('\n');
+    const rendererStyles = managed.stylesheets.map((href) => `<link rel="stylesheet" href="${stamp(href)}">`).join('\n');
+    const extraScripts = [...scripts, ...managed.scripts].map((src) => `<script src="${stamp(src)}"></script>`).join('\n');
     const generated = sourceName ? `\n<!-- Generated from ${sourceName}. Do not edit by hand. -->` : '';
 
     return `<!DOCTYPE html>
@@ -202,6 +205,7 @@ function page(slides, options) {
 <link rel="stylesheet" href="${stamp(`${revealBase}/plugin/highlight/monokai.css`)}">
 ${extraStyles}
 ${darkStyles}
+${rendererStyles}
 </head>
 <body>${generated}
 <div class="reveal">
@@ -219,7 +223,7 @@ ${darkTheme ? themeToggle(defaultDark) : ''}
 ${extraScripts}
 <script>
 Reveal.initialize(Object.assign(${JSON.stringify({ ...DEFAULT_CONFIG, ...config }, null, 4)}, {
-    plugins: [${pluginList.join(', ')}],
+    plugins: [${[...pluginList, managed.plugin].filter(Boolean).join(', ')}],
 }));
 </script>
 ${rawScripts}
@@ -235,10 +239,11 @@ ${rawScripts}
 export function buildPage({ source, target, render, ...options }) {
     const text = readSource(source, options);
     const slides = renderDeck(text, render, options);
+    const managed = rendererAssets(target, options.renderers || [], options.rendererDirectory);
 
     writeFileSync(
         target,
-        page(slides.join('\n\n'), { ...options, sourceName: basename(source) }),
+        page(slides.join('\n\n'), { ...options, managed, sourceName: basename(source) }),
         'utf8',
     );
 

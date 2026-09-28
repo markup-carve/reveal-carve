@@ -1,0 +1,34 @@
+%% class: exercise
+
+%% minutes: 10
+
+## Your turn
+
+Plan a 45-minute session. Reserve 10 minutes for review and give practice
+twice as much time as explanation.
+
+Write down the three durations before advancing.
+
+%% notes
+
+Give participants two minutes to work alone, then compare answers in pairs.
+The next slide contains the solution; it also appears in the handout.
+
+---
+
+%% minutes: 3
+
+## Compare your answer
+
+```math
+E + 2E + 10 = 45
+```
+
+Explanation: 11 minutes 40 seconds. Practice: 23 minutes 20 seconds.
+Review: 10 minutes.
+
+For a schedule in whole minutes, use 12, 23 and 10.
+
+---
+
+{{ partials/recap.crv }}

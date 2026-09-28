@@ -56,6 +56,8 @@ them.
 
 | Flag | Meaning |
 |---|---|
+| `--with mermaid,katex` | managed renderers for build, watch and source PDF; selected optional assets for vendor |
+| `--preset training` | training starter for init, including Mermaid and KaTeX |
 | `--title`, `--theme`, `--lang` | page title, reveal theme (default `white`), `<html lang>` |
 | `--dark-theme NAME` | a second reveal theme, with a switch in the corner |
 | `--dark-css FILE` | extra stylesheet for the dark theme, repeatable |

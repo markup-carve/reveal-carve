@@ -17,6 +17,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Training starter with chapter files, an exercise and solution, light and dark
+  layouts, and npm commands for preview, HTML, PDF and Markdown handouts.
+- `--with mermaid,katex` copies local renderer assets and initializes them before
+  reveal.js measures the deck. Missing packages report an install command.
+
 - Runtime reveal.js plugin: a `<section data-carve="file.crv">` or an inline
   `data-template` is replaced by the slides the Carve source describes.
 - Build step and `reveal-carve` CLI with `build`, `watch`, `lint` and `handout`.
