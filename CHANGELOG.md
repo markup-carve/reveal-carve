@@ -17,6 +17,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Entry-file frontmatter for title, language, theme names and managed renderers,
+  with CLI overrides and fresh settings on watch rebuilds. Metadata no longer
+  becomes an extra slide. The training starter keeps these settings in `deck.crv`.
+
 - Training starter with chapter files, an exercise and solution, light and dark
   layouts, and npm commands for preview, HTML, PDF and Markdown handouts.
 - `--with mermaid,katex` copies local renderer assets and initializes them before

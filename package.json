@@ -76,5 +76,8 @@
         "linkedom": "^0.18.13",
         "reveal.js": "^6.0.2"
     },
-    "module": "./dist/reveal-carve.mjs"
+    "module": "./dist/reveal-carve.mjs",
+    "dependencies": {
+        "yaml": "^2.9.1"
+    }
 }

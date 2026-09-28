@@ -3,6 +3,9 @@
 Everything the plugin reads: directives in a source, flags on the command line,
 options in `Reveal.initialize`, and the classes the stylesheet brings.
 
+Deck-level settings can also come from [frontmatter](frontmatter.crv) in a single
+entry file. CLI options take precedence.
+
 ## Slide directives
 
 A directive is an ordinary Carve comment, so a source with directives still
@@ -56,6 +59,7 @@ them.
 
 | Flag | Meaning |
 |---|---|
+| `--no-renderers` | disable managed renderers, including declarations in frontmatter |
 | `--with mermaid,katex` | managed renderers for build, watch and source PDF; selected optional assets for vendor |
 | `--preset training` | training starter for init, including Mermaid and KaTeX |
 | `--title`, `--theme`, `--lang` | page title, reveal theme (default `white`), `<html lang>` |

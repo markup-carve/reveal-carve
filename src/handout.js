@@ -6,6 +6,8 @@
  * renders through Carve's Markdown writer.
  */
 
+import { readFrontmatter } from './frontmatter.js';
+
 import { asListItemText, chapterTitles, DEFAULTS, deckMinutes, parseSlide } from './slice.js';
 
 /**
@@ -16,6 +18,7 @@ import { asListItemText, chapterTitles, DEFAULTS, deckMinutes, parseSlide } from
  * @param {string} [options.notesLabel] Prefix for the notes block
  */
 export function buildHandout(source, toMarkdown, options = {}) {
+    source = readFrontmatter(source).source;
     const config = { ...DEFAULTS, ...options };
     const includeNotes = config.notes !== false;
     const label = config.notesLabel || '**Spoken:**';

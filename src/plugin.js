@@ -18,6 +18,8 @@
  * `@markup-carve/carve`) unless one is passed in through the plugin options.
  */
 
+import { readFrontmatter } from './frontmatter.js';
+import { managedRenderers } from './renderer-runtime.js';
 import { renderDeck, DEFAULTS } from './slice.js';
 import { extensionSpec, missingRenderers, resolveExtensions } from './extensions.js';
 import { setupTabs } from './tabs.js';
@@ -106,14 +108,17 @@ function rendererFrom(config) {
     const renderOptions = { sections: false, ...(config.carveOptions || {}) };
     // Same defaults as the build step: what needs no script on the page is on,
     // and `carve: { extensions: false }` is core Carve only.
-    const spec = extensionSpec(config.extensions, config.withoutExtensions);
+    const requested = config.extensions === false ? false : [...(config.extensions || []),
+        ...(config.renderers || []).map((name) => name === 'katex' ? 'mathBlock' : name)];
+    const spec = extensionSpec(requested, config.withoutExtensions);
     const extensions = resolveExtensions(spec, engine);
 
     if (extensions.length) {
         renderOptions.extensions = [...(renderOptions.extensions || []), ...extensions];
     }
 
-    const pending = missingRenderers(spec);
+    const managed = (config.renderers || []).map((name) => name === 'katex' ? 'mathBlock' : name);
+    const pending = missingRenderers(spec).filter((name) => !managed.includes(name));
 
     if (pending.length) {
         console.info(
@@ -272,11 +277,14 @@ async function convert(deck) {
 
     // The engine is only needed when there is Carve to render. A deck built
     // ahead of time can still load this plugin for the footer and the tabs.
-    const render = sections.length ? rendererFrom(config) : null;
+    const renderers = new Set();
 
     for (const section of sections) {
-        const source = await sourceOf(section);
-        const html = renderDeck(source, render, readOptions(section, config)).join('\n');
+        const entry = readFrontmatter(await sourceOf(section));
+        const selected = config.renderers ?? entry.options.renderers ?? [];
+        for (const name of selected) renderers.add(name);
+        const render = rendererFrom({ ...config, renderers: selected });
+        const html = renderDeck(entry.source, render, readOptions(section, config)).join('\n');
         const replacement = document.createElement('div');
         replacement.innerHTML = html;
 
@@ -290,6 +298,11 @@ async function convert(deck) {
         section.replaceWith(...generated);
     }
 
+    if (renderers.size) {
+        await managedRenderers([...renderers]).init({
+            getSlidesElement: () => deck.getRevealElement().querySelector('.slides'),
+        });
+    }
     ensureFooter(deck, config);
     setupTabs(deck, config);
     setupTimer(deck, config);

@@ -15,6 +15,7 @@ import { dirname, join, resolve } from 'node:path';
 import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 
+import { readFrontmatter, mergeDeckOptions, FrontmatterError } from './frontmatter.js';
 import { buildPage, buildSlides, readSource } from './build.js';
 import { IncludeError } from './include.js';
 import { buildHandout } from './handout.js';
@@ -55,6 +56,9 @@ function parseArgs(argv) {
         switch (arg) {
             case '--preset':
                 options.preset = argv[++index];
+                break;
+            case '--no-renderers':
+                options.renderers = [];
                 break;
             case '--with':
                 options.renderers = rendererNames(argv[++index] ?? '');
@@ -200,7 +204,7 @@ function usage() {
 
 A source is a .crv file or a directory holding one file per chapter.
 
-Options: --preset training --with mermaid,katex
+Options: --preset training --with mermaid,katex --no-renderers
          --title --theme --lang --reveal-base --css --js --port
          --dark-theme NAME --dark-css FILE --dark
          --extension NAME[:VALUE|:JSON] --no-extension NAME --core-only
@@ -222,7 +226,7 @@ try {
 }
 const [source, target] = positional;
 
-if (options.help || (!source && verb !== 'lint')) {
+if (options.help || (!source && !['lint', 'check'].includes(verb))) {
     usage();
     process.exit(options.help ? 0 : 1);
 }
@@ -260,30 +264,28 @@ options.engine = carve;
 options.resolver = fileSystemResolver;
 options.dependencies = new Set();
 
-// The markup-only extensions are on unless the deck says otherwise, so a tab
-// group in a source is a tab group on the slide without a flag first.
-for (const name of options.renderers || []) {
-    options.extensions.push(name === 'katex' ? 'mathBlock' : name);
+const explicitOptions = { ...options, extensions: [...options.extensions] };
+let extensions = [];
+function refreshSettings() {
+    const metadata = ['build', 'watch', 'pdf', 'agenda', 'handout'].includes(verb)
+        && source && !source.endsWith('.html') && statSync(source).isFile()
+        ? readFrontmatter(readFileSync(source, 'utf8')).options : {};
+    options = mergeDeckOptions(metadata, explicitOptions);
+    const requested = [...options.extensions, ...(options.renderers || []).map((name) => name === 'katex' ? 'mathBlock' : name)];
+    const spec = extensionSpec(options.coreOnly ? false : requested, options.withoutExtensions);
+    extensions = resolveExtensions(spec, carve);
+    const managed = (options.renderers || []).map((name) => name === 'katex' ? 'mathBlock' : name);
+    const pending = missingRenderers(spec).filter((name) => !managed.includes(name));
+    if (pending.length && !options.scripts.length) {
+        console.warn(`[reveal-carve] ${pending.join(', ')} need a renderer. Add it with --js.`);
+    }
 }
-const spec = extensionSpec(options.coreOnly ? false : options.extensions, options.withoutExtensions);
-const extensions = resolveExtensions(spec, carve);
 const render = (text) => carve.carveToHtml(text, {
-    sections: false,
-    ...options.carveOptions,
-    extensions,
+    sections: false, ...options.carveOptions, extensions,
 });
 
-const managedExtensions = (options.renderers || []).map((name) => name === 'katex' ? 'mathBlock' : name);
-const pending = missingRenderers(spec).filter((name) => !managedExtensions.includes(name));
-
-if (pending.length && !options.scripts.length) {
-    console.warn(
-        `[reveal-carve] ${pending.join(', ')} produce markup that needs their own renderer on the `
-        + 'page. Add it with --js, or the slide shows an empty block.',
-    );
-}
-
 function buildOnce() {
+    refreshSettings();
     if (options.slidesOnly) {
         writeFileSync(target, `${buildSlides(source, render, options)}\n`, 'utf8');
 
@@ -296,9 +298,13 @@ function buildOnce() {
 // An unresolved include is a mistake in the deck, not a crash: it is reported
 // like any other finding, with the flag that usually fixes it.
 try {
+    refreshSettings();
     switch (verb) {
         case 'lint': {
-            const files = positional.length ? positional : ['.'];
+            const files = (positional.length ? positional : ['.']).flatMap((file) =>
+                statSync(file).isDirectory()
+                    ? readdirSync(file).filter((name) => name.endsWith(options.extension || '.crv')).map((name) => join(file, name))
+                    : [file]);
             let failed = false;
 
             for (const file of files) {
@@ -353,7 +359,10 @@ try {
         }
 
         case 'check': {
-            const files = positional.length ? positional : ['.'];
+            const files = (positional.length ? positional : ['.']).flatMap((file) =>
+                statSync(file).isDirectory()
+                    ? readdirSync(file).filter((name) => name.endsWith(options.extension || '.crv')).map((name) => join(file, name))
+                    : [file]);
             // Carve's own CLI is found through the package, not by a path relative
             // to this file: installed as a dependency it sits beside this package
             // rather than under it.
@@ -384,14 +393,8 @@ try {
             };
 
             for (const file of files) {
-                const sources = statSync(file).isDirectory()
-                    ? readdirSync(file).filter((name) => name.endsWith('.crv')).map((name) => join(file, name))
-                    : [file];
-
-                for (const path of sources) {
-                    runCarve(['lint', path]);
-                    runCarve(['fmt', '--check', path]);
-                }
+                runCarve(['lint', file]);
+                runCarve(['fmt', '--check', file]);
 
                 const findings = lintSource(readSource(file, options), options);
                 console.log(formatFindings(file, findings));
@@ -506,7 +509,7 @@ try {
         }
     }
 } catch (error) {
-    if (!(error instanceof IncludeError)) {
+    if (!(error instanceof IncludeError) && !(error instanceof FrontmatterError)) {
         throw error;
     }
 

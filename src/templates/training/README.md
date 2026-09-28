@@ -7,6 +7,9 @@ npm install
 npm start
 ```
 
+Set the title, language, themes and renderer list in `deck.crv`.
+The entry file includes the chapter files under `slides/`.
+
 Open http://localhost:8800. Edit the chapter files under `slides/`; the browser
 reloads when you save. Use the corner button to switch between light and dark.
 Press `S` for speaker notes and the timer.
