@@ -10,7 +10,7 @@
  * `build` is the default, so the verb may be left out.
  */
 
-import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
@@ -453,8 +453,15 @@ try {
                 });
             }
 
-            const result = await exportPdf(deck, target, { expectedPages });
-            console.log(`${target}: ${result.pages} pages from ${source}`);
+            try {
+                const result = await exportPdf(deck, target, { expectedPages });
+                console.log(`${target}: ${result.pages} pages from ${source}`);
+            } finally {
+                // The print copy is a temp file of this command's own making.
+                if (fromSource) {
+                    rmSync(deck, { force: true });
+                }
+            }
             break;
         }
 

@@ -13,7 +13,7 @@
  */
 
 import { spawn } from 'node:child_process';
-import { access, constants, mkdtemp, writeFile } from 'node:fs/promises';
+import { access, constants, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { isAbsolute, join, resolve } from 'node:path';
 
@@ -130,9 +130,27 @@ async function endpointFor(port, attempts = 60) {
  * @param {number} [options.settle] Pause before the snapshot, for late diagrams, default 800
  * @returns {Promise<{target: string, pages: number}>}
  */
+/** Resolves when the browser has gone, or after a second either way. */
+function exited(child, timeout = 1000) {
+    if (child.exitCode !== null || child.signalCode !== null) {
+        return Promise.resolve();
+    }
+
+    return new Promise((done) => {
+        const timer = setTimeout(done, timeout);
+
+        child.once('exit', () => {
+            clearTimeout(timer);
+            done();
+        });
+    });
+}
+
 export async function exportPdf(deck, target, options = {}) {
     const binary = options.chrome || (await findChrome());
-    const port = options.port || 9222 + Math.floor(Math.random() * 400);
+    // Not 9222: that is Chrome's own default, and attaching to a browser the
+    // developer opened for their own debugging would print the wrong page.
+    const port = options.port || 41000 + Math.floor(Math.random() * 4000);
     const profile = await mkdtemp(join(tmpdir(), 'reveal-carve-chrome-'));
 
     const chrome = spawn(binary, [
@@ -204,6 +222,15 @@ export async function exportPdf(deck, target, options = {}) {
         return { target, pages };
     } finally {
         socket?.close();
-        chrome.kill();
+        // SIGKILL rather than SIGTERM: a browser asked politely writes its
+        // profile out on the way down, and those files outlive the delete.
+        chrome.kill('SIGKILL');
+
+        // Chrome keeps writing to its profile while it shuts down, so the
+        // directory is removed after it is actually gone - otherwise the files
+        // it writes on the way out survive the delete. A profile is a directory
+        // per run, and a deck printed daily would leave a year of them behind.
+        await exited(chrome);
+        await rm(profile, { recursive: true, force: true }).catch(() => {});
     }
 }

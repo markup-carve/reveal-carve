@@ -29,10 +29,15 @@ await build({
     outfile: 'dist/reveal-carve.cjs',
 });
 
+// The browser file is loaded by a <script> tag rather than by a bundler, so it
+// is the one that gets minified here; a map keeps it debuggable. The ESM and CJS
+// builds stay readable - whoever bundles them minifies them their own way.
 await build({
     ...shared,
     format: 'iife',
     globalName: 'RevealCarve',
+    minify: true,
+    sourcemap: true,
     footer: {
         js: 'if (typeof RevealCarve !== "undefined" && RevealCarve.default) { RevealCarve = RevealCarve.default; }',
     },

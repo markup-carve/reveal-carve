@@ -1,4 +1,14 @@
+/**
+ * Deck frontmatter: the settings a source carries about itself.
+ *
+ * Parsed here with a real YAML library, which is why this module is node-only.
+ * The browser path uses `frontmatter-split.js`, which finds the block and reads
+ * the one setting a built page can still act on.
+ */
+
 import { parseDocument } from 'yaml';
+
+import { splitFrontmatter } from './frontmatter-split.js';
 
 export class FrontmatterError extends Error {
     constructor(message) {
@@ -14,14 +24,12 @@ function mapping(value, name) {
 }
 
 export function readFrontmatter(source) {
-    const opening = /^(?:\uFEFF)?---(?: ?([a-zA-Z0-9]+))?[ \t]*\r?\n/.exec(source);
-    if (!opening) return { source, options: {} };
-    const rest = source.slice(opening[0].length);
-    const closing = /^---[ \t]*(?:\r?\n|$)/m.exec(rest);
-    // An unmatched leading separator is a slide boundary, not metadata.
-    if (!closing) return { source, options: {} };
-    const format = opening[1] || 'yaml';
-    const text = rest.slice(0, closing.index);
+    const { block: text, format, source: body } = splitFrontmatter(source);
+
+    if (text === null) {
+        return { source, options: {} };
+    }
+
     let data;
     try {
         if (format === 'json') {
@@ -72,7 +80,7 @@ export function readFrontmatter(source) {
             }
         }
     }
-    return { source: rest.slice(closing.index + closing[0].length), options };
+    return { source: body, options };
 }
 
 export function mergeDeckOptions(metadata, explicit) {

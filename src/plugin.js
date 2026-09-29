@@ -18,7 +18,7 @@
  * `@markup-carve/carve`) unless one is passed in through the plugin options.
  */
 
-import { readFrontmatter } from './frontmatter.js';
+import { readRenderers, splitFrontmatter } from './frontmatter-split.js';
 import { managedRenderers } from './renderer-runtime.js';
 import { renderDeck, DEFAULTS } from './slice.js';
 import { extensionSpec, missingRenderers, resolveExtensions } from './extensions.js';
@@ -280,8 +280,12 @@ async function convert(deck) {
     const renderers = new Set();
 
     for (const section of sections) {
-        const entry = readFrontmatter(await sourceOf(section));
-        const selected = config.renderers ?? entry.options.renderers ?? [];
+        // The full parser stays in the build step: a page that exists already
+        // has its title, language and theme, so the renderer list is the only
+        // setting left to read - and reading it needs no YAML library.
+        const text = await sourceOf(section);
+        const entry = splitFrontmatter(text);
+        const selected = config.renderers ?? readRenderers(text);
         for (const name of selected) renderers.add(name);
         const render = rendererFrom({ ...config, renderers: selected });
         const html = renderDeck(entry.source, render, readOptions(section, config)).join('\n');
