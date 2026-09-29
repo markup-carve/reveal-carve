@@ -49,6 +49,8 @@ jobs:
         with:
           node-version: '22'
       - run: npm install
+      # pdfinfo and pdftotext, for the PDF regression check below.
+      - run: sudo apt-get update && sudo apt-get install -y poppler-utils
       - run: npm run build
       - run: node scripts/build-site.mjs site
       # Opens every built deck in a browser and fails on what a reader would see:

@@ -21,6 +21,25 @@ const expectedFile = resolve('test/golden/pdf.json');
 
 const PDFS = ['features.pdf', 'everything.pdf'];
 
+/**
+ * The page and text readers come from poppler-utils, which a laptop usually has
+ * and a CI runner usually does not. A missing binary is a setup problem, and it
+ * should read like one rather than as a spawn ENOENT stack.
+ */
+async function requirePoppler() {
+    try {
+        await run('pdfinfo', ['-v']);
+    } catch (error) {
+        if (error.code !== 'ENOENT') {
+            return;
+        }
+
+        console.error('check-pdf: pdfinfo and pdftotext are missing. Install poppler-utils:');
+        console.error('  apt-get install -y poppler-utils   # or: brew install poppler');
+        process.exit(1);
+    }
+}
+
 async function measure(file) {
     const { stdout: info } = await run('pdfinfo', [file]);
     const pages = Number(info.match(/^Pages:\s+(\d+)/m)?.[1] || 0);
@@ -36,6 +55,8 @@ async function measure(file) {
         last: lines[lines.length - 1] || '',
     };
 }
+
+await requirePoppler();
 
 const actual = {};
 
