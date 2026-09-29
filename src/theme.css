@@ -629,7 +629,12 @@
     color: var(--carve-muted);
 }
 
-/* Spoiler: hidden until asked for. */
+/* Spoiler: hidden until asked for. It is a control, so it shows focus. */
+.reveal .spoiler:focus-visible {
+    outline: 2px solid var(--carve-accent);
+    outline-offset: 2px;
+}
+
 .reveal .spoiler {
     background: currentColor;
     border-radius: 3px;

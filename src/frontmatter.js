@@ -80,6 +80,7 @@ export function readFrontmatter(source) {
             }
         }
     }
+
     return { source: body, options };
 }
 

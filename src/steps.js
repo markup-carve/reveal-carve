@@ -113,8 +113,8 @@ export function stepsOn(slide) {
         if (node.matches('.spoiler')) {
             return [{
                 done: node.classList.contains('revealed'),
-                take: () => node.classList.add('revealed'),
-                undo: () => node.classList.remove('revealed'),
+                take: () => setSpoilerState(node, true),
+                undo: () => setSpoilerState(node, false),
             }];
         }
 
@@ -133,8 +133,44 @@ export function setupSpoilers(deck) {
         }
 
         spoiler.dataset.carveSpoiler = 'ready';
-        spoiler.addEventListener('click', () => spoiler.classList.toggle('revealed'));
+
+        // Carve emits a span, and a span that does something needs to say so:
+        // reachable by tab, operated by Enter and Space, and announced as a
+        // control whose content is hidden rather than as bare text a screen
+        // reader would happily read out before anyone asked for it.
+        spoiler.setAttribute('role', 'button');
+        spoiler.setAttribute('tabindex', '0');
+        setSpoilerState(spoiler, spoiler.classList.contains('revealed'));
+
+        const toggle = () => setSpoilerState(spoiler, !spoiler.classList.contains('revealed'));
+
+        spoiler.addEventListener('click', toggle);
+        spoiler.addEventListener('keydown', (event) => {
+            if (event.key !== 'Enter' && event.key !== ' ') {
+                return;
+            }
+
+            // Space scrolls a page and steps a deck; neither belongs here.
+            event.preventDefault();
+            event.stopPropagation();
+            toggle();
+        });
     }
+}
+
+/**
+ * Show or hide a spoiler, and say which it is.
+ *
+ * `aria-expanded` is the state, and the label carries the word "spoiler" so the
+ * control is not announced as an unlabelled button while its text is masked.
+ */
+function setSpoilerState(spoiler, revealed) {
+    spoiler.classList.toggle('revealed', revealed);
+    spoiler.setAttribute('aria-expanded', String(revealed));
+    spoiler.setAttribute(
+        'aria-label',
+        revealed ? `Spoiler, shown: ${spoiler.textContent.trim()}` : 'Spoiler, hidden. Activate to show it.',
+    );
 }
 
 /**

@@ -142,7 +142,7 @@ const REPO = 'https://github.com/markup-carve/reveal-carve';
 // Every published deck says where it came from and what it was built with.
 const footerFor = (sourcePath) => [
     '<a href="index.html">Overview</a>',
-    `<span>Built with <a href="https://markup-carve.github.io/carve/">Carve</a></span>`,
+    '<span>Built with <a href="https://markup-carve.github.io/carve/">Carve</a></span>',
     `<a href="${REPO}">reveal-carve on GitHub</a>`,
     `<a href="${REPO}/blob/main/${sourcePath}">Slide source</a>`,
 ].join('\n');
@@ -311,7 +311,7 @@ try {
         title: 'reveal-carve - every element, for print',
         revealBase: 'vendor/reveal',
         stylesheets: ['vendor/reveal-carve/reveal-carve.css'],
-    ...DARK,
+        ...DARK,
         rawScripts: RENDERERS,
         elements: { card: 'figure' },
         config: { pdfMaxPagesPerSlide: 3 },

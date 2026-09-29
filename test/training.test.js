@@ -14,6 +14,7 @@ import { extensionSpec, resolveExtensions } from '../src/extensions.js';
 function temporary(t) {
     const dir = mkdtempSync(join(tmpdir(), 'carve-training-test-'));
     t.after(() => rmSync(dir, { recursive: true, force: true }));
+
     return dir;
 }
 
@@ -60,6 +61,7 @@ test('managed renderers finish hidden diagrams and formulas before initializatio
         initialize(options) { assert.equal(options.startOnLoad, false); },
         async render(id, source) {
             assert.match(source, /A-->B/);
+
             return { svg: '<svg><text>A to B</text></svg>' };
         },
     };

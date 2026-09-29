@@ -189,7 +189,7 @@ export async function exportPdf(deck, target, options = {}) {
         // instead of trusting a timer.
         while (Date.now() < deadline) {
             const rendererError = await devtools.evaluate('window.carveRenderers?.error');
-            if (rendererError) throw new Error(`reveal-carve: ${rendererError}`);
+            if (rendererError) {throw new Error(`reveal-carve: ${rendererError}`);}
             pages = (await devtools.evaluate('document.querySelectorAll(".pdf-page").length')) || 0;
 
             if (pages > 0) {

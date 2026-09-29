@@ -22,6 +22,7 @@ const includes = { engine: carve, resolver: fileSystemResolver };
 const temporary = (t) => {
     const dir = mkdtempSync(join(tmpdir(), 'reveal-frontmatter-'));
     t.after(() => rmSync(dir, { recursive: true, force: true }));
+
     return dir;
 };
 afterEach(teardownDom);
@@ -147,8 +148,8 @@ test('watch rebuilds resolve metadata afresh while keeping CLI overrides', { tim
     t.after(() => child.kill());
     const until = async (predicate) => {
         for (let i = 0; i < 120; i++) {
-            if (predicate()) return;
-            if (child.exitCode !== null) assert.fail(output);
+            if (predicate()) {return;}
+            if (child.exitCode !== null) {assert.fail(output);}
             await new Promise((done) => setTimeout(done, 50));
         }
         assert.fail(`watch did not rebuild: ${output}`);

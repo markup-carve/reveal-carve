@@ -3,7 +3,7 @@
 Everything the plugin reads: directives in a source, flags on the command line,
 options in `Reveal.initialize`, and the classes the stylesheet brings.
 
-Deck-level settings can also come from [frontmatter](frontmatter.crv) in a single
+Deck-level settings can also come from [frontmatter](frontmatter.md) in a single
 entry file. CLI options take precedence.
 
 ## Slide directives

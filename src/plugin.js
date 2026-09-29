@@ -286,7 +286,7 @@ async function convert(deck) {
         const text = await sourceOf(section);
         const entry = splitFrontmatter(text);
         const selected = config.renderers ?? readRenderers(text);
-        for (const name of selected) renderers.add(name);
+        for (const name of selected) {renderers.add(name);}
         const render = rendererFrom({ ...config, renderers: selected });
         const html = renderDeck(entry.source, render, readOptions(section, config)).join('\n');
         const replacement = document.createElement('div');

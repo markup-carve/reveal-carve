@@ -178,3 +178,49 @@ test('a group driven by reveal fragments is left to reveal', () => {
 
     assert.deepEqual(stepsOn(document.querySelector('section')), []);
 });
+
+test('a spoiler is a control, not a span nobody can reach', () => {
+    const { document } = setupDom(SLIDE);
+
+    setupSpoilers(fakeDeck(document));
+
+    const spoiler = document.querySelector('.spoiler');
+
+    assert.equal(spoiler.getAttribute('role'), 'button');
+    assert.equal(spoiler.getAttribute('tabindex'), '0');
+    assert.equal(spoiler.getAttribute('aria-expanded'), 'false');
+    assert.match(spoiler.getAttribute('aria-label'), /hidden/i);
+
+    const press = (key) => {
+        const event = new globalThis.window.Event('keydown', { bubbles: true, cancelable: true });
+        event.key = key;
+        spoiler.dispatchEvent(event);
+
+        return event;
+    };
+
+    const enter = press('Enter');
+
+    assert.equal(spoiler.getAttribute('aria-expanded'), 'true');
+    assert.match(spoiler.getAttribute('aria-label'), /shown/i);
+    assert.equal(enter.defaultPrevented, true, 'space and enter must not also reach the deck');
+
+    press(' ');
+    assert.equal(spoiler.getAttribute('aria-expanded'), 'false');
+});
+
+test('the step model and the control agree on the state', () => {
+    const { document } = setupDom(SLIDE);
+    const deck = deckOn(document);
+
+    setupSpoilers(deck);
+    setupSlideSteps(deck);
+
+    key('ArrowDown');
+    key('ArrowDown');
+
+    const spoiler = document.querySelector('.spoiler');
+
+    assert.equal(spoiler.classList.contains('revealed'), true);
+    assert.equal(spoiler.getAttribute('aria-expanded'), 'true');
+});
