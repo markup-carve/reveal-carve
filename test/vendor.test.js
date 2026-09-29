@@ -8,10 +8,16 @@
 import assert from 'node:assert/strict';
 import { after, test } from 'node:test';
 import { existsSync, mkdtempSync, rmSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { tmpdir } from 'node:os';
+import { fileURLToPath } from 'node:url';
 
 import { vendorAssets, VENDORABLE } from '../src/vendor.js';
+
+// The plugin vendors its own bundle, which only exists after a build. A fresh
+// clone runs `npm test` before `npm run build`, and that is not a failure.
+const built = existsSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'dist', 'reveal-carve.js'));
+const needsBuild = { skip: built ? false : 'dist is not built' };
 
 const temporaries = [];
 
@@ -29,7 +35,7 @@ function target() {
     return dir;
 }
 
-test('reveal, the engine and the plugin land next to the deck', () => {
+test('reveal, the engine and the plugin land next to the deck', needsBuild, () => {
     const dir = target();
     const { copied, missing } = vendorAssets(dir, { only: ['reveal.js', '@markup-carve/carve', '@markup-carve/reveal-carve'] });
 
@@ -59,7 +65,7 @@ test('every vendorable entry says what it is for', () => {
     }
 });
 
-test('vendoring twice is not an error', () => {
+test('vendoring twice is not an error', needsBuild, () => {
     const dir = target();
 
     vendorAssets(dir, { only: ['@markup-carve/reveal-carve'] });
