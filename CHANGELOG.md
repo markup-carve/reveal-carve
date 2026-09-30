@@ -3,6 +3,8 @@
 All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
 ## [0.1.0] - 2026-09-30
 
 ### Changed
@@ -148,4 +150,5 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `reveal-carve pdf` resolves `--css` and `--js` paths against the working
   directory rather than the temp directory it builds the print copy in.
 
+[Unreleased]: https://github.com/markup-carve/reveal-carve/compare/0.1.0...HEAD
 [0.1.0]: https://github.com/markup-carve/reveal-carve/releases/tag/0.1.0
