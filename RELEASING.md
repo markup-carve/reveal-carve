@@ -32,16 +32,35 @@ within minutes - Packagist-style registries index a tag on their own.
 
 ## Tagging
 
-Only on an explicit go from the maintainer:
+Only on an explicit go from the maintainer. Write the release notes as a DRAFT
+release on the tag first, then push the tag:
 
 ```bash
-npm publish --access public
 git tag 0.1.0 && git push origin 0.1.0
-gh release create 0.1.0 --notes-file <(sed -n '/## \[0.1.0\]/,/## \[/p' CHANGELOG.md)
 ```
 
-A published tag with no release object is an empty releases page, so the release
-is part of the release, not a follow-up.
+That is the whole procedure. `.github/workflows/release.yml` does the rest,
+behind the `release` environment, which needs a reviewer to approve the run.
+
+Do NOT publish by hand. The workflow runs `npm publish` itself, so a manual
+publish makes its own step fail on a version that already exists, and a manual
+release creation collides with the draft the workflow is about to publish.
+
+Before it builds anything the job refuses when the tag disagrees with
+`package.json`, when the changelog has no section for the tag, or when the
+release notes are missing or a stub. It publishes the release page last,
+because a draft that stays a draft is recoverable and one published beside a
+failed publish is not.
+
+Watch the run to green rather than reading the releases page, and check the
+registry separately: npm metadata lands before the tarball is installable, so
+`npm view` can answer while `npm install` still 404s.
+
+## Requirements, once
+
+- `NPM_TOKEN` as a repository secret, a granular token with read and write on
+  the `@markup-carve` scope.
+- A `release` environment with a required reviewer.
 
 ## The first release comes before the scaffold works
 

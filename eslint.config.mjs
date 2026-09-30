@@ -7,6 +7,15 @@
  */
 
 export default [
+    // Build output, not source. `dist/` is gitignored, so a CI checkout has no
+    // copy of it and `npm run lint` is green there whatever this config says -
+    // while the same command fails locally the moment anyone has run a build.
+    // The bundled vendor code carries inline eslint-disable comments naming
+    // typescript-eslint rules this config does not load, which is an error in
+    // itself.
+    {
+        ignores: ['dist/**', 'site/**', 'coverage/**'],
+    },
     {
         files: ['src/**/*.js', 'scripts/**/*.mjs', 'test/**/*.js'],
         languageOptions: {
