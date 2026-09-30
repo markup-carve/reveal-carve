@@ -6,7 +6,7 @@
  * in the Node build step.
  */
 
-import { readFrontmatter } from './frontmatter.js';
+import { splitFrontmatter } from './frontmatter-split.js';
 
 export const DEFAULTS = {
     separator: '\\r?\\n---\\r?\\n',
@@ -565,7 +565,7 @@ export function headingOf(source, options = {}) {
  * something you planned rather than something you discovered at minute 90.
  */
 export function deckMinutes(source, options = {}) {
-    source = readFrontmatter(source).source;
+    source = splitFrontmatter(source).source;
     const config = { ...DEFAULTS, ...options };
     const slides = source
         .split(new RegExp(config.separator, 'm'))
@@ -717,7 +717,7 @@ export function chapterTitles(chunks) {
 }
 
 export function renderDeck(source, render, options = {}) {
-    source = readFrontmatter(source).source;
+    source = splitFrontmatter(source).source;
     const config = { ...DEFAULTS, ...options };
     const { body, definitions } = config.footnotes === false
         ? { body: source, definitions: new Map() }

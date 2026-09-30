@@ -7,6 +7,20 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- Tabs, code groups, folded details and spoilers answer to the keyboard, the
+  spoiler as a real control: reachable by tab, operated by Enter and Space, and
+  announced with its state rather than as an unlabelled button.
+- An unknown flag is an error. `--tilte x` used to become a file name and fail
+  somewhere else, or quietly build the wrong thing.
+- Type declarations ship with the package, generated from the JSDoc, so every
+  entry point has types.
+
+- The browser bundle no longer carries a YAML parser. Frontmatter is parsed by
+  the build step; the runtime reads the one setting a built page can still act
+  on - the renderer list - with a few lines of string work. The bundle went from
+  254 KB to 23 KB, and is minified now, with a source map beside it.
+
+
 - The markup-only extensions are on by default: `tabs`, `codeGroup`, `details`,
   `spoiler`, `listTable`, `colorSwatch`, `semanticSpan` and `codeCallouts`. They
   need nothing from the page, and with them off a tab group rendered as stacked
@@ -105,6 +119,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `docs/`.
 
 ### Fixed
+
+- A deck that opens with `---` builds again. The block is only read as
+  frontmatter when it looks like one - a mapping, or a block tagged `--- yaml` -
+  so a leading separator followed by a heading is slide content, as it was
+  before frontmatter existed.
+- `reveal-carve pdf` removes the Chrome profile and the print copy it creates,
+  and picks a debug port away from Chrome's own default, so it cannot attach to
+  a browser someone opened for their own debugging.
 
 - Tab panels in aria mode rendered empty: the rule that hides every panel for
   css mode had nothing to switch them back on, so the group was a strip of

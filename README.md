@@ -88,7 +88,7 @@ reveal:
 Put slide content after the closing fence. Explicit CLI options override these
 settings; `--no-renderers` clears the renderer list. Build, watch and source PDF
 read metadata before splitting slides. Watch re-reads it on every rebuild.
-For chapters, use an entry file with includes. See [frontmatter](docs/frontmatter.crv)
+For chapters, use an entry file with includes. See [frontmatter](docs/frontmatter.md)
 for formats, validation and browser-plugin behavior.
 
 ## Runtime plugin
@@ -198,302 +198,8 @@ All directives are ordinary Carve comments, so the document still renders correc
 through any other Carve tool. A mistyped one is therefore silent - which is what
 `reveal-carve lint` is for.
 
-### Code blocks
-
-A fence's attribute line drives reveal's stepwise highlighting:
-
-````
-{data-line-numbers=1|2-3|4}
-```php
-$query = $this->Orders->selectQuery();
-$query->contain(['Customers'])
-    ->where(['status' => 'open']);
-$total = $query->count();
-```
-````
-
-Carve renders those attributes onto `<pre>`; the plugin moves the ones reveal reads
-(`data-line-numbers`, `data-ln-start-from`, `data-trim`, `data-noescape`, `data-id`)
-down to `<code>`.
-
-### Chapters and includes
-
-A directory source holds one file per chapter, ordered by name:
-
-```
-slides/
-  010-intro.crv
-  020-orm.crv
-  030-outlook.crv
-```
-
-`{{ ../partials/house-rules.crv }}` pulls a shared slide into a deck. Includes stay
-inside `--include-root`, refuse cycles, and can be switched off.
-
-### Deck footer
-
-There is no default footer: what belongs down there is your business. Give it
-content and it appears, in the build step or at runtime.
-
-```bash
-reveal-carve build slides/deck.crv deck.html \
-    --footer '<a href="index.html">Overview</a> <span>Built with Carve</span>'
-```
-
-```js
-Reveal.initialize({
-    carve: { footer: '<a href="index.html">Overview</a>' },
-    plugins: [RevealCarve()],
-});
-```
-
-It sits outside `.slides`, so it survives every transition, and it is hidden in
-print. `footerClass` renames the element's class if `deck-footer` collides with
-your own styles.
-
-### Containers as other elements
-
-Carve renders `{.card}` plus `:::` as `<div class="card">`. When the slide wants
-real semantics, map the class to an element instead of writing raw HTML:
-
-```bash
-reveal-carve build slides/ deck.html --element card=figure --element quote=blockquote
-```
-
-```js
-Reveal.initialize({
-    carve: { elements: { card: 'figure', quote: 'blockquote' } },
-});
-```
-
-The source stays pure Carve, so `carve lint` still checks it and the Markdown
-handout still reads it. Raw HTML in the source would reach the HTML target only:
-plain text, ANSI and the handout drop it.
-
-### Code blocks: line numbers, diffs, callouts
-
-```
-{data-line-numbers}          numbers every line
-{data-line-numbers=2|4-6}    numbers them and steps through those lines
-{.diff}                      colours lines starting with + or -
-```
-
-All three are plain Carve attribute lines above the fence. Callout markers
-(`<1>` at the end of a line, with a matching `<1> text` paragraph under the
-block) keep their badge inside the code as well.
-
-One caveat worth knowing: reveal's highlighter rebuilds a code block from its
-text, which drops the markup for diffs and callouts. The plugin puts it back
-once reveal is ready, so a deck that uses either should load the plugin - the
-`pdf` command does that for its print copy on its own.
-
-### Carve extensions
-
-Tabs, code groups, folded details, spoilers, list tables, colour swatches,
-semantic spans and code callouts are **on by default**. They need nothing from
-the page - the plugin's own stylesheet covers all of them - and with them off a
-tab group renders as stacked paragraphs with its labels as prose, which looks
-like broken markup and reports no error.
-
-Off by default, because their off-state is the better one: everything that needs
-its own script (`mermaid`, `chart`, `mathBlock`, `vegaLite`, `d2`, `graphviz`,
-`plantuml`, `wavedrom`, `abc`), `smartQuotes`, which needs a locale, and
-`imgFence`, which changes what a fence is.
-
-```bash
-reveal-carve build slides/ deck.html --no-extension spoiler   # one off
-reveal-carve build slides/ deck.html --core-only              # all off
-```
-
-```js
-Reveal.initialize({
-    carve: { extensions: false },   // core Carve only
-    plugins: [RevealCarve()],
-});
-```
-
-Enable the rest by name, in the build step or at runtime, and the plugin
-resolves them against the engine:
-
-```bash
-reveal-carve build slides/ deck.html \
-    --extension mermaid \
-    --smart-quotes de \
-    --js https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js
-```
-
-```js
-Reveal.initialize({
-    carve: { extensions: ['mermaid', { name: 'smartQuotes', options: { locale: 'de' } }] },
-    plugins: [RevealCarve()],
-});
-```
-
-Diagram extensions (`mermaid`, `chart`, `vegaLite`, `d2`, `graphviz`, `plantuml`,
-`wavedrom`, `abc`, `mathBlock`) emit markup that their own renderer turns into a
-picture. reveal-carve says so on the console rather than leaving you with an empty
-rectangle on a slide.
-
-What each one emits, and what draws it:
-
-| Fence | Carve emits | Renderer on the page |
-|---|---|---|
-| ` ```mermaid ` | `<pre class="mermaid">` | Mermaid |
-| ` ```chart ` | `<div class="chart">` with JSON | Chart.js, from the JSON |
-| ` ```math ` | `<div class="math display">\[ … \]</div>` | KaTeX or MathJax |
-| ` ```svg ` | `<img src="data:image/svg+xml,…">` | none: the SVG is sanitized and inlined |
-
-Call `mermaid.render()` per block and write the SVG back yourself rather than
-`mermaid.run()`. Reveal keeps every slide but the current one at `display: none`,
-and a flowchart laid out in a hidden slide measures its labels as zero, so it
-comes out empty or as a syntax error in a printed copy. The demo site's
-`scripts/build-site.mjs` has the loop.
-
-The SVG fence is `img` by default; `imgFence:{"language":"svg"}` makes it ` ```svg `.
-The [showcase deck](https://markup-carve.github.io/reveal-carve/showcase.html)
-runs all four.
-
-`graphviz`, `d2`, `plantuml`, `wavedrom`, `vegaLite` and `abc` work the same way:
-Carve emits `<pre class="graphviz">` and the like, and you add that project's
-renderer with `--js`. The demo site leaves them out on purpose - six more
-renderers would make it slower, not more convincing.
-
-### Tabs and code groups from the keyboard
-
-On a slide carrying a tab group or a code group, the up and down keys step
-through its panels. Left and right stay with the deck, and once the group is at
-its last panel, down moves the deck on as usual - so a speaker with a clicker
-never has to reach for the mouse, and never gets stuck cycling one slide.
-
-`tabs`, `details` and `spoiler` are markup too: the theme styles them, and the
-demo site ships about thirty lines of script to make spoilers reveal. Copy that
-from `scripts/build-site.mjs` if you want the same behavior.
-
-### PDF export
-
-```bash
-reveal-carve pdf slides/deck.crv deck.pdf
-```
-
-Given a Carve source rather than an HTML file, the PDF is built from a print copy
-of the deck in Carve's static mode. That matters for anything interactive: a tab
-group on screen shows one panel at a time, and printing the live deck would put
-only that panel on the page. In static mode the panels unfold into sections with
-their labels as headings, so the handout carries all of them. Code groups behave
-the same way.
-
-An overlong slide runs onto a second page rather than being cut, and code wraps
-instead of leaving the paper.
-
-Printing an HTML deck directly also works, and prints exactly what is on screen:
-
-```bash
-reveal-carve pdf deck.html deck.pdf
-```
-
-The export drives Chrome over the DevTools protocol and waits for reveal's print
-layout to exist. Chrome's own `--print-to-pdf` flag prints when its timer runs
-out, which produced a blank one-page PDF for a deck that had printed twelve pages
-a minute earlier, from the same file.
-
-### Publishing an updated deck
-
-A static host serves a deck's files under the same names with a cache lifetime of
-its own; GitHub Pages sends `max-age=600`. Until that expires the browser keeps
-the old stylesheet and the old bundle, and the reader has to hard-refresh to see
-your change.
-
-Pass `version` (or `--version`) and every local asset URL gets that marker, so a
-new build is a new URL:
-
-```bash
-reveal-carve build slides/ deck.html --version $(git rev-parse --short HEAD)
-```
-
-The HTML page itself still follows the host's cache rules, which on GitHub Pages
-means up to ten minutes. Nothing a deck can do changes that.
-
-### Offline decks
-
-A deck presented in a room with no wifi cannot load renderers from a CDN. Vendor
-them next to the deck and point `--js` at the local copies:
-
-```bash
-npm install mermaid chart.js katex
-mkdir -p deck/vendor
-cp node_modules/mermaid/dist/mermaid.min.js deck/vendor/
-cp node_modules/chart.js/dist/chart.umd.js deck/vendor/
-cp -r node_modules/katex/dist deck/vendor/katex
-
-reveal-carve build slides/ deck/index.html \
-    --reveal-base vendor/reveal \
-    --js vendor/mermaid.min.js --js vendor/chart.umd.js \
-    --js vendor/katex/katex.min.js --css vendor/katex/katex.min.css
-```
-
-Everything else - reveal, the Carve engine, the plugin - is already local when it
-comes from `node_modules`. The SVG fence needs nothing at all: the image is
-inlined as a data URI.
-
-### Footnotes on a slide
-
-A footnote definition belongs to the document, and `carve fmt` moves definitions
-to its end - which on a deck means slide twelve holds the note that slide three
-points at. reveal-carve collects the definitions and gives each one to the slide
-that references it. An unreferenced definition is dropped rather than shown on its
-own. Pass `footnotes: false` to leave the source alone.
-
-### Planning the time
-
-```bash
-reveal-carve agenda slides/ --budget 120
-#  20 min  CakePHP 5 in one slide
-#  40 min  Reading the code together
-#  ...
-# Total: 115 min over 6 planned slides.
-```
-
-`%% toc` puts the same list on a slide, with the minutes beside each entry, so the
-agenda cannot drift away from the deck it describes.
-
-### Speaker timer
-
-`%% minutes: 5` on a slide is a plan; `carve: { timer: true }` compares it with
-the clock. The box shows elapsed against planned and how far ahead or behind you
-are, and it only appears in the speaker view - `timer: 'always'` overrides that.
-
-### Agenda by chapter
-
-`%% toc` lists every slide. `%% toc: chapters` lists the chapter files instead,
-with the minutes of each chapter added up, which is the agenda a training deck
-wants:
-
-```
-- Introduction [20 min]
-- Reading the code [40 min]
-- Upgrade strategy [30 min]
-```
-
-### Dark theme
-
-`dist/reveal-carve-dark.css` carries the same class names with values for a dark
-room. Load it instead of `reveal-carve.css`, after a dark reveal theme.
-
-The build step can ship both and put a switch in the corner of the deck:
-
-```bash
-reveal-carve build slides/ deck.html --dark-theme black --dark-css vendor/reveal-carve-dark.css
-```
-
-The first visit follows the reader's own system setting, the choice is
-remembered per browser, and the switch never reaches paper. `--dark` starts in
-the dark theme regardless.
-
-### Theme helpers
-
-`dist/reveal-carve.css` carries the layout classes a technical deck keeps needing:
-`two-col` with `before`/`after`, `exercise`, `note`, `big`, `tag`, the deck footer,
-plus the styling for error slides. Load it after your reveal theme, or ignore it and bring your own.
+Code blocks, chapters, containers, footnotes, timing and themes have their own
+page: [authoring slides](docs/authoring.md).
 
 ## When a slide fails to render
 
@@ -508,15 +214,21 @@ silently shorter deck. Pass `--strict` (or `throwOnError`) to fail the build ins
 
 ## Documentation
 
-- [Getting started](docs/getting-started.md)
-- [Reference](docs/reference.md)
-- [Markdown or Carve](docs/markdown-vs-carve.md)
-
-## Markdown or Carve
-
-A side-by-side comparison, including the cases where Markdown is the better
-choice: [docs/markdown-vs-carve.md](docs/markdown-vs-carve.md).
+- [Getting started](docs/getting-started.md) - from an empty directory to a
+  published deck.
+- [Authoring slides](docs/authoring.md) - code blocks, chapters, containers,
+  footnotes, timing, themes, and the keys a tab group answers to.
+- [Extensions](docs/extensions.md) - what is on by default, and what a diagram
+  fence needs from the page.
+- [Printing and publishing](docs/publishing.md) - PDF export, cache-safe
+  publishing, decks that work with no network.
+- [Frontmatter](docs/frontmatter.md) - deck settings the source carries itself.
+- [Training decks](docs/training.md) - the `--preset training` starter.
+- [Reference](docs/reference.md) - every directive, flag, option and class.
+- [Markdown or Carve](docs/markdown-vs-carve.md) - the comparison, including
+  where Markdown is the better tool.
 
 ## Development
 
-See [CONTRIBUTING.md](CONTRIBUTING.md).
+See [CONTRIBUTING.md](CONTRIBUTING.md), and [RELEASING.md](RELEASING.md) for what
+a release runs through.

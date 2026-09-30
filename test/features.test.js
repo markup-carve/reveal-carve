@@ -1,19 +1,31 @@
 import assert from 'node:assert/strict';
-import { test } from 'node:test';
+import { after, test } from 'node:test';
 
 import { animateListItems, errorSlide, flattenDiagramFences, keepInlineCodeMarkup, moveCodeAttributes, restoreDataFences, renderDeck, renderSlide, splitAtHeading, unwrapSections } from '../src/slice.js';
-import { IncludeError, expandIncludes, hasIncludes } from '../src/include.js';
+import { expandIncludes, hasIncludes } from '../src/include.js';
 import { KNOWN_DIRECTIVES, formatFindings, lintSource } from '../src/lint.js';
 import { buildHandout } from '../src/handout.js';
 import { buildPage } from '../src/build.js';
 
-import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
+
+// The temp directories below outlive their test, so they are swept once at the
+// end rather than left in /tmp.
+const temporaries = [];
+
+after(() => {
+    for (const dir of temporaries) {
+        rmSync(dir, { recursive: true, force: true });
+    }
+});
 
 // buildPage writes a file, so the page assertions go through a temp directory.
 function buildPageHtml(options) {
     const dir = mkdtempSync(join(tmpdir(), 'reveal-carve-'));
+
+    temporaries.push(dir);
     const source = join(dir, 'deck.crv');
     const target = join(dir, 'deck.html');
     writeFileSync(source, '# Title\n', 'utf8');
@@ -103,7 +115,7 @@ test('expands an include through the engine and reports the dependency', () => {
     const engine = {
         parse: (text) => ({ text }),
         renderCarve: (doc) => doc.text.replace('{{ part.crv }}', 'included text'),
-        expandIncludes: (doc, source) => ({
+        expandIncludes: (doc, _source) => ({
             doc,
             dependencies: [{ id: '/deck/part.crv', resolved: true }],
             warnings: [],

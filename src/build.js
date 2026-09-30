@@ -56,6 +56,7 @@ export function readDeckSource(source, options = {}) {
 
     if (!statSync(source).isDirectory()) {
         const deck = readFrontmatter(readFileSync(source, 'utf8'));
+
         return { ...deck, source: expand(deck.source, source) };
     }
 
@@ -82,6 +83,7 @@ export function readDeckSource(source, options = {}) {
             return `%% chapter: ${title}\n\n${text}`;
         })
         .join('\n\n---\n\n');
+
     return { source: text, options: {} };
 }
 

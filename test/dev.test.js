@@ -8,7 +8,7 @@
 
 import assert from 'node:assert/strict';
 import { after, test } from 'node:test';
-import { mkdtempSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 
@@ -17,6 +17,7 @@ import { initDeck } from '../src/init.js';
 import { KNOWN_DIRECTIVES } from '../src/lint.js';
 
 const root = mkdtempSync(join(tmpdir(), 'reveal-carve-dev-'));
+const temporaries = [root];
 
 writeFileSync(join(root, 'index.html'), '<html><body>deck</body></html>', 'utf8');
 writeFileSync(join(root, 'deck.crv'), '# Slide\n', 'utf8');
@@ -26,7 +27,15 @@ const server = serve({ root, port, watch: [root], log: () => {} });
 
 await new Promise((done) => server.once('listening', done));
 
-after(() => server.close());
+after(() => {
+    server.close();
+
+    // Without this every run leaves its scratch directories in /tmp; a few
+    // hundred of them had piled up before anyone looked.
+    for (const dir of temporaries) {
+        rmSync(dir, { recursive: true, force: true });
+    }
+});
 
 const get = (path) => fetch(`http://127.0.0.1:${port}${path}`);
 
@@ -94,6 +103,8 @@ test('tells an open page to reload when a file changes', async () => {
 
 test('the scaffold writes a deck that lints and builds', async () => {
     const target = mkdtempSync(join(tmpdir(), 'reveal-carve-init-'));
+
+    temporaries.push(target);
     const written = initDeck(target);
 
     assert.deepEqual(written, [
@@ -126,6 +137,8 @@ test('the scaffold writes a deck that lints and builds', async () => {
 
 test('writes nothing over an existing file', () => {
     const target = mkdtempSync(join(tmpdir(), 'reveal-carve-init-'));
+
+    temporaries.push(target);
 
     mkdirSync(join(target, 'slides'), { recursive: true });
     writeFileSync(join(target, 'slides/010-opening.crv'), 'mine\n', 'utf8');

@@ -16,7 +16,7 @@ import { spawn } from 'node:child_process';
 import { createServer } from 'node:http';
 import { createReadStream, readdirSync } from 'node:fs';
 import { extname } from 'node:path';
-import { mkdtemp } from 'node:fs/promises';
+import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
@@ -317,8 +317,23 @@ try {
 
     socket.close();
 } finally {
-    chrome.kill();
+    // SIGKILL rather than SIGTERM: a browser asked politely writes its
+    // profile out on the way down, and those files outlive the delete below.
+    chrome.kill('SIGKILL');
     server.close();
+
+    // Chrome writes to its profile while it shuts down, so the directory goes
+    // after the process does. Otherwise every run leaves one in /tmp, and CI and
+    // a laptop both keep what is left there.
+    await new Promise((done) => {
+        const timer = setTimeout(done, 1000);
+
+        chrome.once('exit', () => {
+            clearTimeout(timer);
+            done();
+        });
+    });
+    await rm(profile, { recursive: true, force: true }).catch(() => {});
 }
 
 process.exit(failed ? 1 : 0);

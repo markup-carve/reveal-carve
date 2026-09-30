@@ -6,6 +6,16 @@ on:
   pull_request:
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install
+      - run: npm run lint
+
   test:
     runs-on: ubuntu-latest
     strategy:
@@ -19,6 +29,18 @@ jobs:
       - run: npm install
       - run: npm test
 
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install
+      # A floor, not a target: it fails when a change drops coverage, and says
+      # nothing about a change that keeps it.
+      - run: node --test --experimental-test-coverage --test-coverage-lines=0.85 --test-coverage-branches=0.80 test/*.test.js
+
   decks:
     runs-on: ubuntu-latest
     steps:
@@ -27,9 +49,14 @@ jobs:
         with:
           node-version: '22'
       - run: npm install
+      # pdfinfo and pdftotext, for the PDF regression check below.
+      - run: sudo apt-get update && sudo apt-get install -y poppler-utils
       - run: npm run build
       - run: node scripts/build-site.mjs site
       # Opens every built deck in a browser and fails on what a reader would see:
       # unrendered markup, a diagram whose renderer never drew, a slide that
       # overflows, an error slide.
       - run: node scripts/check-decks.mjs site
+      # Page counts and text per deck, against the stored numbers. This is what
+      # notices an agenda that overran its slide, which the HTML cannot show.
+      - run: node scripts/check-pdf.mjs site

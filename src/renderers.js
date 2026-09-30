@@ -7,19 +7,20 @@ import { vendorAssets } from './vendor.js';
 const prepared = new Set();
 
 export function rendererNames(value = []) {
-    if (value === '') throw new Error('--with requires a value: mermaid,katex.');
+    if (value === '') {throw new Error('--with requires a value: mermaid,katex.');}
     const names = [...new Set(typeof value === 'string' ? value.split(',') : value)];
     for (const name of names) {
         if (!['mermaid', 'katex'].includes(name)) {
             throw new Error(`Unknown renderer: ${name}. Choose mermaid,katex.`);
         }
     }
+
     return names;
 }
 
 export function rendererAssets(target, names, base) {
     names = rendererNames(names);
-    if (!names.length) return { scripts: [], stylesheets: [], plugin: '' };
+    if (!names.length) {return { scripts: [], stylesheets: [], plugin: '' };}
     const directory = base ? resolve(base) : join(dirname(resolve(target)), 'vendor');
     const key = JSON.stringify([directory, names]);
     const complete = names.every((name) => existsSync(join(directory,
@@ -32,6 +33,7 @@ export function rendererAssets(target, names, base) {
         prepared.add(key);
     }
     const prefix = relative(dirname(resolve(target)), directory).split('\\').join('/') || '.';
+
     return {
         scripts: names.map((name) => `${prefix}/${name === 'mermaid' ? 'mermaid.min.js' : 'katex/katex.min.js'}`),
         stylesheets: names.includes('katex') ? [`${prefix}/katex/katex.min.css`] : [],

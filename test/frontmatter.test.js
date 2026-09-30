@@ -7,6 +7,7 @@ import { spawnSync } from 'node:child_process';
 import * as carve from '@markup-carve/carve';
 import { fileSystemResolver } from '@markup-carve/carve/node';
 import { readFrontmatter, mergeDeckOptions } from '../src/frontmatter.js';
+import { readRenderers, splitFrontmatter } from '../src/frontmatter-split.js';
 import { buildPage, readDeckSource, readSource } from '../src/build.js';
 import { renderDeck, deckMinutes } from '../src/slice.js';
 import { buildHandout } from '../src/handout.js';
@@ -21,6 +22,7 @@ const includes = { engine: carve, resolver: fileSystemResolver };
 const temporary = (t) => {
     const dir = mkdtempSync(join(tmpdir(), 'reveal-frontmatter-'));
     t.after(() => rmSync(dir, { recursive: true, force: true }));
+
     return dir;
 };
 afterEach(teardownDom);
@@ -41,7 +43,9 @@ test('YAML, JSON, CRLF and unrelated metadata are handled explicitly', () => {
     assert.equal(readFrontmatter('--- \ntitle: Spaced\n---  \n# Deck').options.title, 'Spaced');
     assert.equal(readFrontmatter('---json\n{"title":"JSON"}\n---\n# Deck').options.title, 'JSON');
     assert.equal(readFrontmatter('---\nauthor: Someone\n---\n# Deck').source, '# Deck');
-    assert.throws(() => readFrontmatter('---\n\n# One\n\n---\n\n# Two'), /only comments/);
+    // A deck may open with a separator: that block is slide content, not
+    // metadata, and YAML would read a heading as a comment and fail the build.
+    assert.equal(readFrontmatter('---\n\n# One\n\n---\n\n# Two').source, '---\n\n# One\n\n---\n\n# Two');
     assert.deepEqual(readFrontmatter('---json\n\n---\n# Deck').options, {});
     assert.equal(readFrontmatter('---\n# Only slide').source, '---\n# Only slide');
     assert.deepEqual(mergeDeckOptions({ title: 'metadata', renderers: ['mermaid'] }, { title: undefined, renderers: [] }), {
@@ -50,7 +54,7 @@ test('YAML, JSON, CRLF and unrelated metadata are handled explicitly', () => {
 });
 
 test('invalid settings, YAML duplicates and unsupported formats are reported', () => {
-    for (const text of ['title: 12', 'reveal: false', 'reveal:\n  theme: ../evil', 'reveal:\n  renderer: mermaid', 'reveal:\n  renderers: [unknown]', 'title: One\ntitle: Two', '- sequence']) {
+    for (const text of ['title: 12', 'reveal: false', 'reveal:\n  theme: ../evil', 'reveal:\n  renderer: mermaid', 'reveal:\n  renderers: [unknown]', 'title: One\ntitle: Two']) {
         const source = `---\n${text}\n---\n# Deck`;
         assert.throws(() => readFrontmatter(source), /frontmatter/);
         assert.equal(lintSource(source)[0].code, 'frontmatter');
@@ -144,8 +148,8 @@ test('watch rebuilds resolve metadata afresh while keeping CLI overrides', { tim
     t.after(() => child.kill());
     const until = async (predicate) => {
         for (let i = 0; i < 120; i++) {
-            if (predicate()) return;
-            if (child.exitCode !== null) assert.fail(output);
+            if (predicate()) {return;}
+            if (child.exitCode !== null) {assert.fail(output);}
             await new Promise((done) => setTimeout(done, 50));
         }
         assert.fail(`watch did not rebuild: ${output}`);
@@ -173,4 +177,48 @@ test('directory lint and check accept files with deck settings', (t) => {
         });
         assert.equal(result.status, 0, result.stdout + result.stderr);
     }
+});
+
+test('a deck that opens with a separator still builds', () => {
+    // Every shape here was valid before frontmatter existed, and stays valid.
+    const content = [
+        '---\n# Title\n---\n\n# Second\n',
+        '---\nSome prose.\n---\n\n# Second\n',
+        '---\n- a bullet\n- another\n---\n\n# Second\n',
+    ];
+
+    for (const source of content) {
+        assert.equal(readFrontmatter(source).source, source, source.slice(0, 16));
+        assert.deepEqual(readFrontmatter(source).options, {});
+        assert.deepEqual(lintSource(source).filter((finding) => finding.code === 'frontmatter'), []);
+    }
+});
+
+test('a block tagged as yaml is metadata, and says so when it is wrong', () => {
+    // `--- yaml` is a promise: the deck meant metadata, so a bad block is an
+    // error rather than a slide.
+    assert.throws(() => readFrontmatter('--- yaml\n# only a comment\n---\n# Deck'), /frontmatter/);
+    assert.equal(readFrontmatter('--- yaml\ntitle: Tagged\n---\n# Deck').options.title, 'Tagged');
+});
+
+test('the runtime reads the renderer list without a YAML parser', () => {
+    const cases = [
+        ['---\nreveal:\n  renderers:\n    - mermaid\n    - katex\n---\n# Deck', ['mermaid', 'katex']],
+        ['---\nreveal:\n  renderers: [mermaid]\n---\n# Deck', ['mermaid']],
+        ['---json\n{"reveal":{"renderers":["katex"]}}\n---\n# Deck', ['katex']],
+        ['---\ntitle: No renderers\n---\n# Deck', []],
+        ['# No frontmatter at all\n', []],
+        ['---\n# Title\n---\n# Deck', []],
+    ];
+
+    for (const [source, expected] of cases) {
+        assert.deepEqual(readRenderers(source), expected, source.slice(0, 24));
+    }
+});
+
+test('what the parser reads and what the runtime reads agree', () => {
+    const source = '---\ntitle: Both\nreveal:\n  renderers:\n    - mermaid\n---\n\n# Deck\n';
+
+    assert.deepEqual(readFrontmatter(source).options.renderers, readRenderers(source));
+    assert.equal(readFrontmatter(source).source, splitFrontmatter(source).source);
 });
