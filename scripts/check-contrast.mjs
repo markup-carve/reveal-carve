@@ -36,6 +36,7 @@ const SAMPLE = `<section>
 <p id="prose">Plain prose on the slide.</p>
 <p><mark id="plain">a highlight</mark></p>
 <p><mark id="nested">highlight with <ins id="nested-ins">an insert</ins> and <del id="nested-del">a cut</del> and <a id="nested-link" href="#x">a link</a></mark></p>
+<p><span id="token-probe">token probe</span></p>
 </section>`;
 
 const page = (variant) => `<!DOCTYPE html>
@@ -68,7 +69,17 @@ const PROBE = `
             return { color: style.color, background: style.backgroundColor };
         };
 
+        // The token value as the browser resolves it, read off a probe painted
+        // with it. A dropped declaration leaves the browser's own highlight
+        // color in its place, and that color can be darker than the token, so
+        // a ratio alone cannot see the loss.
+        const probe = document.getElementById('token-probe');
+        probe.style.color = getComputedStyle(document.querySelector('.reveal'))
+            .getPropertyValue('--carve-highlight-ink')
+            .trim();
+
         return {
+            token: getComputedStyle(probe).color,
             prose: of('prose'),
             plain: of('plain'),
             nested: of('nested'),
@@ -253,8 +264,17 @@ try {
             );
         }
 
-        // The invariant, not the number: moving the deck's own prose ink must
-        // not move the highlight's.
+        // The invariant, not the number: the ink is the theme's, so it equals
+        // the token and does not follow the deck. Chrome's own `mark` color is
+        // not inherited, so dropping the declaration leaves an ink that the
+        // prose-ink reading below cannot distinguish from a deliberate one.
+        if (before.plain.color !== before.token) {
+            report(
+                'the highlight ink is the theme token, not a browser default',
+                `mark is ${before.plain.color} where --carve-highlight-ink resolves to ${before.token}`,
+            );
+        }
+
         if (after.prose.color === before.prose.color) {
             report(
                 'the probe actually moved the deck prose ink',
