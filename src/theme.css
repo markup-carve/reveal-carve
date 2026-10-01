@@ -9,6 +9,8 @@
     --carve-muted: #6b7280;
     --carve-ok: #1f7a4d;
     --carve-soft: rgba(127, 127, 127, 0.1);
+    --carve-highlight-background: #fde68a;
+    --carve-highlight-ink: #1f2937;
 }
 
 .reveal .slides section {
@@ -798,9 +800,21 @@
     cursor: help;
 }
 
+/* A highlight owns both halves of its pair. Leaving the ink out left it to the
+   browser's own `mark` color, which is not the deck's to predict. */
 .reveal mark {
-    background: #fde68a;
+    background: var(--carve-highlight-background);
+    color: var(--carve-highlight-ink);
     padding: 0 0.15em;
+}
+
+/* `=mark with {+an insert+} and [a link](#x)=` is core syntax, and each of
+   those carries its own color otherwise. The nested background is a separate
+   question, tracked in the stylesheet audit. */
+.reveal mark a,
+.reveal mark del,
+.reveal mark ins {
+    color: inherit;
 }
 
 /* Speaker timer. Hidden on the projector, shown in the speaker view, which

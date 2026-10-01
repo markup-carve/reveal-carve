@@ -60,3 +60,6 @@ jobs:
       # Page counts and text per deck, against the stored numbers. This is what
       # notices an agenda that overran its slide, which the HTML cannot show.
       - run: node scripts/check-pdf.mjs site
+      # Computed colors out of the same browser, for the one thing the CSS text
+      # cannot show: whether a highlight is readable in either deck variant.
+      - run: npm run check:contrast
