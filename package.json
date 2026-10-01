@@ -82,6 +82,7 @@
         "coverage": "node --test --experimental-test-coverage test/*.test.js",
         "lint": "eslint .",
         "lint:fix": "eslint . --fix",
+        "check:contrast": "node scripts/check-contrast.mjs",
         "check:pdf": "node scripts/check-pdf.mjs site",
         "types": "tsc -p tsconfig.json",
         "docs": "node scripts/build-docs.mjs"

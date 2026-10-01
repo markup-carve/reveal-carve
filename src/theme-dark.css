@@ -13,6 +13,10 @@
     --carve-muted: #9aa3af;
     --carve-ok: #4ade80;
     --carve-soft: rgba(255, 255, 255, 0.08);
+    /* A dark wash would sink into a dark slide, so the dark deck keeps the
+       bright wash and the dark ink rather than inverting the pair. */
+    --carve-highlight-background: #fbbf24;
+    --carve-highlight-ink: #1f2937;
 }
 
 .reveal h1,
@@ -36,11 +40,6 @@
 
 .reveal table tr:nth-child(even) {
     background: rgba(255, 255, 255, 0.04);
-}
-
-.reveal mark {
-    background: #b45309;
-    color: #fff;
 }
 
 .reveal .spoiler {
