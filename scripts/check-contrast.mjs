@@ -20,6 +20,8 @@ import { extname, join, resolve } from 'node:path';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 
+import { findChrome, sandboxFlags } from '../src/chrome.js';
+
 // Normal-text AAA rather than the 4.5 floor. A slide is read across a room off
 // a projector that lifts the black point, so the margin the floor leaves for a
 // document is spent before the first row.
@@ -128,7 +130,7 @@ function ratio(foreground, background) {
     return (high + 0.05) / (low + 0.05);
 }
 
-function endpoint(debugPort) {
+function endpoint(debugPort, detail = () => '') {
     return (async () => {
         for (let attempt = 0; attempt < 60; attempt += 1) {
             try {
@@ -145,7 +147,7 @@ function endpoint(debugPort) {
             await new Promise((done) => setTimeout(done, 150));
         }
 
-        throw new Error('check-contrast: no browser.');
+        throw new Error(`check-contrast: the browser never opened a debugging port.${detail()}`);
     })();
 }
 
@@ -219,19 +221,34 @@ const server = createServer((request, response) => {
 await new Promise((done) => server.listen(httpPort, done));
 
 const profile = await mkdtemp(join(tmpdir(), 'reveal-carve-contrast-'));
-const chrome = spawn('google-chrome', [
+const chrome = spawn(await findChrome(), [
     '--headless=new',
+    ...sandboxFlags(),
     '--disable-gpu',
     '--no-first-run',
     `--user-data-dir=${profile}`,
     `--remote-debugging-port=${port}`,
     'about:blank',
-], { stdio: 'ignore' });
+], { stdio: ['ignore', 'pipe', 'pipe'] });
+
+// A browser that refuses to start used to surface as a bare timeout, which says
+// nothing about why. Its own stderr says it in one line.
+let chromeSaid = '';
+for (const stream of [chrome.stdout, chrome.stderr]) {
+    stream?.on('data', (chunk) => {
+        chromeSaid += chunk;
+    });
+}
+chrome.on('error', (error) => {
+    chromeSaid += `${error.message}\n`;
+});
+
+const whyNoBrowser = () => (chromeSaid.trim() ? `\n${chromeSaid.trim()}` : ' It printed nothing.');
 
 const findings = [];
 
 try {
-    const socket = new WebSocket(await endpoint(port));
+    const socket = new WebSocket(await endpoint(port, whyNoBrowser));
     await new Promise((done) => socket.addEventListener('open', done, { once: true }));
 
     const devtools = new Devtools(socket);
