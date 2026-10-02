@@ -20,6 +20,8 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
+import { findChrome } from '../src/chrome.js';
+
 const site = resolve(process.argv[2] || 'site');
 const port = 9500 + Math.floor(Math.random() * 400);
 
@@ -204,7 +206,7 @@ class Devtools {
     }
 }
 
-async function endpoint(debugPort) {
+async function endpoint(debugPort, detail = () => '') {
     for (let attempt = 0; attempt < 60; attempt += 1) {
         try {
             const targets = await (await fetch(`http://127.0.0.1:${debugPort}/json/list`)).json();
@@ -220,7 +222,7 @@ async function endpoint(debugPort) {
         await new Promise((done) => setTimeout(done, 150));
     }
 
-    throw new Error('check-decks: no browser.');
+    throw new Error(`check-decks: the browser never opened a debugging port.${detail()}`);
 }
 
 const decks = readdirSync(site).filter((name) => name.endsWith('.html') && name !== 'index.html');
@@ -259,19 +261,31 @@ const server = createServer((request, response) => {
 await new Promise((done) => server.listen(httpPort, done));
 
 const profile = await mkdtemp(join(tmpdir(), 'reveal-carve-check-'));
-const chrome = spawn('google-chrome', [
+const chrome = spawn(await findChrome(), [
     '--headless=new',
     '--disable-gpu',
     '--no-first-run',
     `--user-data-dir=${profile}`,
     `--remote-debugging-port=${port}`,
     'about:blank',
-], { stdio: 'ignore' });
+], { stdio: ['ignore', 'ignore', 'pipe'] });
+
+// A browser that refuses to start used to surface as a bare timeout, which says
+// nothing about why. Its own stderr says it in one line.
+let chromeSaid = '';
+chrome.stderr?.on('data', (chunk) => {
+    chromeSaid += chunk;
+});
+chrome.on('error', (error) => {
+    chromeSaid += `${error.message}\n`;
+});
+
+const whyNoBrowser = () => (chromeSaid.trim() ? `\n${chromeSaid.trim()}` : ' It printed nothing.');
 
 let failed = false;
 
 try {
-    const socket = new WebSocket(await endpoint(port));
+    const socket = new WebSocket(await endpoint(port, whyNoBrowser));
     await new Promise((done) => socket.addEventListener('open', done, { once: true }));
 
     const devtools = new Devtools(socket);

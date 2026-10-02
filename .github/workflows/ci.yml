@@ -57,6 +57,37 @@ jobs:
       - run: npm install
       # pdfinfo and pdftotext, for the PDF regression check below.
       - run: sudo apt-get update && sudo apt-get install -y poppler-utils
+      # The deck, PDF and contrast checks all drive a headless browser. The job
+      # used to rely on one being preinstalled on the runner image; when the
+      # image stopped carrying it the decks job went red on main. So the job
+      # installs its own.
+      # Temporary probe: which browser names the image carries, and what the
+      # preinstalled one says when asked to open a debugging port.
+      - name: Probe the image for a browser
+        run: |
+          for c in google-chrome google-chrome-stable chrome chromium chromium-browser; do
+            printf '%s -> %s\n' "$c" "$(command -v "$c" || echo MISSING)"
+          done
+          ls /usr/bin | grep -i -E 'chrom|firefox' || echo 'no chrom*/firefox in /usr/bin'
+          if command -v google-chrome > /dev/null; then
+            google-chrome --version
+            echo '--- launch, sandboxed:'
+            google-chrome --headless=new --disable-gpu --no-first-run --user-data-dir=/tmp/p1 --remote-debugging-port=9411 about:blank > /dev/null 2> /tmp/p1.err &
+            sleep 6
+            curl -s --max-time 3 http://127.0.0.1:9411/json/version || echo 'NO DEBUG PORT'
+            echo; echo "stderr: $(cat /tmp/p1.err)"
+            echo '--- launch, --no-sandbox:'
+            google-chrome --headless=new --no-sandbox --disable-gpu --no-first-run --user-data-dir=/tmp/p2 --remote-debugging-port=9412 about:blank > /dev/null 2> /tmp/p2.err &
+            sleep 6
+            curl -s --max-time 3 http://127.0.0.1:9412/json/version || echo 'NO DEBUG PORT'
+            echo; echo "stderr: $(cat /tmp/p2.err)"
+          fi
+        continue-on-error: true
+      - uses: browser-actions/setup-chrome@v1
+        id: chrome
+        with:
+          chrome-version: stable
+      - run: echo "CHROME_PATH=${{ steps.chrome.outputs.chrome-path }}" >> "$GITHUB_ENV"
       - run: npm run build
       - run: node scripts/build-site.mjs site
       # Opens every built deck in a browser and fails on what a reader would see:
