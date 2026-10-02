@@ -49,3 +49,19 @@ export async function findChrome() {
 
     throw new Error(`reveal-carve: no Chrome or Chromium found. Tried ${CANDIDATES.join(', ')}. Set CHROME_PATH to the binary.`);
 }
+
+/**
+ * Extra launch flags.
+ *
+ * Chrome will not start sandboxed where the kernel denies it an unprivileged
+ * user namespace, or where its own SUID helper is not setuid root. Both are
+ * normal in CI and in a container, and neither is something the script can
+ * repair. CHROME_NO_SANDBOX=1 drops the sandbox for exactly those places; the
+ * default keeps it, because a reader running `reveal-carve pdf` over their own
+ * deck has no reason to lose it.
+ */
+export function sandboxFlags() {
+    const asked = process.env.CHROME_NO_SANDBOX;
+
+    return asked && asked !== '0' && asked !== 'false' ? ['--no-sandbox'] : [];
+}

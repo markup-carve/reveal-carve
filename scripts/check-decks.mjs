@@ -20,7 +20,7 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
-import { findChrome } from '../src/chrome.js';
+import { findChrome, sandboxFlags } from '../src/chrome.js';
 
 const site = resolve(process.argv[2] || 'site');
 const port = 9500 + Math.floor(Math.random() * 400);
@@ -263,19 +263,22 @@ await new Promise((done) => server.listen(httpPort, done));
 const profile = await mkdtemp(join(tmpdir(), 'reveal-carve-check-'));
 const chrome = spawn(await findChrome(), [
     '--headless=new',
+    ...sandboxFlags(),
     '--disable-gpu',
     '--no-first-run',
     `--user-data-dir=${profile}`,
     `--remote-debugging-port=${port}`,
     'about:blank',
-], { stdio: ['ignore', 'ignore', 'pipe'] });
+], { stdio: ['ignore', 'pipe', 'pipe'] });
 
 // A browser that refuses to start used to surface as a bare timeout, which says
 // nothing about why. Its own stderr says it in one line.
 let chromeSaid = '';
-chrome.stderr?.on('data', (chunk) => {
-    chromeSaid += chunk;
-});
+for (const stream of [chrome.stdout, chrome.stderr]) {
+    stream?.on('data', (chunk) => {
+        chromeSaid += chunk;
+    });
+}
 chrome.on('error', (error) => {
     chromeSaid += `${error.message}\n`;
 });

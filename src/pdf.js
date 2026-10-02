@@ -17,7 +17,7 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { isAbsolute, join, resolve } from 'node:path';
 
-import { findChrome } from './chrome.js';
+import { findChrome, sandboxFlags } from './chrome.js';
 
 function urlFor(deck) {
     if (deck.startsWith('http')) {
@@ -122,6 +122,7 @@ export async function exportPdf(deck, target, options = {}) {
 
     const chrome = spawn(binary, [
         '--headless=new',
+        ...sandboxFlags(),
         '--disable-gpu',
         '--no-first-run',
         '--no-default-browser-check',

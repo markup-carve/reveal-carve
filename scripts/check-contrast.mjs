@@ -20,7 +20,7 @@ import { extname, join, resolve } from 'node:path';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 
-import { findChrome } from '../src/chrome.js';
+import { findChrome, sandboxFlags } from '../src/chrome.js';
 
 // Normal-text AAA rather than the 4.5 floor. A slide is read across a room off
 // a projector that lifts the black point, so the margin the floor leaves for a
@@ -223,19 +223,22 @@ await new Promise((done) => server.listen(httpPort, done));
 const profile = await mkdtemp(join(tmpdir(), 'reveal-carve-contrast-'));
 const chrome = spawn(await findChrome(), [
     '--headless=new',
+    ...sandboxFlags(),
     '--disable-gpu',
     '--no-first-run',
     `--user-data-dir=${profile}`,
     `--remote-debugging-port=${port}`,
     'about:blank',
-], { stdio: ['ignore', 'ignore', 'pipe'] });
+], { stdio: ['ignore', 'pipe', 'pipe'] });
 
 // A browser that refuses to start used to surface as a bare timeout, which says
 // nothing about why. Its own stderr says it in one line.
 let chromeSaid = '';
-chrome.stderr?.on('data', (chunk) => {
-    chromeSaid += chunk;
-});
+for (const stream of [chrome.stdout, chrome.stderr]) {
+    stream?.on('data', (chunk) => {
+        chromeSaid += chunk;
+    });
+}
 chrome.on('error', (error) => {
     chromeSaid += `${error.message}\n`;
 });
