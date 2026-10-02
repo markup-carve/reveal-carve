@@ -14,9 +14,12 @@ concurrency:
   group: pages
   cancel-in-progress: true
 
+# Every job below carries a timeout-minutes bound. Without one a job inherits
+# GitHub's 360-minute default, and a stalled step can burn hours unnoticed.
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -32,6 +35,7 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
