@@ -37,7 +37,7 @@ Two entry points over one implementation:
 |---|---|---|
 | A PHP chain in a code block | `$this-&gt;find()` eleven times over | `$this->find()`, as written |
 | Two-column before/after | nested `<div>` in the source | `{.two-col}` and two containers |
-| Stepwise code highlighting | hand-written `<code data-line-numbers>` | `{data-line-numbers=1\|2-3}` above the fence |
+| Stepwise code highlighting | hand-written `<code data-line-numbers>` | `{data-line-numbers="1\|2-3"}` above the fence |
 | Checking the source | open it in a browser and look | `carve lint`, `carve fmt --check`, `reveal-carve lint` |
 
 ## Install

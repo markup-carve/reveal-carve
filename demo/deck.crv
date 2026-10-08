@@ -52,7 +52,7 @@ In HTML this slide would need `&gt;` eleven times. Every one of them is a chance
 
 ## 2. Highlight the line you are talking about
 
-{data-line-numbers=1|2-3|4}
+{data-line-numbers="1\|2-3\|4"}
 ```php
 $query = $this->Orders->selectQuery();
 $query->contain(['Customers'])

@@ -18,6 +18,10 @@ jobs:
           node-version: '22'
       - run: npm install
       - run: npm run lint
+      # The demo decks are the only deck sources with a cross-directory
+      # include, so nothing else exercises that path. The script had never
+      # succeeded and no job ran it.
+      - run: npm run lint:demos
 
   test:
     runs-on: ubuntu-latest

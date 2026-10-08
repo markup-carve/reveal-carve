@@ -32,7 +32,7 @@ editing. In Carve the attribute sits on its own line above the fence, and the
 code stays code:
 
 ````
-{data-line-numbers=1|2-3}
+{data-line-numbers="1\|2-3"}
 ```php
 $query = $this->Orders->selectQuery();
 $query->contain(['Customers'])

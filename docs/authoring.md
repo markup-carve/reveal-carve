@@ -7,7 +7,7 @@ What a deck source can say, beyond the directives in the [reference](reference.m
 A fence's attribute line drives reveal's stepwise highlighting:
 
 ````
-{data-line-numbers=1|2-3|4}
+{data-line-numbers="1\|2-3\|4"}
 ```php
 $query = $this->Orders->selectQuery();
 $query->contain(['Customers'])
@@ -24,7 +24,7 @@ down to `<code>`.
 
 ```
 {data-line-numbers}          numbers every line
-{data-line-numbers=2|4-6}    numbers them and steps through those lines
+{data-line-numbers="2\|4-6"}    numbers them and steps through those lines
 {.diff}                      colours lines starting with + or -
 ```
 

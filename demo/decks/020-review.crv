@@ -1,6 +1,6 @@
 ## Chapter two: reading code together
 
-{data-line-numbers=1-4|2|5-7}
+{data-line-numbers="1-4\|2\|5-7"}
 ```php
 foreach ($orders as $order) {
     $customer = $this->Customers->get($order->customer_id);
