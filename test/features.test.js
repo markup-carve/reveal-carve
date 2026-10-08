@@ -172,6 +172,18 @@ test('lints a mistyped directive, which is otherwise a silent comment', () => {
     assert.equal(findings[0].code, 'unknown-directive');
 });
 
+test('a mistyped directive with a colon is an error, so a check can fail on it', () => {
+    // `%%` is the comment syntax, so an unknown bare word may be prose and
+    // stays a warning. `check` and `lint` exit non-zero on errors only, so
+    // before this the typo printed and the gate passed.
+    const typo = lintSource('%% notez: speaker notes\n\nbody\n');
+
+    assert.equal(typo.length, 1);
+    assert.equal(typo[0].code, 'unknown-directive');
+    assert.equal(typo[0].level, 'error');
+    assert.equal(lintSource('%% note to self\n\nbody\n')[0].level, 'warning');
+});
+
 test('accepts every documented directive', () => {
     for (const name of KNOWN_DIRECTIVES) {
         assert.equal(lintSource(`%% ${name}: value\n\nbody\n`).length, 0, name);

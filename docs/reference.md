@@ -33,7 +33,7 @@ stack. `--split-at-heading N` starts one at every level-N heading instead.
 |---|---|
 | `{.fragments}` on a list | that one list reveals item by item |
 | `{.fragment}` on anything | one reveal step for the whole element |
-| `{data-line-numbers=1|2-3}` on a fence | reveal's stepwise code highlighting |
+| `{data-line-numbers="1\|2-3"}` on a fence | reveal's stepwise code highlighting |
 | `{.diff}` on a fence | added lines green, removed lines red |
 | `{.callout}` in a fence | a numbered badge that survives the highlighter |
 | `{.two-col}` on a container | two columns side by side |

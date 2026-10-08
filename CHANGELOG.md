@@ -5,6 +5,40 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- `{data-line-numbers="1\|2-3\|4"}` is the spelling the demo decks and docs
+  carry now. An unquoted `|` in an attribute value stopped attaching the whole
+  attribute block somewhere between engine 0.1.7 and 0.1.10: the line renders as
+  visible text on the slide and the fence loses its attributes, with no lint
+  finding either way. The golden deck caught it, and quoting plus the escape
+  `carve fmt` writes restores the output the golden already recorded.
+- `npm run lint:demos` works. It had never succeeded: the demo decks share a
+  partial through `{{ ../partials/house-rules.crv }}` and the script passed no
+  `--include-root`, so every run died on the include. No CI job ran it, so
+  nothing noticed. It runs the `check` verb now, which adds `carve lint` and
+  `carve fmt --check` to the deck rules, and CI runs it.
+- A mistyped directive with a colon, such as `%% notez: ...`, is an error rather
+  than a warning. `lint` and `check` exit non-zero on errors only, so the one
+  finding this linter exists for printed and left the gate green. An unknown
+  bare word stays a warning, because `%%` is also the comment syntax and
+  `%% note to self` is not a directive attempt.
+- `.reveal mark` sets its own ink instead of inheriting the browser's highlight
+  color, in the light and dark themes (#7).
+- The deck and PDF checks no longer depend on a browser starting sandboxed. The
+  runner image carries Chrome but it refuses a sandboxed launch, so the
+  debugging port never opened (#10).
+
+### Changed
+
+- The engine peer range is `>=0.1.7 <0.2.0`. It was open-ended, and on 0.x the
+  minor is the breaking axis here, so it accepted a release that could break a
+  deck.
+- Tested against `@markup-carve/carve` 0.1.10. The peer range already allowed
+  it, but the committed lockfile held 0.1.7, so CI had never run the engine a
+  consumer installs.
+
+
 ## [0.1.0] - 2026-09-30
 
 ### Changed

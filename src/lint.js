@@ -5,6 +5,10 @@
  * The one that matters most is a mistyped directive. `%% notez` is a perfectly
  * valid Carve comment, so nothing complains - the speaker notes simply never
  * appear, and you find out while presenting.
+ *
+ * Carve's own diagnostics are NOT part of this: `reveal-carve lint` runs the
+ * deck rules below and nothing else. The `check` verb runs `carve lint` and
+ * `carve fmt --check` alongside them, which is why the demo gate uses it.
  */
 
 import { readFrontmatter } from './frontmatter.js';
@@ -16,7 +20,7 @@ import { DEFAULTS, parseSlide } from './slice.js';
 // same, because linting a directory means linting text the build step wrote.
 export const KNOWN_DIRECTIVES = ['class', 'attr', 'notes', 'fragments', 'animate', 'minutes', 'toc', 'chapter'];
 
-const DIRECTIVE_LINE = /^%%\s*([a-z-]+)\s*:?/i;
+const DIRECTIVE_LINE = /^%%\s*([a-z-]+)\s*(:)?/i;
 
 function slideLines(source, separator) {
     const lines = source.split('\n');
@@ -54,8 +58,12 @@ export function lintSource(source, options = {}) {
         const name = match[1].toLowerCase();
 
         if (!KNOWN_DIRECTIVES.includes(name)) {
+            // A colon is the shape of a directive someone meant to write, so an
+            // unknown name there is a typo and fails the check. Without one the
+            // line is indistinguishable from an ordinary `%%` comment, which is
+            // what `%%` is for, so it stays a warning.
             findings.push({
-                level: 'warning',
+                level: match[2] ? 'error' : 'warning',
                 line,
                 code: 'unknown-directive',
                 message: `"%% ${name}" is not a reveal-carve directive, so it stays a plain comment. `
