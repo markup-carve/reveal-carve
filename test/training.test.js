@@ -22,6 +22,8 @@ test('training scaffold renders its chapters and preserves edited files on repea
     const dir = temporary(t);
     initDeck(dir, { preset: 'training' });
     const manifest = JSON.parse(readFileSync(join(dir, 'package.json')));
+    const own = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+    assert.equal(manifest.dependencies['@markup-carve/carve'], own.peerDependencies['@markup-carve/carve']);
     assert.ok(manifest.dependencies.mermaid);
     assert.ok(manifest.dependencies.katex);
     const extensions = resolveExtensions(extensionSpec(['mermaid', 'mathBlock']), carve);

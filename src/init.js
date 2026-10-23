@@ -146,14 +146,16 @@ export function initDeck(target, options = {}) {
             .flatMap((entry) => entry.isDirectory() ? collect(join(base, entry.name))
                 : [[join(base, entry.name), readFileSync(join(directory, base, entry.name), 'utf8')]]);
         files = collect().map(([path, content]) => [path === 'gitignore' ? '.gitignore' : path, content]);
-        const version = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version;
+        const own = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+        const version = own.version;
         files.push(['package.json', JSON.stringify({
             name: 'carve-training-deck', private: true, type: 'module',
             scripts: Object.fromEntries(['start', 'build', 'pdf', 'handout', 'agenda', 'check']
                 .map((command) => [command, `node deck.mjs ${command === 'start' ? 'watch' : command}`])),
             dependencies: {
                 '@markup-carve/reveal-carve': `^${version}`,
-                '@markup-carve/carve': '^0.1.7', 'reveal.js': '^6.0.2',
+                // The starter asks for the engine range this package itself needs.
+                '@markup-carve/carve': own.peerDependencies['@markup-carve/carve'], 'reveal.js': '^6.0.2',
                 mermaid: '^11.0.0', katex: '^0.16.0',
             },
         }, null, 2) + '\n']);
