@@ -206,8 +206,10 @@ function convertBlock(markdown, number, engine, warnings) {
         return steps ? `${fence[1]}${steps[1]}` : line;
     });
     // The writer spells a thematic break `---`, which this package would read
-    // as a slide separator. `***` renders the same rule.
-    const converted = engine.markdownToCarve(stripped.join('\n')).trim().replace(/^---$/gm, '***');
+    // as a slide separator. `***` renders the same rule. Code keeps its lines.
+    const convertedLines = engine.markdownToCarve(stripped.join('\n')).trim().split('\n');
+    const fenced = fencedLines(convertedLines);
+    const converted = convertedLines.map((line, index) => (line === '---' && !fenced.has(index) ? '***' : line)).join('\n');
     const carve = moveLineSteps(markdownLines, converted, number, warnings);
 
     for (const separator of [DEFAULTS.separator, DEFAULTS.verticalSeparator]) {

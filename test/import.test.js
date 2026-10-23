@@ -77,6 +77,14 @@ test('a notes separator inside a code sample stays code', () => {
     assert.equal(source, '# Code\n\n```text\nNote: literal\n```\n\n%% notes\n\nspoken\n');
 });
 
+test('a --- line inside code stays code, and is reported as a separator', () => {
+    const markdown = '# Rules\n\n***\n\n```yaml\n---\nkey: value\n```\n';
+    const { source, warnings } = importMarkdownDeck(markdown, { engine: carve, separator: '^===$' });
+
+    assert.equal(source, '# Rules\n\n***\n\n```yaml\n---\nkey: value\n```\n');
+    assert.deepEqual(warnings, ['slide 1: a converted line reads as a slide separator; check the slide boundaries']);
+});
+
 test('honors custom separators and drops empty slides', () => {
     const markdown = '===\n# One\n\nNOTES: spoken\n===\n# Two\n';
     const { source, slides } = importMarkdownDeck(markdown, {
