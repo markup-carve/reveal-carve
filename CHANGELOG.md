@@ -3,6 +3,27 @@
 All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Added
+
+- `reveal-carve import <deck.md> <target.crv>` converts a reveal.js Markdown
+  deck slide by slide, keeping the slide separators. Speaker notes, slide
+  attribute comments and fence line steps are carried over; `.element`
+  comments are reported for a manual move.
+- An include can take one named region of a partial or of a source file; a
+  missing region is reported when the deck is built.
+
+### Fixed
+
+- Include warnings (a missing region, a renamed id) were dropped. The build
+  prints them now, or passes them to an `onWarning` option.
+
+### Changed
+
+- Requires `@markup-carve/carve` 0.1.13 or later. Task lists render with the
+  engine's `task-list` class and `data-task-state` attributes.
+
 ## [0.1.1] - 2026-10-08
 
 ### Fixed

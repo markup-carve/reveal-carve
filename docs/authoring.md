@@ -51,6 +51,24 @@ slides/
 `{{ ../partials/house-rules.crv }}` pulls a shared slide into a deck. Includes stay
 inside `--include-root`, refuse cycles, and can be switched off.
 
+One partial can hold several named pieces. Mark each with a region and include
+it by name:
+
+```
+%% #region rules
+## House rules
+%% #endregion
+```
+
+```
+{{ ../partials/shared.crv @region:rules }}
+```
+
+A source file can be included as a code block, with region markers in its own
+comment syntax (`// #region demo` ... `// #endregion`):
+`{{ src/example.ts @region:demo @code:ts }}`. A missing region is reported
+when the deck is built.
+
 ### Containers as other elements
 
 Carve renders `{.card}` plus `:::` as `<div class="card">`. When the slide wants
