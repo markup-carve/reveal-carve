@@ -230,5 +230,5 @@ silently shorter deck. Pass `--strict` (or `throwOnError`) to fail the build ins
 
 ## Development
 
-See [CONTRIBUTING.md](CONTRIBUTING.md), and [RELEASING.md](RELEASING.md) for what
+See [CONTRIBUTING.md](.github/CONTRIBUTING.md), and [RELEASING.md](RELEASING.md) for what
 a release runs through.
