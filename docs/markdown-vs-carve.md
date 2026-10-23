@@ -221,11 +221,31 @@ extension of it.
 | Agenda slide | none | `%% toc` |
 | Timing plan | none | `%% minutes:` plus `reveal-carve agenda` |
 | Handout export | none | `reveal-carve handout` |
+| Migration | - | `reveal-carve import` from a Markdown deck |
 | Source validation | none | `carve lint`, `carve fmt`, `reveal-carve lint` |
 | Diagrams | bring your own | Carve extensions (`--extension mermaid`) |
 | Locale typography | none | `--smart-quotes de` |
 
-## 10. Choosing
+## 10. Moving a Markdown deck over
+
+`reveal-carve import deck.md slides/deck.crv` converts an existing deck. Each
+slide goes through Carve's Markdown importer on its own, and the separators are
+written back as `---` and `--`:
+
+| Markdown plugin | After `import` |
+|---|---|
+| `Note:` | `%% notes` |
+| `<!-- .slide: data-background="#123" -->` | `%% attr: data-background="#123"` |
+| fence info `js [1-3\|5]` | `{data-line-numbers="1-3\\|5"}` above the fence |
+| `***` inside a slide | `***` (a `---` there would split the slide) |
+| `<!-- .element: class="fragment" -->` | left as an HTML comment, and reported |
+
+If the deck set its own `data-separator`, `data-separator-vertical` or
+`data-separator-notes`, pass the same patterns with `--separator`,
+`--vertical-separator` and `--notes-separator`. Run `reveal-carve check` on the
+result.
+
+## 11. Choosing
 
 Take Markdown when the deck is prose, when someone else will maintain it, or when
 it has to be finished tonight.

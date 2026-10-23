@@ -6,6 +6,7 @@
  *   reveal-carve watch <source> <target.html> [--port 8800] [options]
  *   reveal-carve lint <source...>
  *   reveal-carve handout <source> <target.md> [--no-notes]
+ *   reveal-carve import <deck.md> <target.crv>
  *
  * `build` is the default, so the verb may be left out.
  */
@@ -23,6 +24,7 @@ import { serve } from './dev.js';
 import { extensionSpec, missingRenderers, resolveExtensions } from './extensions.js';
 import { deckMinutes } from './slice.js';
 import { exportPdf } from './pdf.js';
+import { importMarkdownDeck } from './import.js';
 import { vendorAssets } from './vendor.js';
 import { initDeck } from './init.js';
 import { absoluteAsset, locateCarveCli, parseArgs, usage, VERBS } from './args.js';
@@ -291,6 +293,28 @@ try {
                     rmSync(deck, { force: true });
                 }
             }
+            break;
+        }
+
+        case 'import': {
+            if (!target) {
+                usage();
+                process.exit(1);
+            }
+
+            const imported = importMarkdownDeck(readFileSync(source, 'utf8'), {
+                engine: carve,
+                ...(options.separator ? { separator: options.separator } : {}),
+                ...(options.verticalSeparator !== undefined ? { verticalSeparator: options.verticalSeparator } : {}),
+                ...(options.notesSeparator ? { notesSeparator: options.notesSeparator } : {}),
+            });
+
+            for (const warning of imported.warnings) {
+                console.warn(`[reveal-carve] ${warning}`);
+            }
+
+            writeFileSync(target, imported.source, 'utf8');
+            console.log(`${target}: ${imported.slides} slides from ${source}`);
             break;
         }
 

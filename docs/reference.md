@@ -56,6 +56,7 @@ them.
 | `handout <source> <target.md>` | slides plus what you said about them |
 | `pdf <source> <out.pdf>` | a print copy, built and printed by Chrome |
 | `vendor <dir>` | copy reveal, Carve and the renderers next to the deck |
+| `import <deck.md> <target.crv>` | convert a reveal.js Markdown deck, slide by slide |
 
 | Flag | Meaning |
 |---|---|
@@ -86,6 +87,10 @@ them.
 | `--no-notes` | handout without the speaker notes |
 | `--no-reveal-spoilers` | print without the slide that opens spoilers |
 | `--port N` | port for `watch` |
+| `--separator RE` | `import`: horizontal separator of the Markdown deck, default `\r?\n---\r?\n` |
+| `--vertical-separator RE` | `import`: vertical separator, default `\r?\n--\r?\n` |
+| `--no-vertical-separator` | `import`: the Markdown deck has no vertical slides |
+| `--notes-separator RE` | `import`: start of the speaker notes, default `^\s*notes?:` |
 
 ## What is on without asking, and what is not
 

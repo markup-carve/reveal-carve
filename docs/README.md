@@ -14,7 +14,8 @@
   renderers and its commands.
 - [Reference](reference.md) - every directive, flag, plugin option and layout
   class, and the keys a slide answers to.
-- [Markdown or Carve](markdown-vs-carve.md) - the comparison, including the
+- [Markdown or Carve](markdown-vs-carve.md) - the comparison, converting a
+  Markdown deck with `reveal-carve import`, and the
   cases where Markdown is the better choice.
 
 The [demo site](https://markup-carve.github.io/reveal-carve/) runs one source

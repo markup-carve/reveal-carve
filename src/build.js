@@ -51,6 +51,11 @@ export function readDeckSource(source, options = {}) {
             dependencies?.add(dependency.id);
         }
 
+        // A missing region or a renamed id is not fatal, but it changes the deck.
+        for (const warning of expanded.warnings) {
+            (options.onWarning ?? console.warn)(`[reveal-carve] ${from}: ${warning.message}`);
+        }
+
         return expanded.source;
     };
 

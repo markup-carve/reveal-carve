@@ -13,7 +13,7 @@ import { dirname, join, resolve } from 'node:path';
 import { parseExtensionArgument } from './extensions.js';
 import { rendererNames } from './renderers.js';
 
-export const VERBS = ['init', 'build', 'watch', 'lint', 'handout', 'pdf', 'agenda', 'vendor', 'check'];
+export const VERBS = ['init', 'build', 'watch', 'lint', 'handout', 'pdf', 'agenda', 'vendor', 'check', 'import'];
 
 export function parseArgs(argv) {
     const positional = [];
@@ -98,6 +98,18 @@ export function parseArgs(argv) {
             case '--animate-lists':
                 options.animateLists = true;
                 break;
+            case '--separator':
+                options.separator = argv[++index];
+                break;
+            case '--vertical-separator':
+                options.verticalSeparator = argv[++index];
+                break;
+            case '--no-vertical-separator':
+                options.verticalSeparator = null;
+                break;
+            case '--notes-separator':
+                options.notesSeparator = argv[++index];
+                break;
             case '--no-includes':
                 options.includes = false;
                 break;
@@ -177,6 +189,7 @@ export function usage() {
   reveal-carve agenda  <source>                 list the slides and their planned minutes
   reveal-carve vendor  <dir>                    copy reveal, Carve and the renderers next to a deck
   reveal-carve check   <source...>              carve lint, carve fmt and the deck rules in one go
+  reveal-carve import  <deck.md> <target.crv>   convert a reveal.js Markdown deck to Carve
 
 A source is a .crv file or a directory holding one file per chapter.
 
@@ -188,5 +201,7 @@ Options: --preset training --with mermaid,katex --no-renderers
          --element CLASS=ELEMENT
          --footer "<html>" --footer-file FILE --version MARKER
          --split-at-heading N --animate-lists --slides-only --strict --static
-         --no-includes --include-root DIR --no-notes --no-reveal-spoilers`);
+         --no-includes --include-root DIR --no-notes --no-reveal-spoilers
+Import:  --separator RE --vertical-separator RE --no-vertical-separator
+         --notes-separator RE`);
 }

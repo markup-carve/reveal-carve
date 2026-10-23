@@ -142,6 +142,7 @@ reveal-carve agenda slides/ --budget 120               # planned minutes per sli
 reveal-carve check slides/                             # carve lint, carve fmt and the deck rules
 reveal-carve vendor deck/vendor                        # copy reveal, Carve and the renderers in
 reveal-carve pdf slides/ deck.pdf                      # print copy, built and printed
+reveal-carve import deck.md slides/deck.crv            # convert a reveal.js Markdown deck
 ```
 
 | Flag | Meaning |
@@ -163,6 +164,15 @@ reveal-carve pdf slides/ deck.pdf                      # print copy, built and p
 | `--budget N` | `agenda` fails when the planned minutes exceed N |
 | `--no-notes` | handout without the speaker notes |
 | `--no-reveal-spoilers` | print without the repeated slide that opens spoilers |
+| `--separator RE`, `--vertical-separator RE`, `--notes-separator RE` | `import`: the separators the Markdown deck uses, as in reveal's `data-separator` attributes |
+| `--no-vertical-separator` | `import`: the Markdown deck has no vertical slides |
+
+`import` converts each slide of a reveal.js Markdown deck with Carve's Markdown
+importer and writes the slide separators back as `---` and `--`. `Note:` becomes
+`%% notes`, a `<!-- .slide: -->` comment becomes `%% attr:`, and line steps in a
+fence info string (`js [1-3|5]`) become a `data-line-numbers` attribute line. A
+`<!-- .element: -->` comment stays an HTML comment and is reported, so it can be
+moved to a Carve attribute by hand.
 
 In JavaScript:
 
