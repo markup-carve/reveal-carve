@@ -85,6 +85,14 @@ test('a --- line inside code stays code, and is reported as a separator', () => 
     assert.deepEqual(warnings, ['slide 1: a converted line reads as a slide separator; check the slide boundaries']);
 });
 
+test('slide and element comments inside code stay code', () => {
+    const markdown = '# Comments\n\n```html\n<!-- .slide: data-state="x" -->\n<!-- .element: class="fragment" -->\n```\n';
+    const { source, warnings } = importMarkdownDeck(markdown, { engine: carve });
+
+    assert.equal(source, '# Comments\n\n```html\n<!-- .slide: data-state="x" -->\n<!-- .element: class="fragment" -->\n```\n');
+    assert.deepEqual(warnings, []);
+});
+
 test('honors custom separators and drops empty slides', () => {
     const markdown = '===\n# One\n\nNOTES: spoken\n===\n# Two\n';
     const { source, slides } = importMarkdownDeck(markdown, {

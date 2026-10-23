@@ -59,13 +59,21 @@ export function importMarkdownDeck(markdown, { engine, ...options } = {}) {
 
 function convertSlide(markdown, number, config, engine, warnings) {
     const attributes = [];
-    const withoutSlideComments = markdown.replace(SLIDE_COMMENT, (match, attrs) => {
+    // reveal.js reads these comments from the rendered page, so one shown
+    // inside a code sample is text, not an instruction.
+    const withoutSlideComments = outsideFences(markdown, (text) => text.replace(SLIDE_COMMENT, (match, attrs) => {
         attributes.push(attrs.trim());
 
         return '';
+    }));
+    let elementComment = false;
+    outsideFences(withoutSlideComments, (text) => {
+        elementComment ||= ELEMENT_COMMENT.test(text);
+
+        return text;
     });
 
-    if (ELEMENT_COMMENT.test(withoutSlideComments)) {
+    if (elementComment) {
         warnings.push(
             `slide ${number}: a .element comment stays an HTML comment; move it to a Carve attribute such as {.fragment}`,
         );
@@ -103,6 +111,32 @@ function splitNotes(markdown, separator) {
     const rest = lines[at].replace(separator, '');
 
     return [lines.slice(0, at).join('\n'), [rest, ...lines.slice(at + 1)].join('\n').trim()];
+}
+
+/** Apply `edit` to each run of lines outside column-0 fences. */
+function outsideFences(markdown, edit) {
+    const lines = markdown.split('\n');
+    const fenced = fencedLines(lines);
+    const out = [];
+    let run = [];
+    const flush = () => {
+        if (run.length) {
+            out.push(edit(run.join('\n')));
+            run = [];
+        }
+    };
+
+    lines.forEach((line, index) => {
+        if (fenced.has(index)) {
+            flush();
+            out.push(line);
+        } else {
+            run.push(line);
+        }
+    });
+    flush();
+
+    return out.join('\n');
 }
 
 /** Indices of lines inside a column-0 fence, its delimiters included. */
