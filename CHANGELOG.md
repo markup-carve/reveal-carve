@@ -18,6 +18,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Include warnings (a missing region, a renamed id) were dropped. The build
   prints them now, or passes them to an `onWarning` option.
+- `init --preset training` wrote `@markup-carve/carve ^0.1.7` into the new
+  deck, below the range this package needs. It now writes the package's own
+  engine range.
 
 ### Changed
 
