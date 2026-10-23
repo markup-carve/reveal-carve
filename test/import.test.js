@@ -70,6 +70,13 @@ test('drops line steps it cannot place, and says so', () => {
     ]);
 });
 
+test('a notes separator inside a code sample stays code', () => {
+    const markdown = '# Code\n\n```text\nNote: literal\n```\n\nNote: spoken\n';
+    const { source } = importMarkdownDeck(markdown, { engine: carve });
+
+    assert.equal(source, '# Code\n\n```text\nNote: literal\n```\n\n%% notes\n\nspoken\n');
+});
+
 test('honors custom separators and drops empty slides', () => {
     const markdown = '===\n# One\n\nNOTES: spoken\n===\n# Two\n';
     const { source, slides } = importMarkdownDeck(markdown, {

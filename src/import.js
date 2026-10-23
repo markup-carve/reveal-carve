@@ -71,7 +71,7 @@ function convertSlide(markdown, number, config, engine, warnings) {
         );
     }
 
-    const [body, ...notes] = withoutSlideComments.split(new RegExp(config.notesSeparator, 'mi'));
+    const [body, notesText] = splitNotes(withoutSlideComments, new RegExp(config.notesSeparator, 'i'));
     const parts = [];
 
     if (attributes.length) {
@@ -80,13 +80,52 @@ function convertSlide(markdown, number, config, engine, warnings) {
 
     parts.push(convertBlock(body, number, engine, warnings));
 
-    const notesText = notes.join('\n').trim();
-
     if (notesText) {
         parts.push(`%% notes\n\n${convertBlock(notesText, number, engine, warnings)}`);
     }
 
     return parts.filter(Boolean).join('\n\n');
+}
+
+/**
+ * Split at the first notes separator outside a fenced block, so a `Note:` line
+ * in a code sample stays code.
+ */
+function splitNotes(markdown, separator) {
+    const lines = markdown.split('\n');
+    const fenced = fencedLines(lines);
+    const at = lines.findIndex((line, index) => !fenced.has(index) && separator.test(line));
+
+    if (at === -1) {
+        return [markdown, ''];
+    }
+
+    const rest = lines[at].replace(separator, '');
+
+    return [lines.slice(0, at).join('\n'), [rest, ...lines.slice(at + 1)].join('\n').trim()];
+}
+
+/** Indices of lines inside a column-0 fence, its delimiters included. */
+function fencedLines(lines) {
+    const inside = new Set();
+    let open = null;
+
+    lines.forEach((line, index) => {
+        const match = FENCE.exec(line);
+
+        if (open) {
+            inside.add(index);
+
+            if (match && match[1][0] === open[0] && match[1].length >= open.length && !match[2].trim()) {
+                open = null;
+            }
+        } else if (match) {
+            open = match[1];
+            inside.add(index);
+        }
+    });
+
+    return inside;
 }
 
 /**
