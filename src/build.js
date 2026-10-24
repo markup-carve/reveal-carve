@@ -8,6 +8,7 @@
 
 import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { basename, join, resolve } from 'node:path';
+import { createRequire } from 'node:module';
 
 import { expandIncludes, hasIncludes } from './include.js';
 import { readFrontmatter, mergeDeckOptions, FrontmatterError } from './frontmatter.js';
@@ -171,6 +172,12 @@ function escapeHtml(value) {
     return String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
 }
 
+const require = createRequire(import.meta.url);
+const grammarScripts = [
+    '@markup-carve/carve-grammars/highlightjs/carve.js',
+    '@markup-carve/carve-grammars/highlightjs/delimited.js',
+].map((name) => readFileSync(require.resolve(name), 'utf8').replaceAll('</script', '<\\/script'));
+
 function page(slides, options) {
     const {
         title = 'Presentation',
@@ -225,6 +232,7 @@ function page(slides, options) {
 <link rel="stylesheet" href="${stamp(`${revealBase}/reveal.css`)}">
 <link rel="stylesheet" data-carve-theme="light" href="${stamp(`${revealBase}/theme/${theme}.css`)}"${darkTheme && defaultDark ? ' disabled' : ''}>
 <link rel="stylesheet" href="${stamp(`${revealBase}/plugin/highlight/monokai.css`)}">
+<style>.reveal .hljs-operator { color: #fd971f; font-weight: 700; }</style>
 ${extraStyles}
 ${darkStyles}
 ${rendererStyles}
@@ -242,9 +250,20 @@ ${darkTheme ? themeToggle(defaultDark) : ''}
 <script src="${stamp(`${revealBase}/reveal.js`)}"></script>
 <script src="${stamp(`${revealBase}/plugin/highlight.js`)}"></script>
 <script src="${stamp(`${revealBase}/plugin/notes.js`)}"></script>
+<script>${grammarScripts[0]}</script>
+<script>${grammarScripts[1]}</script>
 ${extraScripts}
 <script>
-Reveal.initialize(Object.assign(${JSON.stringify({ ...DEFAULT_CONFIG, ...config }, null, 4)}, {
+const revealOptions = ${JSON.stringify({ ...DEFAULT_CONFIG, ...config }, null, 4)};
+revealOptions.highlight = {
+    ...(revealOptions.highlight || {}),
+    beforeHighlight(hljs) {
+        hljs.registerLanguage('carve', globalThis.carveHljs);
+        hljs.registerLanguage('csv', globalThis.carveHljsDelimited.csv);
+        hljs.registerLanguage('tsv', globalThis.carveHljsDelimited.tsv);
+    },
+};
+Reveal.initialize(Object.assign(revealOptions, {
     plugins: [${[...pluginList, managed.plugin].filter(Boolean).join(', ')}],
 }));
 </script>

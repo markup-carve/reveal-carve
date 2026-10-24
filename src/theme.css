@@ -1168,3 +1168,6 @@ body.reveal-viewport.speaker-view .deck-timer,
 @media (max-width: 600px) {
     .reveal .layout-code { grid-template-columns: 1fr; }
 }
+
+/* The bundled Monokai stylesheet leaves operator tokens at the plain code color. */
+.reveal .hljs-operator { color: #fd971f; font-weight: 700; }

@@ -24,6 +24,7 @@ import { renderDeck, DEFAULTS } from './slice.js';
 import { extensionSpec, missingRenderers, resolveExtensions } from './extensions.js';
 import { setupTabs } from './tabs.js';
 import { setupTimer } from './timer.js';
+import { registerCarveLanguages } from './highlight.js';
 
 function dedent(text) {
     const lines = text.replace(/^\n+/, '').replace(/\s+$/, '').split('\n');
@@ -270,6 +271,10 @@ export function ensureFooter(deck, config) {
 }
 
 async function convert(deck) {
+    const hljs = deck.getPlugin?.('highlight')?.hljs;
+    if (hljs) {
+        registerCarveLanguages(hljs);
+    }
     const config = deck.getConfig().carve || {};
     const sections = deck
         .getRevealElement()

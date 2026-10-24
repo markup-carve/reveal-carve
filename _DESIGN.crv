@@ -1,0 +1,13 @@
+# Reveal fence grammars
+
+## Root cause
+
+Reveal's highlight plugin knows only its bundled languages. The Carve runtime plugin and generated static pages register no Carve, CSV, or TSV grammar, so their fences cannot receive separator tokens.
+
+## Change
+
+Depend on the published carve-grammars package and register its Carve, CSV, and TSV highlight.js definitions before Reveal runs its highlight plugin. Use the same registration in runtime and static pages, and test a rendered slide through the real highlighter.
+
+## Scope
+
+Registration is per highlight.js instance and applies to every slide in that deck. It does not inspect particular fence content or slide structure.
