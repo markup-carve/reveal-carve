@@ -12,7 +12,9 @@ async function highlighter() {
     globalThis.document = window.document;
     const { default: RevealHighlight } = await import('reveal.js/plugin/highlight');
     const hljs = RevealHighlight().hljs;
+
     registerCarveLanguages(hljs);
+
     return hljs;
 }
 
@@ -23,6 +25,7 @@ function highlighted(source, hljs) {
     assert.ok(code);
     hljs.highlightElement(code);
     assert.equal(code.textContent, source);
+
     return code;
 }
 
