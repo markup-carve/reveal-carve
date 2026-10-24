@@ -12,6 +12,7 @@ Reveal decks highlight CSV and TSV blocks with separate field and separator colo
 ### Improvements
 
 - CSV and TSV blocks use their registered grammars in rendered decks (#21).
+- Deck parsing and syntax highlighting follow Carve 0.1.14 and carve-grammars 0.1.20 (#27).
 
 **Full Changelog**: https://github.com/markup-carve/reveal-carve/compare/0.1.2...0.1.3
 
