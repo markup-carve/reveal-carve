@@ -5,6 +5,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-10-24
+
+Reveal decks highlight CSV and TSV blocks with separate field and separator colors.
+
+### Improvements
+
+- CSV and TSV blocks use their registered grammars in rendered decks (#21).
+
+**Full Changelog**: https://github.com/markup-carve/reveal-carve/compare/0.1.2...0.1.3
+
 ## [0.1.2] - 2026-10-23
 
 ### Added
