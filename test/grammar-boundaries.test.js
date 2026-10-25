@@ -37,3 +37,11 @@ test('Reveal highlighting keeps lazy markers, lists and footnote descriptions di
     assert.match(footnote.querySelector('.hljs-title')?.textContent ?? '', /:: term/);
     assert.equal(footnote.querySelector('.hljs-punctuation')?.textContent, '    :');
 });
+
+test('Reveal highlighting scopes the spec 0.1.13 task states', async () => {
+    const hljs = await highlighter();
+    for (const [state, label] of [['/', 'progress'], ['!', 'blocked'], ['_', 'open']]) {
+        const code = highlighted(`- [${state}] ${label}\n`, hljs);
+        assert.equal(code.querySelector('.hljs-bullet')?.textContent, `- [${state}]`);
+    }
+});
