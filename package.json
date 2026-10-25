@@ -1,6 +1,6 @@
 {
     "name": "@markup-carve/reveal-carve",
-    "version": "0.1.3",
+    "version": "0.1.4",
     "description": "Write reveal.js presentations in Carve markup - a runtime plugin and a static build step.",
     "keywords": [
         "reveal.js",

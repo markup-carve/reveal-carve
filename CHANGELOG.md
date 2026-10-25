@@ -5,6 +5,20 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-10-26
+
+Decks render the spec 0.1.13 task states and highlight Carve blocks with current grammar scopes.
+
+### Fixes
+
+- Progress `[/]`, blocked `[!]`, and open alias `[_]` task items render in decks built with the scaffolded engine floor (#30).
+
+### Improvements
+
+- Carve code blocks distinguish table marker roles and the new task states (#32).
+
+**Full Changelog**: https://github.com/markup-carve/reveal-carve/compare/0.1.3...0.1.4
+
 ## [0.1.3] - 2026-10-24
 
 Reveal decks highlight CSV and TSV blocks with separate field and separator colors.
