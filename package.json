@@ -88,7 +88,7 @@
         "docs": "node scripts/build-docs.mjs"
     },
     "peerDependencies": {
-        "@markup-carve/carve": ">=0.1.14 <0.2.0",
+        "@markup-carve/carve": ">=0.1.15 <0.2.0",
         "reveal.js": ">=4.0.0"
     },
     "peerDependenciesMeta": {
@@ -100,7 +100,7 @@
         "node": ">=20"
     },
     "devDependencies": {
-        "@markup-carve/carve": "0.1.14",
+        "@markup-carve/carve": "0.1.15",
         "esbuild": "^0.28.2",
         "eslint": "^9.39.5",
         "linkedom": "^0.18.13",
