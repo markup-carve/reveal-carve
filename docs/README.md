@@ -1,4 +1,5 @@
 # reveal-carve docs
+- [Full guide](guide.md)
 
 - [Getting started](getting-started.md) - install, scaffold, watch, build, print,
   publish.
