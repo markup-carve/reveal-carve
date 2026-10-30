@@ -157,7 +157,7 @@ function forwardAttributes(from, to) {
  * reveal reports ready, which is after every plugin has had its turn.
  */
 export function markDiffs(deck) {
-    const blocks = [...deck.getRevealElement().querySelectorAll('pre.diff code')];
+    const blocks = [...deck.getRevealElement().querySelectorAll('pre.diff > code, figure.diff > pre > code')];
 
     if (!blocks.length) {
         return;

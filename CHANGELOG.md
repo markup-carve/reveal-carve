@@ -5,6 +5,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixes
+
+- A `{.diff}` fence with a caption gets its added and removed lines colored; the class sits on the `<figure>` then, not the `<pre>`.
+
 ## [0.1.4] - 2026-10-26
 
 Decks render the spec 0.1.13 task states and highlight Carve blocks with current grammar scopes.
