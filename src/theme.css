@@ -889,11 +889,11 @@ body.reveal-viewport.speaker-view .deck-timer,
 }
 
 /* On paper the translucent diff tints all but vanish, so print gets solid ones. */
-.print-pdf .reveal pre.diff code .diff-add {
+.print-pdf .reveal :is(pre.diff, figure.diff > pre) code .diff-add {
     background: rgba(31, 122, 77, 0.45);
 }
 
-.print-pdf .reveal pre.diff code .diff-del {
+.print-pdf .reveal :is(pre.diff, figure.diff > pre) code .diff-del {
     background: rgba(211, 60, 67, 0.38);
 }
 
@@ -965,26 +965,26 @@ body.reveal-viewport.speaker-view .deck-timer,
     color: var(--carve-accent);
 }
 
-/* Diff blocks: `{.diff}` above the fence. Carve passes the class through, and
-   the plugin marks each line so the added and removed ones can be coloured. */
-.reveal pre.diff code .diff-add,
-.reveal pre.diff code .diff-del {
+/* Diff blocks: `{.diff}` above the fence. Carve passes the class through (to the
+   figure when the fence has a caption), and the plugin marks each line so the added and removed ones can be coloured. */
+.reveal :is(pre.diff, figure.diff > pre) code .diff-add,
+.reveal :is(pre.diff, figure.diff > pre) code .diff-del {
     /* inline-block, not block: the code already carries its own line breaks, and
        a block element would add a second one under every changed line. */
     display: inline-block;
     width: 100%;
 }
 
-.reveal pre.diff code .diff-add {
+.reveal :is(pre.diff, figure.diff > pre) code .diff-add {
     background: rgba(31, 122, 77, 0.22);
 }
 
-.reveal pre.diff code .diff-del {
+.reveal :is(pre.diff, figure.diff > pre) code .diff-del {
     background: rgba(211, 60, 67, 0.18);
 }
 
-.reveal pre.diff code .diff-add::selection,
-.reveal pre.diff code .diff-del::selection {
+.reveal :is(pre.diff, figure.diff > pre) code .diff-add::selection,
+.reveal :is(pre.diff, figure.diff > pre) code .diff-del::selection {
     background: rgba(255, 255, 255, 0.25);
 }
 
