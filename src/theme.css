@@ -91,8 +91,8 @@
     border-radius: 0 6px 6px 0;
 }
 
-/* Secondary note under a statement: {.note} */
-.reveal .note {
+/* Secondary note under a statement: {.note}. Not the `::: note` admonition, which carries the same class. */
+.reveal .note:not(.admonition) {
     color: var(--carve-muted);
     font-size: 0.75em;
 }
