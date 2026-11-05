@@ -98,9 +98,10 @@ Core Carve syntax always works - no flag, no extension:
 
 headings, paragraphs, `/emphasis/` and `*strong*`, inline code, fenced code with
 an attribute line, bullet, ordered and task lists, tables (`|=` marks a header
-row), block quotes, links and images, footnotes, definition lists, `:::`
-containers, `{.class key=value}` attribute lines, `%%` comments, `{{ includes }}`
-(the build step resolves them), and braced `{^sup^}` / `{,sub,}`.
+cell, `|={>}` aligns its column), block quotes, links and images, footnotes,
+definition lists, `:::` containers, `{.class key=value}` attribute lines, `%%`
+comments, `{{ includes }}` (the build step resolves them), and braced `{^sup^}` /
+`{,sub,}`.
 
 Eight extensions are on unless a deck turns them off, because they need nothing
 from the page and their off-state reads as broken markup: `tabs`, `codeGroup`,
