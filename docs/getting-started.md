@@ -60,6 +60,11 @@ npx reveal-carve agenda slides --budget 90
 valid Carve comment, so the speaker notes simply never appear. `agenda` adds up
 the `%% minutes:` in the deck and fails when the total runs past the budget.
 
+Do not run `carve fmt -w` on a deck file. Carve reads a `---` slide separator
+as a thematic break, and newer Carve writers spell that `***`, which turns the
+whole deck into one slide. `check` runs `carve fmt --check` with the separators
+set aside, so it only reports changes inside the slides.
+
 ## Build and print
 
 ```bash

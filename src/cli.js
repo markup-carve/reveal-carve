@@ -11,15 +11,15 @@
  * `build` is the default, so the verb may be left out.
  */
 
-import { readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { basename, dirname, join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 
 import { readFrontmatter, mergeDeckOptions, FrontmatterError } from './frontmatter.js';
 import { buildPage, buildSlides, readSource } from './build.js';
 import { IncludeError } from './include.js';
 import { buildHandout } from './handout.js';
-import { formatFindings, lintSource } from './lint.js';
+import { formatFindings, lintSource, maskSeparators, separatorLines } from './lint.js';
 import { serve } from './dev.js';
 import { extensionSpec, missingRenderers, resolveExtensions } from './extensions.js';
 import { deckMinutes } from './slice.js';
@@ -208,24 +208,49 @@ try {
                 );
             }
 
-            const runCarve = (args) => {
-                if (!carveCli) {
-                    return true;
-                }
-
-                const result = spawnSync(process.execPath, [carveCli, ...args], { encoding: 'utf8' });
-
-                if (result.status !== 0) {
-                    failed = true;
-                    console.log((result.stdout || result.stderr).trim());
-                }
-
-                return result.status === 0;
-            };
-
             for (const file of files) {
-                runCarve(['lint', file]);
-                runCarve(['fmt', '--check', file]);
+                const text = readFileSync(file, 'utf8');
+                const separators = separatorLines(text, options);
+
+                if (carveCli) {
+                    const linted = spawnSync(process.execPath, [carveCli, 'lint', '--json', file], { encoding: 'utf8' });
+                    let warnings = null;
+
+                    try {
+                        warnings = linted.status > 1 ? null : JSON.parse(linted.stdout);
+                    } catch {
+                        warnings = null;
+                    }
+
+                    if (!warnings) {
+                        failed = true;
+                        console.log((linted.stderr || linted.stdout).trim());
+                    }
+
+                    // A slide separator is not a thematic break, whatever Carve calls it.
+                    const kept = (warnings || []).filter((warning) =>
+                        !(warning.rule === 'thematic-break-spelling' && separators.has(warning.line)));
+
+                    for (const warning of kept) {
+                        failed = true;
+                        console.log(`${file}:${warning.line}:${warning.column ?? 1} ${warning.rule ?? warning.code} - ${warning.message}`);
+                    }
+
+                    const dir = mkdtempSync(join(tmpdir(), 'reveal-carve-check-'));
+                    const masked = join(dir, basename(file));
+
+                    try {
+                        writeFileSync(masked, maskSeparators(text, separators));
+                        const formatted = spawnSync(process.execPath, [carveCli, 'fmt', '--check', masked], { encoding: 'utf8' });
+
+                        if (formatted.status !== 0) {
+                            failed = true;
+                            console.log((formatted.stdout || formatted.stderr).split(masked).join(file).trim());
+                        }
+                    } finally {
+                        rmSync(dir, { recursive: true, force: true });
+                    }
+                }
 
                 const findings = lintSource(readSource(file, options), options);
                 console.log(formatFindings(file, findings));

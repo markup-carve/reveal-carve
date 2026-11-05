@@ -51,7 +51,7 @@ them.
 | `build <source> <target.html>` | render a deck to one page |
 | `watch <source> <target.html>` | rebuild on save, reload the browser |
 | `lint <source...>` | deck problems: unknown directives and the like |
-| `check <source...>` | `carve lint`, `carve fmt --check` and the deck rules |
+| `check <source...>` | `carve lint`, `carve fmt --check` and the deck rules; slide separators are not reported as thematic breaks |
 | `agenda <source>` | the running order and its planned minutes |
 | `handout <source> <target.md>` | slides plus what you said about them |
 | `pdf <source> <out.pdf>` | a print copy, built and printed by Chrome |

@@ -12,6 +12,7 @@
  */
 
 import { readFrontmatter } from './frontmatter.js';
+import { splitFrontmatter } from './frontmatter-split.js';
 
 import { DEFAULTS, parseSlide } from './slice.js';
 
@@ -33,6 +34,46 @@ function slideLines(source, separator) {
     }
 
     return { lines: boundaries, separator };
+}
+
+/**
+ * The 1-based lines a deck splits on, outside its frontmatter.
+ *
+ * Carve reads such a `---` as a thematic break, which its canonical writer
+ * spells `***` (carve#4973), so `carve fmt` and `carve lint` would flag every
+ * slide boundary.
+ *
+ * @param {string} source
+ * @param {{separator?: string}} [options]
+ * @returns {Set<number>}
+ */
+export function separatorLines(source, options = {}) {
+    const separator = new RegExp(`^(?:${options.separator || DEFAULTS.separator})$`);
+    const { block, source: body } = splitFrontmatter(source);
+    const skip = block === null ? 0 : source.slice(0, source.length - body.length).split('\n').length - 1;
+    const found = new Set();
+
+    for (const [index, line] of source.split('\n').entries()) {
+        if (index >= skip && separator.test(`\n${line}\n`)) {
+            found.add(index + 1);
+        }
+    }
+
+    return found;
+}
+
+/**
+ * The source with every slide separator written as `***`, the thematic break
+ * `carve fmt` keeps, so a format check compares only the slides.
+ *
+ * @param {string} source
+ * @param {Set<number>} lines from `separatorLines`
+ */
+export function maskSeparators(source, lines) {
+    return source
+        .split('\n')
+        .map((line, index) => (lines.has(index + 1) ? line.replace(/^[^\r]*/, '***') : line))
+        .join('\n');
 }
 
 /**
