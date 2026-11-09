@@ -28,6 +28,7 @@ export const VENDORABLE = [
         name: '@markup-carve/carve',
         from: '@markup-carve/carve/package.json',
         copy: [{ source: 'dist/carve.iife.min.js', target: 'carve.iife.min.js' }],
+        fallback: new URL('../dist/carve.iife.min.js', import.meta.url).pathname,
         what: 'the Carve engine, for decks rendered in the browser',
     },
     {
@@ -114,9 +115,11 @@ export function vendorAssets(target, options = {}) {
         }
 
         for (const file of entry.copy) {
-            const source = join(base, file.source);
+            const source = existsSync(join(base, file.source))
+                ? join(base, file.source)
+                : entry.fallback;
 
-            if (!existsSync(source)) {
+            if (!source || !existsSync(source)) {
                 missing.push({ ...entry, detail: file.source });
                 continue;
             }
