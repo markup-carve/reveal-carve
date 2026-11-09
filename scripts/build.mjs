@@ -44,6 +44,19 @@ await build({
     outfile: 'dist/reveal-carve.js',
 });
 
+// Git installs of the engine carry its public ESM entry but not the browser
+// bundle made for npm publishing. Bundle that same entry for offline decks.
+await build({
+    entryPoints: ['node_modules/@markup-carve/carve/dist/index.js'],
+    bundle: true,
+    format: 'iife',
+    globalName: 'carve',
+    minify: true,
+    keepNames: true,
+    target: ['es2020'],
+    outfile: 'dist/carve.iife.min.js',
+});
+
 mkdirSync('dist', { recursive: true });
 copyFileSync('src/theme.css', 'dist/reveal-carve.css');
 // The dark theme imports the light one, and the file is renamed on the way

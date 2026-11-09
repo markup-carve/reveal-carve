@@ -154,7 +154,7 @@ mkdirSync(join(out, 'vendor'), { recursive: true });
 // Vendor the two runtime dependencies so the site is self-contained.
 cpSync(join(root, 'node_modules/reveal.js/dist'), join(out, 'vendor/reveal'), { recursive: true });
 cpSync(
-    join(root, 'node_modules/@markup-carve/carve/dist/carve.iife.min.js'),
+    join(root, 'dist/carve.iife.min.js'),
     join(out, 'vendor/carve.iife.min.js'),
 );
 cpSync(join(root, 'dist'), join(out, 'vendor/reveal-carve'), { recursive: true });
