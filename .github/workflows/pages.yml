@@ -3,6 +3,7 @@ name: Demo site
 on:
   push:
     branches: [main]
+  pull_request:
   workflow_dispatch:
 
 permissions:
@@ -11,7 +12,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
+  group: pages-${{ github.event_name == 'pull_request' && github.ref || 'deploy' }}
   cancel-in-progress: true
 
 # Every job below carries a timeout-minutes bound. Without one a job inherits
@@ -29,10 +30,12 @@ jobs:
       - run: npm run build
       - run: node scripts/build-site.mjs site
       - uses: actions/upload-pages-artifact@v5
+        if: github.event_name != 'pull_request'
         with:
           path: site
 
   deploy:
+    if: github.event_name != 'pull_request'
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 30
