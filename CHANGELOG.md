@@ -5,9 +5,27 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.1.5] - 2026-11-12
+
+Decks follow the Carve 0.1.16 engine: imported Markdown becomes current canonical Carve, and braced table alignment renders and highlights.
+
+### Breaking
+
+- Requires `@markup-carve/carve` 0.1.16 (peer `>=0.1.16 <0.2.0`) (#40).
+- Lint rule `a11y/heading-jump` is no longer an alias; use `heading-level-skip`. `check` reports the old `|=>` cell alignment as `deprecated-cell-alignment` (write `|={>}`).
+
 ### Fixes
 
-- A `{.diff}` fence with a caption gets its added and removed lines colored; the class sits on the `<figure>` then, not the `<pre>`.
+- A `{.diff}` fence with a caption gets its added and removed lines colored; the class sits on the `<figure>` then, not the `<pre>` (#36).
+- `check` stays clean on decks that use the `---` slide separator (#37).
+- A `::: note` admonition keeps the deck's text color instead of the muted `{.note}` style (#38).
+
+### Improvements
+
+- `import` turns GitHub alerts into admonitions, HTML comments into Carve comments, and writes braced table alignment (`|={<}`) (#40).
+- Braced cell alignment renders in decks and gets the `table-alignment` highlight scope (#40).
+
+**Full Changelog**: https://github.com/markup-carve/reveal-carve/compare/0.1.4...0.1.5
 
 ## [0.1.4] - 2026-10-26
 
