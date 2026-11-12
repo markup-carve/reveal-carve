@@ -49,7 +49,7 @@ further ceremony.
 A before/after comparison is the workhorse slide of any migration talk. Markdown
 has no concept of columns, so the source becomes HTML with Markdown islands:
 
-```html
+````html
 <div class="two-col">
 <div class="before">
 
@@ -64,13 +64,13 @@ $table->query()->update();
 ...
 </div>
 </div>
-```
+````
 
 The blank lines inside the `<div>`s are load-bearing: without them the Markdown
 inside is not parsed. Carve has containers with attributes, so the same slide is
 markup all the way down:
 
-```
+````
 {.two-col}
 :::
 {.before}
@@ -91,7 +91,7 @@ $table->updateQuery();
 ```
 ::::
 :::
-```
+````
 
 Note the nesting rule: Carve containers get **wider on the inside** (`:::`
 outside, `::::` inside), the opposite of code fences. `carve fmt` corrects it for

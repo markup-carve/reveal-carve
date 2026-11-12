@@ -36,7 +36,7 @@ never the screen.
 
 - Bullets are bullets
 - Inline code stays as written: \`$this->find()\`
-- *Strong*, _emphasis_, and a footnote[^1]
+- *Strong*, /emphasis/, and a footnote[^1]
 
 [^1]: Footnotes land at the foot of the slide.
 `;

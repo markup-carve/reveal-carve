@@ -9,7 +9,9 @@
 import assert from 'node:assert/strict';
 import { after, test } from 'node:test';
 import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
 
 import { serve } from '../src/dev.js';
@@ -134,6 +136,22 @@ test('the scaffold writes a deck that lints and builds', async () => {
     assert.match(slides, /<h2[^>]*>Thank you<\/h2>/, 'the included partial did not reach the deck');
     assert.equal(/\{\{/.test(slides), false, 'an include was left unexpanded');
 });
+
+for (const preset of [[], ['--preset', 'training']]) {
+    test(`a fresh init${preset.length ? ' --preset training' : ''} deck passes check`, () => {
+        const target = mkdtempSync(join(tmpdir(), 'reveal-carve-init-check-'));
+        const cli = join(dirname(fileURLToPath(import.meta.url)), '..', 'src', 'cli.js');
+
+        temporaries.push(target);
+        const run = (...args) => spawnSync(process.execPath, [cli, ...args], { cwd: target, encoding: 'utf8' });
+
+        assert.equal(run('init', 'talk', ...preset).status, 0);
+        const result = run('check', 'talk/slides');
+
+        assert.equal(result.status, 0, result.stdout + result.stderr);
+        assert.match(result.stdout, /check: clean/);
+    });
+}
 
 test('writes nothing over an existing file', () => {
     const target = mkdtempSync(join(tmpdir(), 'reveal-carve-init-'));

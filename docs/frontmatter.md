@@ -6,7 +6,7 @@ A single entry file can hold the settings needed to render a deck. Metadata is
 removed before slide splitting, so its fences do not become slide boundaries.
 
 ```carve
----
+---yaml
 title: Planning a workshop
 lang: en
 reveal:
@@ -78,7 +78,7 @@ settings through a chapter’s frontmatter. Directory lint and check validate ea
 file independently. For rendering, use one entry file instead:
 
 ```carve
----
+---yaml
 title: Workshop
 reveal:
   renderers: [mermaid]
