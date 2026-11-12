@@ -1,6 +1,6 @@
 # reveal-carve
 
-Write reveal.js presentations in Carve. Package version 0.1.4 provides a browser plugin and a Node build command. See the [Carve documentation](https://markup-carve.github.io/carve/) for the markup language.
+Write reveal.js presentations in Carve. Package version 0.1.5 provides a browser plugin and a Node build command. See the [Carve documentation](https://markup-carve.github.io/carve/) for the markup language.
 
 ## Install
 
