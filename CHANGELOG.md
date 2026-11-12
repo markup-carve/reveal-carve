@@ -25,6 +25,7 @@ Decks follow the Carve 0.1.16 engine: imported Markdown becomes current canonica
 - `import` turns GitHub alerts into admonitions, HTML comments into Carve comments, and writes braced table alignment (`|={<}`) (#40).
 - Braced cell alignment renders in decks and gets the `table-alignment` highlight scope (#40).
 - The `@markup-carve/carve-grammars` runtime dependency installs from npm (`^0.1.23`) instead of a git commit (#45).
+- The offline engine bundle `dist/carve.iife.min.js` is carve-js 0.1.17, which parses and renders faster (#46).
 
 **Full Changelog**: https://github.com/markup-carve/reveal-carve/compare/0.1.4...0.1.5
 
