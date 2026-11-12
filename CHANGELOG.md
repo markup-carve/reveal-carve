@@ -5,6 +5,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.1.6] - 2026-11-12
+
+A fresh `reveal-carve init` deck passes `reveal-carve check`.
+
+### Fixes
+
+- The `init` starter deck writes Carve italic (`/emphasis/`) instead of `_emphasis_`, which rendered as underline and failed `check` (#47).
+
+**Full Changelog**: https://github.com/markup-carve/reveal-carve/compare/0.1.5...0.1.6
+
 ## [0.1.5] - 2026-11-12
 
 Decks follow the Carve 0.1.16 engine: imported Markdown becomes current canonical Carve, and braced table alignment renders and highlights.
