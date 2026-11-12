@@ -100,7 +100,7 @@
         "node": ">=20"
     },
     "devDependencies": {
-        "@markup-carve/carve": "0.1.16",
+        "@markup-carve/carve": "0.1.17",
         "esbuild": "^0.28.2",
         "eslint": "^9.39.5",
         "linkedom": "^0.18.13",
