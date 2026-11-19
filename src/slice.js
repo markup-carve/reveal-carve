@@ -35,7 +35,7 @@ export function splitSlidesSource(source, separator) {
 
     for (const line of source.split('\n')) {
         const text = line.replace(/\r$/, '');
-        const match = /^(`{3,}|~{3,})(.*)$/.exec(text);
+        const match = /^ {0,3}(`{3,}|~{3,})(.*)$/.exec(text);
         if (open) {
             fenced.push([offset, offset + text.length]);
             if (match && match[1][0] === open[0] && match[1].length >= open.length && !match[2].trim()) {

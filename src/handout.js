@@ -8,7 +8,7 @@
 
 import { splitFrontmatter } from './frontmatter-split.js';
 
-import { asListItemText, chapterTitles, DEFAULTS, deckMinutes, parseSlide } from './slice.js';
+import { asListItemText, chapterTitles, DEFAULTS, deckMinutes, parseSlide, splitSlidesSource } from './slice.js';
 
 /**
  * @param {string} source Carve source of a whole deck
@@ -24,8 +24,7 @@ export function buildHandout(source, toMarkdown, options = {}) {
     const label = config.notesLabel || '**Spoken:**';
     const vertical = new RegExp(config.verticalSeparator, 'm');
 
-    const slides = source
-        .split(new RegExp(config.separator, 'm'))
+    const slides = splitSlidesSource(source, config.separator)
         .flatMap((chunk) => chunk.split(vertical))
         .filter((chunk) => chunk.trim());
 
