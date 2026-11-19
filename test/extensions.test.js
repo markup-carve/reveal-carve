@@ -152,7 +152,21 @@ test('the 0.1 block extensions now resolve on Carve 0.2', async () => {
     for (const name of ['details', 'spoiler', 'listTable', 'colorSwatch', 'semanticSpan']) {
         assert.equal(resolveExtensions([name], carve).length, 1, name);
     }
-    assert.throws(() => resolveExtensions(['imgFence'], carve), /markup-carve\/carve-js#5062/);
+    assert.equal(resolveExtensions(['imgFence'], carve).length, 1);
+});
+
+test('SVG image fences sanitize safe and unsafe content', async () => {
+    const { carve } = await import('./helpers/engine.js');
+    const { carveRenderer } = await import('../src/extensions.js');
+    const render = carveRenderer(carve, resolveExtensions(['imgFence'], carve), { sections: false });
+    const safe = render('```img\n<svg xmlns="http://www.w3.org/2000/svg"><circle r="1"/></svg>\n```\n');
+    const unsafe = render('```img\n<svg onload="alert(1)"><script>alert(1)</script><circle r="1"/></svg>\n```\n');
+
+    assert.match(safe, /^<img src="data:image\/svg\+xml,/);
+    assert.match(decodeURIComponent(safe), /<circle r="1"\/>/);
+    assert.match(unsafe, /^<img src="data:image\/svg\+xml,/);
+    assert.doesNotMatch(decodeURIComponent(unsafe), /onload|<script|alert\(/);
+    assert.match(decodeURIComponent(unsafe), /<circle r="1"\/>/);
 });
 
 test('the 0.2 bundles render through the engine, document transforms included', async () => {

@@ -98,14 +98,6 @@ export function extensionSpec(spec, without = []) {
 }
 
 /**
- * Extensions not yet available in the Carve 0.2 engine. A deck that asks for
- * one by name fails with its ticket; as a default it is left out.
- */
-export const PENDING_IN_0_2 = {
-    imgFence: 'markup-carve/carve-js#5062',
-};
-
-/**
  * The 0.2 engine ships tabs as definitions plus a renderer rather than a factory.
  */
 function builtinBundle(name, engine) {
@@ -149,13 +141,6 @@ export function resolveExtensions(spec, engine) {
         if (typeof factory !== 'function') {
             if (entry?.optional) {
                 return null;
-            }
-
-            if (PENDING_IN_0_2[name]) {
-                throw new Error(
-                    `reveal-carve: the Carve extension "${name}" is not available in Carve 0.2 yet `
-                    + `(${PENDING_IN_0_2[name]}). Leave it out of the deck's extensions for now.`,
-                );
             }
 
             throw new Error(
