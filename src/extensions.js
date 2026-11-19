@@ -98,22 +98,11 @@ export function extensionSpec(spec, without = []) {
 }
 
 /**
- * 0.1 extensions with no Carve 0.2 port yet, and the carve-js change that brings each back.
- * A deck that asks for one by name fails with that pointer; as a default it is left out.
+ * Extensions not yet available in the Carve 0.2 engine. A deck that asks for
+ * one by name fails with its ticket; as a default it is left out.
  */
 export const PENDING_IN_0_2 = {
-    details: 'markup-carve/carve-js#5070',
-    spoiler: 'markup-carve/carve-js#5070',
-    listTable: 'markup-carve/carve-js#5070',
-    colorSwatch: 'markup-carve/carve-js#5070',
-    semanticSpan: 'markup-carve/carve-js#5070',
-    imgFence: 'markup-carve/carve-js#5070',
-    tableOfContents: 'markup-carve/carve-js#5073',
-    headingPermalinks: 'markup-carve/carve-js#5073',
-    headingNumbers: 'markup-carve/carve-js#5073',
-    externalLinks: 'markup-carve/carve-js#5073',
-    glossary: 'markup-carve/carve-js#5071',
-    smartQuotes: 'no 0.2 port; smart typography is the smartTypography render option',
+    imgFence: 'markup-carve/carve-js#5062',
 };
 
 /**

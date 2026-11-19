@@ -8,8 +8,6 @@ import { carve } from './helpers/engine.js';
 
 import { findMarkdownWriter } from '../src/markdown.js';
 
-// Handouts are written with the Carve 0.2 Markdown writer, which the pinned engine does not have yet.
-const needsMarkdown = { skip: !(await findMarkdownWriter(carve)) && 'needs the Carve 0.2 Markdown writer (markup-carve/carve-js#5076)' };
 import { fileSystemResolver } from '@markup-carve/carve/node';
 import { readFrontmatter, mergeDeckOptions } from '../src/frontmatter.js';
 import { readRenderers, splitFrontmatter } from '../src/frontmatter-split.js';
@@ -40,7 +38,7 @@ test('frontmatter is removed before slides and agenda are split', () => {
     assert.deepEqual(lintSource(source), []);
 });
 
-test('frontmatter is removed before the handout is split', needsMarkdown, async () => {
+test('frontmatter is removed before the handout is split', async () => {
     const markdown = buildHandout(header + body, await findMarkdownWriter(carve));
     assert.match(markdown, /First/);
     assert.doesNotMatch(markdown, /Workshop|renderers|lang:/);

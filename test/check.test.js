@@ -47,6 +47,12 @@ test('check accepts the --- slide separator', () => {
     assert.doesNotMatch(result.stdout, /thematic-break-spelling|\*\*\*/);
 });
 
+test('check accepts the canonical *** slide separator', () => {
+    const { result } = check('= One\n\n***\n\n= Two\n');
+
+    assert.equal(result.status, 0, result.stdout);
+});
+
 test('check still reports a slide that carve fmt would change, under the deck path', () => {
     const { file, result } = check('# One\ntext\n\n---\n\n# Two\n');
 

@@ -43,6 +43,13 @@ test('splits a document into slides', () => {
     assert.match(slides[1], /<p>Two<\/p>/);
 });
 
+test('splits on the canonical Carve 0.2 thematic break too', () => {
+    const slides = renderDeck('One\n\n---\n\nTwo\n\n***\n\nThree\n', render);
+
+    assert.equal(slides.length, 3);
+    assert.match(slides[2], /<p>Three<\/p>/);
+});
+
 test('nests a vertical stack in one outer section', () => {
     const slides = renderDeck('Top\n\n--\n\nBelow\n', render);
 

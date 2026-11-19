@@ -9,7 +9,7 @@
 import { splitFrontmatter } from './frontmatter-split.js';
 
 export const DEFAULTS = {
-    separator: '\\r?\\n---\\r?\\n',
+    separator: '\\r?\\n(?:---|\\*\\*\\*)\\r?\\n',
     verticalSeparator: '\\r?\\n--\\r?\\n',
     classDirective: '^%%\\s*class:\\s*(.+)$',
     attrDirective: '^%%\\s*attr:\\s*(.+)$',
