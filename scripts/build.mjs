@@ -45,9 +45,15 @@ await build({
 });
 
 // Git installs of the engine carry its public ESM entry but not the browser
-// bundle made for npm publishing. Bundle that same entry for offline decks.
+// bundle made for npm publishing. Bundle that entry for offline decks, with the
+// standard extensions of Carve 0.2 (code groups, diagrams, math), which live in
+// an entry of their own.
 await build({
-    entryPoints: ['node_modules/@markup-carve/carve/dist/index.js'],
+    stdin: {
+        contents: "export * from '@markup-carve/carve'; export * from '@markup-carve/carve/extensions';",
+        resolveDir: process.cwd(),
+        sourcefile: 'carve-browser.js',
+    },
     bundle: true,
     format: 'iife',
     globalName: 'carve',

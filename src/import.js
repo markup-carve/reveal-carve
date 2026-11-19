@@ -7,6 +7,7 @@
  * `--` as the vertical separator most decks configure.
  */
 
+import { separatorLines } from './lint.js';
 import { DEFAULTS } from './slice.js';
 
 export const MARKDOWN_DEFAULTS = {
@@ -23,15 +24,15 @@ const ELEMENT_COMMENT = /<!--\s*\.element:/;
 /**
  * @param {string} markdown The deck's Markdown source
  * @param {object} options
- * @param {object} options.engine The Carve module (`markdownToCarve`)
+ * @param {object} options.engine The Carve 0.2 module with the `importDocument` of `@markup-carve/carve/import`
  * @param {string} [options.separator] Horizontal slide separator, as a regular expression
  * @param {string|null} [options.verticalSeparator] Vertical slide separator; `null` for none
  * @param {string} [options.notesSeparator] Start of the speaker notes, matched case-insensitively
  * @returns {{ source: string, slides: number, warnings: string[] }}
  */
 export function importMarkdownDeck(markdown, { engine, ...options } = {}) {
-    if (typeof engine?.markdownToCarve !== 'function') {
-        throw new Error('reveal-carve: this Carve engine has no markdownToCarve. Upgrade @markup-carve/carve.');
+    if (typeof engine?.importDocument !== 'function') {
+        throw new Error('reveal-carve: this Carve engine has no importDocument. Use the Carve 0.2 engine with @markup-carve/carve/import.');
     }
 
     const config = { ...MARKDOWN_DEFAULTS, ...options };
@@ -54,7 +55,41 @@ export function importMarkdownDeck(markdown, { engine, ...options } = {}) {
         return slides.join('\n\n--\n\n');
     }).filter(Boolean);
 
-    return { source: `${stacks.join('\n\n---\n\n')}\n`, slides: count, warnings };
+    return { source: canonicalDeck(`${stacks.join('\n\n---\n\n')}\n`, engine), slides: count, warnings };
+}
+
+/**
+ * The deck in the spelling `carve fmt` writes, so `reveal-carve check` passes on it. The slide
+ * separators are deck syntax: they are formatted as `***`, as `check` masks them, and put back.
+ */
+function canonicalDeck(source, engine) {
+    if (typeof engine.format !== 'function') {
+        return source;
+    }
+
+    const separators = separatorLines(source);
+    const lines = source.split('\n');
+    // fmt keeps every thematic break, in order, so the k-th `***` it writes is the k-th one masked.
+    const kinds = [];
+    const masked = lines.map((line, index) => {
+        if (separators.has(index + 1)) {
+            kinds.push(line);
+
+            return '***';
+        }
+
+        if (line === '***') {
+            kinds.push('***');
+        }
+
+        return line;
+    });
+    let next = 0;
+
+    return engine.format(masked.join('\n'))
+        .split('\n')
+        .map((line) => (line === '***' ? kinds[next++] ?? line : line))
+        .join('\n');
 }
 
 function convertSlide(markdown, number, config, engine, warnings) {
@@ -223,8 +258,7 @@ function moveLineSteps(markdownLines, carve, number, warnings) {
 
     for (let index = fences.length - 1; index >= 0; index -= 1) {
         if (steps[index]) {
-            // The escaped pipe is the spelling `carve fmt` writes.
-            lines.splice(fences[index].line, 0, `{data-line-numbers="${steps[index].replaceAll('|', '\\|')}"}`);
+            lines.splice(fences[index].line, 0, `{data-line-numbers="${steps[index]}"}`);
         }
     }
 
@@ -241,7 +275,10 @@ function convertBlock(markdown, number, engine, warnings) {
     });
     // Writers before carve#4973 spell a thematic break `---`, which this package
     // would read as a slide separator. `***` renders the same rule. Code keeps its lines.
-    const convertedLines = engine.markdownToCarve(stripped.join('\n')).trim().split('\n');
+    // The 0.2 importer keeps an HTML comment as a raw HTML block; a deck says it as a Carve comment.
+    const imported = engine.importDocument(stripped.join('\n'), { from: 'gfm' }).source
+        .replace(/^```=html\n<!--\s*([^\n]*?)\s*-->\n```$/gm, '%% $1');
+    const convertedLines = imported.trim().split('\n');
     const fenced = fencedLines(convertedLines);
     const converted = convertedLines.map((line, index) => (line === '---' && !fenced.has(index) ? '***' : line)).join('\n');
     const carve = moveLineSteps(markdownLines, converted, number, warnings);

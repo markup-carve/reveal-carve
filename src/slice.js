@@ -13,7 +13,8 @@ export const DEFAULTS = {
     verticalSeparator: '\\r?\\n--\\r?\\n',
     classDirective: '^%%\\s*class:\\s*(.+)$',
     attrDirective: '^%%\\s*attr:\\s*(.+)$',
-    notesDirective: '^%%\\s*notes\\s*$',
+    // Indented too: Carve 0.2 hands a comment below a list to its last item, so `carve fmt` indents it.
+    notesDirective: '^[ \\t]*%%\\s*notes\\s*$',
     fragmentDirective: '^%%\\s*fragments\\s*$',
     animateDirective: '^%%\\s*animate\\s*$',
     minutesDirective: '^%%\\s*minutes:\\s*(\\d+)\\s*$',
@@ -508,7 +509,8 @@ export function withRevealedSpoilers(sectionHtml) {
  * would otherwise need a separator line between every slide.
  */
 export function splitAtHeading(source, level) {
-    const marker = new RegExp(`^(?=#{${level}}\\s)`, 'm');
+    // Carve 0.2 writes headings with `=` (C2-W-035); `#` is still read.
+    const marker = new RegExp(`^(?=(?:#{${level}}|={${level}})\\s)`, 'm');
 
     return source
         .split(marker)
@@ -555,7 +557,7 @@ export function attachFootnotes(chunk, definitions) {
  */
 export function headingOf(source, options = {}) {
     const slide = parseSlide(source, options);
-    const match = slide.body.match(/^#{1,3}\s+(.+)$/m);
+    const match = slide.body.match(/^(?:#{1,3}|={1,3})\s+(.+)$/m);
 
     return match ? match[1].trim() : '';
 }

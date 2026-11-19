@@ -10,7 +10,7 @@
   <li>Tabs</li>
   <li>Code groups</li>
   <li>Details, folded away</li>
-  <li>A table with block content</li>
+  <li>A table of commands</li>
   <li>Spoilers and swatches</li>
   <li>Diffs and line numbers</li>
   <li>Code with callouts</li>
@@ -24,19 +24,11 @@
 
 <section>
 <h2 id="Tabs">Tabs</h2>
-<div class="tabs" role="tablist" aria-label="Tabs">
-<button type="button" role="tab" id="tabset-1-tab-1" aria-selected="true" aria-controls="tabset-1-panel-1" class="tabs-label">Symptom</button>
-<button type="button" role="tab" id="tabset-1-tab-2" aria-selected="false" aria-controls="tabset-1-panel-2" class="tabs-label" tabindex="-1">Cause</button>
-<button type="button" role="tab" id="tabset-1-tab-3" aria-selected="false" aria-controls="tabset-1-panel-3" class="tabs-label" tabindex="-1">Fix</button>
-<div role="tabpanel" id="tabset-1-panel-1" aria-labelledby="tabset-1-tab-1" class="tabs-panel">
-<p>The upgrade runs, and half the finders are gone.</p>
+<div class="tabs" role="group" aria-label="Tabs"><input type="radio" class="tabs-radio" name="tabs-1" id="tabs-1-0" checked><label class="tabs-label" for="tabs-1-0">Symptom</label><input type="radio" class="tabs-radio" name="tabs-1" id="tabs-1-1"><label class="tabs-label" for="tabs-1-1">Cause</label><input type="radio" class="tabs-radio" name="tabs-1" id="tabs-1-2"><label class="tabs-label" for="tabs-1-2">Fix</label><div class="tab-panel tabs-panel" role="group" aria-label="Symptom"><p>The upgrade runs, and half the finders are gone.</p>
 <ul>
   <li>No error, no exit code</li>
   <li>Only the tables with a behavior</li>
-</ul>
-</div>
-<div role="tabpanel" id="tabset-1-panel-2" aria-labelledby="tabset-1-tab-2" class="tabs-panel" hidden>
-<table>
+</ul></div><div class="tab-panel tabs-panel" role="group" aria-label="Cause"><table>
   <thead>
     <tr><th scope="col">What ran</th><th scope="col">Against</th></tr>
   </thead>
@@ -44,17 +36,12 @@
     <tr><td>The rule set</td><td>4.5 sources</td></tr>
     <tr><td>The finder rename</td><td>Nothing it matched</td></tr>
   </tbody>
-</table>
-</div>
-<div role="tabpanel" id="tabset-1-panel-3" aria-labelledby="tabset-1-tab-3" class="tabs-panel" hidden>
-<ol>
+</table></div><div class="tab-panel tabs-panel" role="group" aria-label="Fix"><ol>
   <li>Bump the dependency</li>
   <li>Run the rules again</li>
   <li>Re-run the touched tests</li>
 </ol>
-<blockquote><p>The order is the fix.</p></blockquote>
-</div>
-</div>
+<blockquote><p>The order is the fix.</p></blockquote></div></div>
 <div class="note">
   <p><code>--extension tabs</code>. Any block goes in a tab: prose, a table, a list, a quote. Up
 and down switch tabs, left and right stay with the deck.</p>
@@ -63,23 +50,10 @@ and down switch tabs, left and right stay with the deck.</p>
 
 <section>
 <h2 id="Code-groups">Code groups</h2>
-<div class="code-group" role="group" aria-label="Code examples">
-<input type="radio" name="codegroup-1" id="codegroup-1-tab-1" class="code-group-radio" checked>
-<label for="codegroup-1-tab-1" class="code-group-label">Composer</label>
-<input type="radio" name="codegroup-1" id="codegroup-1-tab-2" class="code-group-radio">
-<label for="codegroup-1-tab-2" class="code-group-label">composer.json</label>
-<input type="radio" name="codegroup-1" id="codegroup-1-tab-3" class="code-group-radio">
-<label for="codegroup-1-tab-3" class="code-group-label">Application.php</label>
-<div class="code-group-panel" role="group" aria-label="Composer"><pre><code class="language-bash">composer require cakephp/cakephp:^5.2
-</code></pre>
-</div>
-<div class="code-group-panel" role="group" aria-label="composer.json"><pre><code class="language-json">{ "require": { "cakephp/cakephp": "^5.2" } }
-</code></pre>
-</div>
-<div class="code-group-panel" role="group" aria-label="Application.php"><pre><code class="language-php">$this-&gt;addPlugin('Migrations');
-</code></pre>
-</div>
-</div>
+<div class="code-group" role="group" aria-label="Code examples"><input type="radio" name="codegroup-1" id="codegroup-1-tab-1" class="code-group-radio" checked><label for="codegroup-1-tab-1" class="code-group-label">Composer</label><input type="radio" name="codegroup-1" id="codegroup-1-tab-2" class="code-group-radio"><label for="codegroup-1-tab-2" class="code-group-label">composer.json</label><input type="radio" name="codegroup-1" id="codegroup-1-tab-3" class="code-group-radio"><label for="codegroup-1-tab-3" class="code-group-label">Application.php</label><div class="code-group-panel" role="group" aria-label="Composer"><pre><code class="language-bash">composer require cakephp/cakephp:^5.2
+</code></pre></div><div class="code-group-panel" role="group" aria-label="composer.json"><pre><code class="language-json">{ "require": { "cakephp/cakephp": "^5.2" } }
+</code></pre></div><div class="code-group-panel" role="group" aria-label="Application.php"><pre><code class="language-php">$this-&gt;addPlugin('Migrations');
+</code></pre></div></div>
 <div class="note">
   <p><code>--extension codeGroup</code>. One block per file, switched on screen and unfolded in the PDF.</p>
 </div>
@@ -87,33 +61,32 @@ and down switch tabs, left and right stay with the deck.</p>
 
 <section>
 <h2 id="Details-folded-away">Details, folded away</h2>
-<details>
-  <summary>Details</summary>
+<div class="details">
   <h3 id="The-long-version-of-why-buffering-changed">The long version of why buffering changed</h3>
   <p>5.0 always buffered result sets, which raised memory on large exports. 5.1 brought back <code>disableBufferedResults()</code>.</p>
-</details>
+</div>
 <div class="note">
   <p>Useful for the question you only sometimes get asked.</p>
 </div>
 </section>
 
 <section>
-<h2 id="A-table-with-block-content">A table with block content</h2>
+<h2 id="A-table-of-commands">A table of commands</h2>
 <table>
+  <thead>
+    <tr><th scope="col">Step</th><th scope="col">Command</th><th scope="col">Guards it</th></tr>
+  </thead>
   <tbody>
-    <tr><td><strong>Step</strong></td><td><strong>Command</strong></td><td><strong>Guards it</strong></td></tr>
-    <tr><td>Deprecations</td><td><pre><code class="language-bash">bin/cake upgrade rector --rules cakephp45 src
-</code></pre></td><td>Tests</td></tr>
-    <tr><td>The jump</td><td><pre><code class="language-bash">composer update -W
-</code></pre></td><td>Tests, PHPStan</td></tr>
+    <tr><td>Deprecations</td><td><code>bin/cake upgrade rector --rules cakephp45 src</code></td><td>Tests</td></tr>
+    <tr><td>The jump</td><td><code>composer update -W</code></td><td>Tests, PHPStan</td></tr>
   </tbody>
 </table>
 </section>
 
 <section>
 <h2 id="Spoilers-and-swatches">Spoilers and swatches</h2>
-<p>The answer to “how long does the upgrade take” is <span class="spoiler">as long as your test suite is short</span>.</p>
-<p>Palette: <span class="swatch"><span class="swatch-chip" style="background-color:#d33c43"></span> #d33c43</span> accent, <span class="swatch"><span class="swatch-chip" style="background-color:#1f7a4d"></span> #1f7a4d</span> success, <span class="swatch"><span class="swatch-chip" style="background-color:#6b7280"></span> #6b7280</span> muted.</p>
+<p>The answer to “how long does the upgrade take” is <span class="ext-spoiler">as long as your test suite is short</span>.</p>
+<p>Palette: <span class="ext-color"><span class="tag"><strong>#d33c43</strong></span></span> accent, <span class="ext-color"><span class="tag"><strong>#1f7a4d</strong></span></span> success, <span class="ext-color"><span class="tag"><strong>#6b7280</strong></span></span> muted.</p>
 </section>
 
 <section>
@@ -136,10 +109,7 @@ and down switch tabs, left and right stay with the deck.</p>
 $query-&gt;contain(['Authors'])               <b class="callout" data-callout="2">2</b>
     -&gt;where(['published' =&gt; true]);
 </code></pre>
-<ol class="callouts">
-  <li value="1">One query type, so the IDE and PHPStan know what comes next.</li>
-  <li value="2">Eager loading, which is the whole point of the slide.</li>
-</ol>
+<ol class="callouts"><li value="1">One query type, so the IDE and PHPStan know what comes next.</li><li value="2">Eager loading, which is the whole point of the slide.</li></ol>
 <div class="note">
   <p><code>--extension codeCallouts</code>. The markers bind to the list under the block.</p>
 </div>

@@ -10,13 +10,17 @@ import { cpSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import * as carve from '@markup-carve/carve';
+import * as core from '@markup-carve/carve';
+import * as standard from '@markup-carve/carve/extensions';
 import { fileSystemResolver } from '@markup-carve/carve/node';
 
 import { buildPage, themeToggle, readSource } from '../src/build.js';
 import { buildHandout } from '../src/handout.js';
 import { exportPdf } from '../src/pdf.js';
-import { resolveExtensions } from '../src/extensions.js';
+import { carveRenderer, resolveExtensions } from '../src/extensions.js';
+import { findMarkdownWriter } from '../src/markdown.js';
+
+const carve = { ...standard, ...core };
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const out = process.argv[2] || join(root, 'site');
@@ -28,20 +32,15 @@ const EXTENSIONS = [
     'mermaid',
     'chart',
     'mathBlock',
-    { name: 'imgFence', options: { language: 'svg' } },
-    'details',
-    { name: 'tabs', options: { mode: 'aria' } },
-    'listTable',
-    'spoiler',
-    'colorSwatch',
-    'semanticSpan',
+    'tabs',
     'codeCallouts',
     'codeGroup',
-    { name: 'smartQuotes', options: { locale: 'en' } },
 ];
 
+// Not in Carve 0.2 yet, see PENDING_IN_0_2 in src/extensions.js: imgFence, details,
+// listTable, spoiler, colorSwatch, semanticSpan (carve-js#5070) and smartQuotes.
 const extensions = resolveExtensions(EXTENSIONS, carve);
-const render = (text) => carve.carveToHtml(text, { sections: false, extensions });
+const render = carveRenderer(carve, extensions, { sections: false });
 
 // One version marker for the whole site, derived from the files that actually
 // change between deploys. GitHub Pages serves everything with max-age=600, so
@@ -278,15 +277,20 @@ const chapters = buildPage({
     version,
 });
 
-// 6. The handout export of the chapter deck.
-writeFileSync(
-    join(out, 'handout.md'),
-    buildHandout(
-        readSource(join(root, 'demo/decks'), { includeRoot: join(root, 'demo'), ...includes }),
-        (text) => carve.carveToMarkdown(text),
-    ),
-    'utf8',
-);
+// 6. The handout export of the chapter deck, once the engine has a Markdown writer.
+const toMarkdown = await findMarkdownWriter(carve);
+if (toMarkdown) {
+    writeFileSync(
+        join(out, 'handout.md'),
+        buildHandout(
+            readSource(join(root, 'demo/decks'), { includeRoot: join(root, 'demo'), ...includes }),
+            toMarkdown,
+        ),
+        'utf8',
+    );
+} else {
+    console.warn('[build-site] handout.md skipped: needs the Carve 0.2 Markdown writer (markup-carve/carve-js#5076)');
+}
 
 // Two PDFs: the feature deck as it looks on screen, and a handout of everything
 // in static mode, where tab groups unfold so no panel is missing from the page.
@@ -303,11 +307,7 @@ try {
     buildPage({
         source: everythingSource,
         target: join(out, 'everything.html'),
-        render: (text) => carve.carveToHtml(text, {
-            sections: false,
-            mode: 'static',
-            extensions,
-        }),
+        render: carveRenderer(carve, extensions, { sections: false, mode: 'static' }),
         title: 'reveal-carve - every element, for print',
         revealBase: 'vendor/reveal',
         stylesheets: ['vendor/reveal-carve/reveal-carve.css'],

@@ -58,5 +58,6 @@ export function fakeDeck(document, config = {}) {
  * The Carve engine as the plugin expects to find it: one function, one call.
  */
 export function fakeEngine(render = (text) => `<p>${text.trim()}</p>`) {
-    return { carveToHtml: (text) => render(text) };
+    // The Carve 0.2 engine renders with render(); the plugin passes its options along.
+    return { render: (text) => render(text) };
 }

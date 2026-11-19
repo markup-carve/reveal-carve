@@ -14,30 +14,23 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import * as carve from '@markup-carve/carve';
+import * as core from '@markup-carve/carve';
+import * as standard from '@markup-carve/carve/extensions';
 
 import { buildSlides } from '../src/build.js';
+import { carveRenderer, resolveExtensions } from '../src/extensions.js';
+
+const carve = { ...standard, ...core };
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = join(here, '..');
 const goldenDir = join(here, 'golden');
 
-const EXTENSIONS = [
-    carve.mermaid(),
-    carve.chart(),
-    carve.mathBlock(),
-    carve.imgFence({ language: 'svg' }),
-    carve.details(),
-    carve.tabs({ mode: 'aria' }),
-    carve.listTable(),
-    carve.spoiler(),
-    carve.colorSwatch(),
-    carve.semanticSpan(),
-    carve.codeCallouts(),
-    carve.codeGroup(),
-];
+// imgFence, details, listTable, spoiler, colorSwatch and semanticSpan have no Carve 0.2
+// port yet (markup-carve/carve-js#5070); the decks render those constructs as core Carve.
+const EXTENSIONS = resolveExtensions(['mermaid', 'chart', 'mathBlock', 'tabs', 'codeCallouts', 'codeGroup'], carve);
 
-const render = (text) => carve.carveToHtml(text, { sections: false, extensions: EXTENSIONS });
+const render = carveRenderer(carve, EXTENSIONS, { sections: false });
 
 const DECKS = [
     { name: 'deck', source: 'demo/deck.crv' },

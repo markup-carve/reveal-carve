@@ -1,4 +1,4 @@
-## Chapter three: what the tooling gives you
+== Chapter three: what the tooling gives you
 
 %% fragments
 
@@ -7,10 +7,9 @@
 - `reveal-carve watch` rebuilds and reloads while you write
 
 ---
-
 %% class: center
 
-## Thanks
+== Thanks
 
 Questions welcome afterwards too.
 

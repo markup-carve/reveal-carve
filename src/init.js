@@ -12,10 +12,9 @@ import { basename, join } from 'node:path';
 const FENCE = '```';
 
 const OPENING = (title) => `%% class: center
-
 %% minutes: 5
 
-# ${title}
+= ${title}
 
 Written in Carve, shown with reveal.js.
 
@@ -25,14 +24,13 @@ Speaker notes live under the slide. They reach the speaker view and the handout,
 never the screen.
 
 ---
-
 %% toc
 
-## Agenda
+== Agenda
 
 ---
 
-## The first slide
+== The first slide
 
 - Bullets are bullets
 - Inline code stays as written: \`$this->find()\`
@@ -43,13 +41,11 @@ never the screen.
 
 const CHAPTER = `%% minutes: 15
 
-## Two columns
+== Two columns
 
-{.two-col}
-:::
-{.before}
-::::
-### Before
+:::: two-col
+::: before
+=== Before
 
 ${FENCE}php
 $query = $table->find();
@@ -57,11 +53,10 @@ $query->order([
     'created' => 'DESC',
 ]);
 ${FENCE}
-::::
+:::
 
-{.after}
-::::
-### After
+::: after
+=== After
 
 ${FENCE}php
 $query = $table->find();
@@ -69,12 +64,12 @@ $query->orderBy([
     'created' => 'DESC',
 ]);
 ${FENCE}
-::::
 :::
+::::
 
 ---
 
-## What changed
+== What changed
 
 {.diff}
 ${FENCE}php
@@ -90,7 +85,7 @@ ${FENCE}
 {{ partials/thanks.crv }}
 `;
 
-const PARTIAL = `## Thank you
+const PARTIAL = `== Thank you
 
 Included from \`slides/partials/thanks.crv\`, so every deck ends the same way.
 `;

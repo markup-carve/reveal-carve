@@ -21,20 +21,29 @@ import { IncludeError } from './include.js';
 import { buildHandout } from './handout.js';
 import { formatFindings, lintSource, maskSeparators, separatorLines } from './lint.js';
 import { serve } from './dev.js';
-import { extensionSpec, missingRenderers, resolveExtensions } from './extensions.js';
+import { carveRenderer, extensionSpec, missingRenderers, resolveExtensions } from './extensions.js';
 import { deckMinutes } from './slice.js';
 import { exportPdf } from './pdf.js';
 import { importMarkdownDeck } from './import.js';
 import { vendorAssets } from './vendor.js';
 import { initDeck } from './init.js';
+import { markdownWriter } from './markdown.js';
 import { absoluteAsset, locateCarveCli, parseArgs, usage, VERBS } from './args.js';
 
 
 // The Carve package publishes ESM only, so this is a dynamic import rather than
 // a require: `require('@markup-carve/carve')` fails with ERR_PACKAGE_PATH_NOT_EXPORTED.
+// The standard extensions and the Markdown importer live in entries of their own in Carve 0.2.
 async function loadCarve() {
     try {
-        return await import('@markup-carve/carve');
+        const [core, standard, formats] = await Promise.all([
+            import('@markup-carve/carve'),
+            import('@markup-carve/carve/extensions').catch(() => ({})),
+            import('@markup-carve/carve/import').catch(() => ({})),
+        ]);
+
+        // The import entry's importDocument also reads Markdown, GFM and Djot.
+        return { ...standard, ...core, ...formats };
     } catch (error) {
         if (error.code === 'ERR_MODULE_NOT_FOUND') {
             throw new Error(
@@ -111,9 +120,7 @@ function refreshSettings() {
         console.warn(`[reveal-carve] ${pending.join(', ')} need a renderer. Add it with --js.`);
     }
 }
-const render = (text) => carve.carveToHtml(text, {
-    sections: false, ...options.carveOptions, extensions,
-});
+const render = (text) => carveRenderer(carve, extensions, { sections: false, ...options.carveOptions })(text);
 
 function buildOnce() {
     refreshSettings();
@@ -213,11 +220,15 @@ try {
                 const separators = separatorLines(text, options);
 
                 if (carveCli) {
-                    const linted = spawnSync(process.execPath, [carveCli, 'lint', '--json', file], { encoding: 'utf8' });
+                    const includeRoot = options.includeRoot ? resolve(options.includeRoot) : dirname(resolve(file));
+                    const linted = spawnSync(process.execPath, [carveCli, 'lint', '--json', '--include-root', includeRoot, file], { encoding: 'utf8' });
                     let warnings = null;
 
                     try {
-                        warnings = linted.status > 1 ? null : JSON.parse(linted.stdout);
+                        // Carve 0.2 writes { files: [{ file, diagnostics }] }, each entry with its line and column.
+                        warnings = linted.status > 1 ? null : JSON.parse(linted.stdout).files
+                            .flatMap((entry) => entry.diagnostics)
+                            .map((entry) => ({ ...entry, rule: entry.code }));
                     } catch {
                         warnings = null;
                     }
@@ -227,13 +238,26 @@ try {
                         console.log((linted.stderr || linted.stdout).trim());
                     }
 
-                    // A slide separator is not a thematic break, whatever Carve calls it.
+                    // A slide separator is not a thematic break, whatever Carve calls it. A finding in an
+                    // included file is measured against that file's own separators.
+                    const separatorsOf = (entry) => {
+                        if (!entry.file) {
+                            return separators;
+                        }
+
+                        try {
+                            return separatorLines(readFileSync(resolve(includeRoot, entry.file), 'utf8'), options);
+                        } catch {
+                            return new Set();
+                        }
+                    };
                     const kept = (warnings || []).filter((warning) =>
-                        !(warning.rule === 'thematic-break-spelling' && separators.has(warning.line)));
+                        !(warning.rule === 'thematic-break-spelling' && separatorsOf(warning).has(warning.line)));
 
                     for (const warning of kept) {
                         failed = true;
-                        console.log(`${file}:${warning.line}:${warning.column ?? 1} ${warning.rule ?? warning.code} - ${warning.message}`);
+                        const where = warning.file ? join(includeRoot, warning.file) : file;
+                        console.log(`${where}:${warning.line}:${warning.column ?? 1} ${warning.rule ?? warning.code} - ${warning.message}`);
                     }
 
                     const dir = mkdtempSync(join(tmpdir(), 'reveal-carve-check-'));
@@ -276,11 +300,10 @@ try {
                 expectedPages = buildPage({
                     source,
                     target: deck,
-                    render: (text) => carve.carveToHtml(text, {
+                    render: carveRenderer(carve, extensions, {
                         sections: false,
                         mode: 'static',
                         ...options.carveOptions,
-                        extensions,
                     }),
                     ...options,
                     // A handout cannot be clicked, so a spoiler gets its answer on
@@ -344,9 +367,10 @@ try {
         }
 
         case 'handout': {
+            const toMarkdown = await markdownWriter(carve);
             const markdown = buildHandout(
                 readSource(source, options),
-                (text) => carve.carveToMarkdown(text),
+                toMarkdown,
                 options,
             );
             writeFileSync(target, markdown, 'utf8');

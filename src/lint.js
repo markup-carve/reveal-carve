@@ -123,7 +123,7 @@ export function lintSource(source, options = {}) {
         const slide = parseSlide(chunk, config);
         const number = index + 1;
 
-        if (!/^#{1,6}\s/m.test(slide.body) && slide.body.length > 200) {
+        if (!/^(?:#{1,6}|={1,6})\s/m.test(slide.body) && slide.body.length > 200) {
             findings.push({
                 level: 'warning',
                 line: 0,

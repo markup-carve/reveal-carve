@@ -5,6 +5,22 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+Runs on the Carve 0.2 engine (carve-js `next2`, pinned by commit until 0.2 is published).
+
+### Breaking
+
+- Requires the Carve 0.2 engine: rendering goes through `render()`, includes through the 0.2 include resolver, and the browser bundle carries the standard extensions of `@markup-carve/carve/extensions`.
+- `details`, `spoiler`, `listTable`, `colorSwatch`, `semanticSpan`, `imgFence`, the navigation extensions and `glossary` have no 0.2 port yet; as defaults they are left out, and asked for by name they fail with the carve-js issue named. `smartQuotes` is the `smartTypography` option now.
+- A tab is written `::: tab "Label"`. The tabs render as 0.2 radio groups, not the 0.1 `aria` mode.
+- `handout` and the generated docs need the Carve 0.2 Markdown writer (markup-carve/carve-js#5076) and stop with an error until it lands.
+- `import` writes canonical 0.2 Carve (`=` headings, `carve fmt` spacing), so `check` passes on its output; HTML comments still become Carve comments.
+
+### Fixes
+
+- `check` passes the deck's include root to `carve lint` and filters separator hints in included files against their own separators.
+- Speaker notes are found when `carve fmt` indents `%% notes` under a list, as 0.2 does, and agendas and heading splits read `=` headings.
+
+
 ## [0.1.6] - 2026-11-12
 
 A fresh `reveal-carve init` deck passes `reveal-carve check`.

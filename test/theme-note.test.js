@@ -14,7 +14,7 @@ const muting = [...css.replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/([^{}]+)\{([^}
     .filter((selector) => !selector.includes('::'));
 
 test('the {.note} helper mutes a paragraph but not a ::: note admonition', () => {
-    const html = carve.carveToHtml('{.note}\nAside.\n\n::: note\nWatch this.\n:::\n', { sections: false });
+    const html = carve.render('{.note}\nAside.\n\n::: note\nWatch this.\n:::\n', { sections: false });
     const { document } = parseHTML(`<html><body><div class="reveal">${html}</div></body></html>`);
     const paragraph = document.querySelector('.reveal > p.note');
     const admonition = document.querySelector('aside.admonition.note');

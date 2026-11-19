@@ -178,12 +178,12 @@ In JavaScript:
 
 ```js
 import { buildPage } from '@markup-carve/reveal-carve/build';
-import { carveToHtml } from '@markup-carve/carve';
+import { render } from '@markup-carve/carve';
 
 buildPage({
     source: 'slides/chapters',
     target: 'deck.html',
-    render: (text) => carveToHtml(text),
+    render: (text) => render(text, { sections: false }),
     title: 'My deck',
 });
 ```

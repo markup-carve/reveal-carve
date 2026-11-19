@@ -145,3 +145,30 @@ test('the renderer warning counts the defaults too, not only what was asked for'
     assert.deepEqual(missingRenderers(extensionSpec(['mermaid'])), ['mermaid']);
     assert.deepEqual(missingRenderers(extensionSpec()), []);
 });
+
+test('a 0.1 extension with no Carve 0.2 port fails by name, and is left out as a default', async () => {
+    const { carve } = await import('./helpers/engine.js');
+
+    assert.throws(() => resolveExtensions(['spoiler'], carve), /"spoiler" is not available in Carve 0.2 yet \(markup-carve\/carve-js#5070\)/);
+    assert.deepEqual(resolveExtensions([{ name: 'spoiler', optional: true }], carve), []);
+});
+
+test('the 0.2 bundles render through the engine, document transforms included', async () => {
+    const { carve } = await import('./helpers/engine.js');
+    const { carveRenderer } = await import('../src/extensions.js');
+    const render = carveRenderer(carve, resolveExtensions(['tabs', 'codeGroup', 'codeCallouts'], carve), { sections: false });
+
+    assert.match(render(':::: tabs\n::: tab "A"\nx\n:::\n::::\n'), /<label class="tabs-label" for="tabs-1-0">A<\/label>.*class="tab-panel tabs-panel"/);
+    assert.match(render('::: code-group\n```sh [npm]\nnpm i\n```\n:::\n'), /class="code-group"/);
+});
+
+test('without the Carve 0.2 Markdown writer, a handout says what it waits for', async () => {
+    const { carve } = await import('./helpers/engine.js');
+    const { findMarkdownWriter, markdownWriter } = await import('../src/markdown.js');
+
+    if (await findMarkdownWriter(carve)) {
+        return;
+    }
+
+    await assert.rejects(() => markdownWriter(carve), (error) => error.code === 'writer-unavailable' && /carve-js#5076/.test(error.message));
+});

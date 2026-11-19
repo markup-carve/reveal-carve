@@ -4,7 +4,12 @@ import { mkdtempSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
-import * as carve from '@markup-carve/carve';
+import { carve } from './helpers/engine.js';
+
+import { findMarkdownWriter } from '../src/markdown.js';
+
+// Handouts are written with the Carve 0.2 Markdown writer, which the pinned engine does not have yet.
+const needsMarkdown = { skip: !(await findMarkdownWriter(carve)) && 'needs the Carve 0.2 Markdown writer (markup-carve/carve-js#5076)' };
 import { fileSystemResolver } from '@markup-carve/carve/node';
 import { readFrontmatter, mergeDeckOptions } from '../src/frontmatter.js';
 import { readRenderers, splitFrontmatter } from '../src/frontmatter-split.js';
@@ -17,7 +22,7 @@ import { setupDom, teardownDom, fakeDeck } from './helpers/dom.js';
 
 const header = '---\ntitle: Workshop\nlang: de\nreveal:\n  theme: serif\n  darkTheme: black\n  renderers: []\n---\n';
 const body = '\n# First\n\n%% minutes: 5\n\n---\n\n# Second\n';
-const render = (text) => carve.carveToHtml(text, { sections: false });
+const render = (text) => carve.render(text, { sections: false });
 const includes = { engine: carve, resolver: fileSystemResolver };
 const temporary = (t) => {
     const dir = mkdtempSync(join(tmpdir(), 'reveal-frontmatter-'));
@@ -27,15 +32,18 @@ const temporary = (t) => {
 };
 afterEach(teardownDom);
 
-test('frontmatter is removed before slides, agenda and handout are split', () => {
+test('frontmatter is removed before slides and agenda are split', () => {
     const source = header + body;
     assert.equal(renderDeck(source, render).length, 2);
     assert.equal(deckMinutes(source).slides.length, 2);
     assert.equal(deckMinutes(source).total, 5);
-    const markdown = buildHandout(source, carve.carveToMarkdown);
+    assert.deepEqual(lintSource(source), []);
+});
+
+test('frontmatter is removed before the handout is split', needsMarkdown, async () => {
+    const markdown = buildHandout(header + body, await findMarkdownWriter(carve));
     assert.match(markdown, /First/);
     assert.doesNotMatch(markdown, /Workshop|renderers|lang:/);
-    assert.deepEqual(lintSource(source), []);
 });
 
 test('YAML, JSON, CRLF and unrelated metadata are handled explicitly', () => {
@@ -170,7 +178,7 @@ test('watch rebuilds resolve metadata afresh while keeping CLI overrides', { tim
 
 test('directory lint and check accept files with deck settings', (t) => {
     const dir = temporary(t);
-    writeFileSync(join(dir, 'deck.crv'), carve.carveToCarve(header + '\n# Deck\n'));
+    writeFileSync(join(dir, 'deck.crv'), carve.format(header + '\n# Deck\n'));
     for (const verb of ['lint', 'check']) {
         const result = spawnSync(process.execPath, [join(process.cwd(), 'src/cli.js'), verb], {
             cwd: dir, encoding: 'utf8',
