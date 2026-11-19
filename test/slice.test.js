@@ -43,6 +43,42 @@ test('splits a document into slides', () => {
     assert.match(slides[1], /<p>Two<\/p>/);
 });
 
+test('splits on the canonical Carve 0.2 thematic break too', () => {
+    const slides = renderDeck('One\n\n---\n\nTwo\n\n***\n\nThree\n', render);
+
+    assert.equal(slides.length, 3);
+    assert.match(slides[2], /<p>Three<\/p>/);
+});
+
+test('keeps marked in-slide rules inside LF and CRLF decks', () => {
+    for (const newline of ['\n', '\r\n']) {
+        const source = ['One', '', '% in-slide-rule', '', '***', '', '---', '', 'Two'].join(newline);
+        const slides = renderDeck(source, render);
+
+        assert.equal(slides.length, 2, JSON.stringify(newline));
+        assert.doesNotMatch(slides[0], /in-slide-rule/);
+    }
+});
+
+test('keeps slide separators inside fenced code on their slide', () => {
+    for (const fence of ['````', '~~~~']) {
+        for (const indent of ['', '   ']) {
+            const source = ['One', '', `${indent}${fence}text`, 'hello', '***', '---', 'world', `${indent}${fence}`, '', '***', '', 'Two'].join('\n');
+            const slides = renderDeck(source, render);
+
+            assert.equal(slides.length, 2, `${indent}${fence}`);
+            assert.match(slides[0], /hello\n\*\*\*\n---\nworld/);
+        }
+    }
+});
+
+test('keeps a literal import marker inside fenced code', () => {
+    const source = ['````text', '% in-slide-rule', '', '***', '````'].join('\n');
+    const slide = renderSlide(source, render);
+
+    assert.match(slide, /% in-slide-rule\n\n\*\*\*/);
+});
+
 test('nests a vertical stack in one outer section', () => {
     const slides = renderDeck('Top\n\n--\n\nBelow\n', render);
 

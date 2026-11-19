@@ -146,11 +146,13 @@ test('the renderer warning counts the defaults too, not only what was asked for'
     assert.deepEqual(missingRenderers(extensionSpec()), []);
 });
 
-test('a 0.1 extension with no Carve 0.2 port fails by name, and is left out as a default', async () => {
+test('the 0.1 block extensions now resolve on Carve 0.2', async () => {
     const { carve } = await import('./helpers/engine.js');
 
-    assert.throws(() => resolveExtensions(['spoiler'], carve), /"spoiler" is not available in Carve 0.2 yet \(markup-carve\/carve-js#5070\)/);
-    assert.deepEqual(resolveExtensions([{ name: 'spoiler', optional: true }], carve), []);
+    for (const name of ['details', 'spoiler', 'listTable', 'colorSwatch', 'semanticSpan']) {
+        assert.equal(resolveExtensions([name], carve).length, 1, name);
+    }
+    assert.throws(() => resolveExtensions(['imgFence'], carve), /markup-carve\/carve-js#5062/);
 });
 
 test('the 0.2 bundles render through the engine, document transforms included', async () => {

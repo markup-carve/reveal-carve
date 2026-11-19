@@ -14,6 +14,9 @@ npm install @markup-carve/reveal-carve @markup-carve/carve reveal.js
 
 Create a starter deck with `npx reveal-carve init talk`.
 
+Separate slides with `***` or `---` on its own line. Carve 0.2 writes
+thematic breaks as `***` (U-044), so upgraded decks keep their slide boundaries.
+
 ## Documentation
 
 - [Carve documentation](https://markup-carve.github.io/carve/)
