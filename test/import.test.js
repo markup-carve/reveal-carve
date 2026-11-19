@@ -56,8 +56,10 @@ test('the converted deck renders the same slides, notes and attributes', () => {
     const { source } = importMarkdownDeck(readFileSync(fixture, 'utf8'), { engine: carve });
     const deck = renderDeck(source, render);
 
+    // U-044: an imported in-slide rule stays on its slide under the host marker.
     assert.equal(deck.length, 2);
-    assert.match(deck[0], /<hr>/, 'an in-slide rule became a slide separator');
+    assert.match(deck[0], /<hr>/);
+    assert.doesNotMatch(deck[0], /in-slide-rule/);
     assert.match(deck[0], /<aside class="notes">\n<p>Say <em>hello<\/em> first\.<\/p>/);
     assert.match(deck[1], /<section data-background="#ff0000">\n<h2 id="Second">/);
     assert.match(deck[1], /<code data-line-numbers="1\|2" class="language-js">/);
@@ -88,7 +90,7 @@ test('a --- line inside code stays code, and is reported as a separator', () => 
     const { source, warnings } = importMarkdownDeck(markdown, { engine: carve, separator: '^===$' });
 
     // C2-W-035
-    assert.equal(source, '= Rules\n\n***\n\n```yaml\n---\nkey: value\n```\n');
+    assert.equal(source, '= Rules\n\n% in-slide-rule\n\n***\n\n```yaml\n---\nkey: value\n```\n');
     assert.deepEqual(warnings, ['slide 1: a converted line reads as a slide separator; check the slide boundaries']);
 });
 

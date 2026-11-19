@@ -273,14 +273,18 @@ function convertBlock(markdown, number, engine, warnings) {
 
         return steps ? `${fence[1]}${steps[1]}` : line;
     });
-    // Writers before carve#4973 spell a thematic break `---`, which this package
-    // would read as a slide separator. `***` renders the same rule. Code keeps its lines.
+    // U-044 spells a thematic break `***`; both it and `---` are slide
+    // separators. Mark an imported rule with a Carve comment so the deck slicer
+    // keeps it on its slide without changing the rule's HTML.
     // The 0.2 importer keeps an HTML comment as a raw HTML block; a deck says it as a Carve comment.
     const imported = engine.importDocument(stripped.join('\n'), { from: 'gfm' }).source
         .replace(/^```=html\n<!--\s*([^\n]*?)\s*-->\n```$/gm, '%% $1');
     const convertedLines = imported.trim().split('\n');
     const fenced = fencedLines(convertedLines);
-    const converted = convertedLines.map((line, index) => (line === '---' && !fenced.has(index) ? '***' : line)).join('\n');
+    const converted = convertedLines.map((line, index) => (
+        (line === '---' || line === '***') && !fenced.has(index)
+            ? '% in-slide-rule\n\n***' : line
+    )).join('\n');
     const carve = moveLineSteps(markdownLines, converted, number, warnings);
 
     for (const separator of [DEFAULTS.separator, DEFAULTS.verticalSeparator]) {
