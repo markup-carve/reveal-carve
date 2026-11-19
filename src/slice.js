@@ -59,6 +59,10 @@ export function splitSlidesSource(source, separator) {
         if (fenceIndex < fenced.length && match.index < fenced[fenceIndex][1] && end > fenced[fenceIndex][0]) {
             continue;
         }
+        const before = source.slice(Math.max(0, match.index - 40), match.index);
+        if (/(?:^|\r?\n)% in-slide-rule[ \t]*\r?\n?\r?$/.test(before)) {
+            continue;
+        }
 
         chunks.push(source.slice(start, match.index));
         start = end;
@@ -70,7 +74,36 @@ export function splitSlidesSource(source, separator) {
 }
 
 export function stripInSlideRuleMarkers(source) {
-    return source.replace(/^% in-slide-rule[ \t]*(?:\r?\n(?:\r?\n)?)?/gm, '');
+    const lines = source.split('\n');
+    const output = [];
+    let open = null;
+
+    for (let index = 0; index < lines.length; index += 1) {
+        const line = lines[index];
+        const fence = /^ {0,3}(`{3,}|~{3,})(.*)$/.exec(line.replace(/\r$/, ''));
+        if (open) {
+            output.push(line);
+            if (fence && fence[1][0] === open[0] && fence[1].length >= open.length && !fence[2].trim()) {
+                open = null;
+            }
+            continue;
+        }
+        if (fence) {
+            open = fence[1];
+            output.push(line);
+            continue;
+        }
+        const marker = /^% in-slide-rule[ \t]*\r?$/.test(line);
+        const blank = /^\r?$/.test(lines[index + 1] || '');
+        const rule = /^\*\*\*\r?$/.test(lines[index + (blank ? 2 : 1)] || '');
+        if (marker && rule) {
+            index += blank ? 1 : 0;
+            continue;
+        }
+        output.push(line);
+    }
+
+    return output.join('\n');
 }
 
 /**

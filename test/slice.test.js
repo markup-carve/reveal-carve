@@ -72,6 +72,13 @@ test('keeps slide separators inside fenced code on their slide', () => {
     }
 });
 
+test('keeps a literal import marker inside fenced code', () => {
+    const source = ['````text', '% in-slide-rule', '', '***', '````'].join('\n');
+    const slide = renderSlide(source, render);
+
+    assert.match(slide, /% in-slide-rule\n\n\*\*\*/);
+});
+
 test('nests a vertical stack in one outer section', () => {
     const slides = renderDeck('Top\n\n--\n\nBelow\n', render);
 

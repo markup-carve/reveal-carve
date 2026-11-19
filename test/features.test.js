@@ -206,6 +206,13 @@ test('handout omits imported in-slide rule markers', () => {
     assert.match(markdown, /One\n\n\*\*\*/);
 });
 
+test('handout keeps a literal marker inside fenced code', () => {
+    const source = ['````text', '% in-slide-rule', '', '***', '````'].join('\n');
+    const markdown = buildHandout(source, (text) => text.trim());
+
+    assert.match(markdown, /% in-slide-rule\n\n\*\*\*/);
+});
+
 test('handout can leave the notes out', () => {
     const markdown = buildHandout('# Title\n\n%% notes\n\nSecret\n', (text) => text.trim(), {
         notes: false,
