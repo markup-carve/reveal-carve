@@ -117,12 +117,14 @@ and only some of the 0.1 ones have a 0.2 port so far:
 - Ported: `tabs`, `codeGroup`, `codeCallouts`, `mathBlock`, `mermaid`, `chart`,
   `vegaLite`, `d2`, `graphviz`, `plantuml`, `wavedrom` and `abc`, from
   `@markup-carve/carve` and `@markup-carve/carve/extensions`.
-- Not ported yet: `details`, `spoiler`, `listTable`, `colorSwatch`,
-  `semanticSpan` and `imgFence` (markup-carve/carve-js#5070);
-  `tableOfContents`, `headingPermalinks`, `headingNumbers` and `externalLinks`
+- Not ported yet: `tableOfContents`, `headingPermalinks`,
+  `headingNumbers` and `externalLinks`
   (markup-carve/carve-js#5073); `glossary` (markup-carve/carve-js#5071). As a
   default they are left out and their constructs render as core Carve; a deck
   that asks for one by name fails with the issue named.
+- `details`, `spoiler`, `listTable`, `colorSwatch`, `semanticSpan`, and
+  `imgFence` are available in the pinned engine. `imgFence` recognizes `img`
+  and `image` fences with sanitized SVG content.
 - `smartQuotes` has no 0.2 port; smart typography is the `smartTypography`
   render option.
 - A tab is written `::: tab "Label"`; the 0.1 `[Label]` form is now a group
