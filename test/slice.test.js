@@ -50,6 +50,16 @@ test('splits on the canonical Carve 0.2 thematic break too', () => {
     assert.match(slides[2], /<p>Three<\/p>/);
 });
 
+test('keeps marked in-slide rules inside LF and CRLF decks', () => {
+    for (const newline of ['\n', '\r\n']) {
+        const source = ['One', '', '% in-slide-rule', '', '***', '', '---', '', 'Two'].join(newline);
+        const slides = renderDeck(source, render);
+
+        assert.equal(slides.length, 2, JSON.stringify(newline));
+        assert.doesNotMatch(slides[0], /in-slide-rule/);
+    }
+});
+
 test('nests a vertical stack in one outer section', () => {
     const slides = renderDeck('Top\n\n--\n\nBelow\n', render);
 

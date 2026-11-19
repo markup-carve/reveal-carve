@@ -11,7 +11,7 @@ import { splitFrontmatter } from './frontmatter-split.js';
 export const DEFAULTS = {
     // An imported in-slide rule carries a canonical Carve comment immediately
     // above the separator line. The lookbehind keeps that rule on its slide.
-    separator: '(?<!% in-slide-rule\\n)\\r?\\n(?:---|\\*\\*\\*)\\r?\\n',
+    separator: '(?<!% in-slide-rule\\n)(?<!% in-slide-rule\\r\\n)\\r?\\n(?:---|\\*\\*\\*)\\r?\\n',
     verticalSeparator: '\\r?\\n--\\r?\\n',
     classDirective: '^%%\\s*class:\\s*(.+)$',
     attrDirective: '^%%\\s*attr:\\s*(.+)$',
@@ -446,7 +446,7 @@ export function renderSlide(source, render, options = {}) {
 
     const clean = (text) => {
         // The import marker only guides slide splitting; it is not deck content.
-        let html = unwrapSections(render(text.replace(/^% in-slide-rule[ \t]*$/gm, '')));
+        let html = unwrapSections(render(text.replace(/^% in-slide-rule[ \t]*\r?$/gm, '')));
 
         if (config.moveCodeAttributes !== false) {
             html = moveCodeAttributes(html);
