@@ -221,10 +221,25 @@ export function carveRenderer(engine, bundles, options = {}) {
     };
 
     if (transforms.length && typeof engine.renderWithDocumentTransforms === 'function') {
-        return (text) => engine.renderWithDocumentTransforms(text, transforms, renderOptions).html;
+        return (text) => themeTabs(engine.renderWithDocumentTransforms(text, transforms, renderOptions).html);
     }
 
-    return (text) => engine.render(text, renderOptions);
+    return (text) => themeTabs(engine.render(text, renderOptions));
+}
+
+/**
+ * The 0.2 tabs are radio groups without classes; the theme styles radio tabs by
+ * `tabs-radio`, `tabs-label` and `tabs-panel`, so those are added.
+ */
+export function themeTabs(html) {
+    if (!html.includes('class="tabs"')) {
+        return html;
+    }
+
+    return html
+        .replace(/<input type="radio" name="(tabs-\d+)"/g, '<input type="radio" class="tabs-radio" name="$1"')
+        .replace(/<label for="(tabs-\d+-\d+)">/g, '<label class="tabs-label" for="$1">')
+        .replace(/<div class="tab-panel"/g, '<div class="tab-panel tabs-panel"');
 }
 
 /**

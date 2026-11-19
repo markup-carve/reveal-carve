@@ -10,7 +10,7 @@
   <li>Tabs</li>
   <li>Code groups</li>
   <li>Details, folded away</li>
-  <li>A table with block content</li>
+  <li>A table of commands</li>
   <li>Spoilers and swatches</li>
   <li>Diffs and line numbers</li>
   <li>Code with callouts</li>
@@ -24,11 +24,11 @@
 
 <section>
 <h2 id="Tabs">Tabs</h2>
-<div class="tabs" role="group" aria-label="Tabs"><input type="radio" name="tabs-1" id="tabs-1-0" checked><label for="tabs-1-0">Symptom</label><input type="radio" name="tabs-1" id="tabs-1-1"><label for="tabs-1-1">Cause</label><input type="radio" name="tabs-1" id="tabs-1-2"><label for="tabs-1-2">Fix</label><div class="tab-panel" role="group" aria-label="Symptom"><p>The upgrade runs, and half the finders are gone.</p>
+<div class="tabs" role="group" aria-label="Tabs"><input type="radio" class="tabs-radio" name="tabs-1" id="tabs-1-0" checked><label class="tabs-label" for="tabs-1-0">Symptom</label><input type="radio" class="tabs-radio" name="tabs-1" id="tabs-1-1"><label class="tabs-label" for="tabs-1-1">Cause</label><input type="radio" class="tabs-radio" name="tabs-1" id="tabs-1-2"><label class="tabs-label" for="tabs-1-2">Fix</label><div class="tab-panel tabs-panel" role="group" aria-label="Symptom"><p>The upgrade runs, and half the finders are gone.</p>
 <ul>
   <li>No error, no exit code</li>
   <li>Only the tables with a behavior</li>
-</ul></div><div class="tab-panel" role="group" aria-label="Cause"><table>
+</ul></div><div class="tab-panel tabs-panel" role="group" aria-label="Cause"><table>
   <thead>
     <tr><th scope="col">What ran</th><th scope="col">Against</th></tr>
   </thead>
@@ -36,7 +36,7 @@
     <tr><td>The rule set</td><td>4.5 sources</td></tr>
     <tr><td>The finder rename</td><td>Nothing it matched</td></tr>
   </tbody>
-</table></div><div class="tab-panel" role="group" aria-label="Fix"><ol>
+</table></div><div class="tab-panel tabs-panel" role="group" aria-label="Fix"><ol>
   <li>Bump the dependency</li>
   <li>Run the rules again</li>
   <li>Re-run the touched tests</li>
@@ -71,38 +71,16 @@ and down switch tabs, left and right stay with the deck.</p>
 </section>
 
 <section>
-<h2 id="A-table-with-block-content">A table with block content</h2>
-<div class="list-table">
-  <ul>
-    <li>
-      <ul>
-        <li><strong>Step</strong></li>
-        <li><strong>Command</strong></li>
-        <li><strong>Guards it</strong></li>
-      </ul>
-    </li>
-    <li>
-      <ul>
-        <li><p>Deprecations</p></li>
-        <li>
-          <pre><code class="language-bash">bin/cake upgrade rector --rules cakephp45 src
-</code></pre>
-        </li>
-        <li><p>Tests</p></li>
-      </ul>
-    </li>
-    <li>
-      <ul>
-        <li><p>The jump</p></li>
-        <li>
-          <pre><code class="language-bash">composer update -W
-</code></pre>
-        </li>
-        <li><p>Tests, PHPStan</p></li>
-      </ul>
-    </li>
-  </ul>
-</div>
+<h2 id="A-table-of-commands">A table of commands</h2>
+<table>
+  <thead>
+    <tr><th scope="col">Step</th><th scope="col">Command</th><th scope="col">Guards it</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Deprecations</td><td><code>bin/cake upgrade rector --rules cakephp45 src</code></td><td>Tests</td></tr>
+    <tr><td>The jump</td><td><code>composer update -W</code></td><td>Tests, PHPStan</td></tr>
+  </tbody>
+</table>
 </section>
 
 <section>

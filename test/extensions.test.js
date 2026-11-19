@@ -158,7 +158,7 @@ test('the 0.2 bundles render through the engine, document transforms included', 
     const { carveRenderer } = await import('../src/extensions.js');
     const render = carveRenderer(carve, resolveExtensions(['tabs', 'codeGroup', 'codeCallouts'], carve), { sections: false });
 
-    assert.match(render(':::: tabs\n::: tab "A"\nx\n:::\n::::\n'), /<label for="tabs-1-0">A<\/label>/);
+    assert.match(render(':::: tabs\n::: tab "A"\nx\n:::\n::::\n'), /<label class="tabs-label" for="tabs-1-0">A<\/label>.*class="tab-panel tabs-panel"/);
     assert.match(render('::: code-group\n```sh [npm]\nnpm i\n```\n:::\n'), /class="code-group"/);
 });
 

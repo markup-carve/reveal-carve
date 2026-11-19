@@ -82,29 +82,11 @@ Useful for the question you only sometimes get asked.
 
 ---
 
-== A table with block content
+== A table of commands
 
-::: list-table
-- - *Step*
-  - *Command*
-  - *Guards it*
-
-- - Deprecations
-
-  - ```bash
-    bin/cake upgrade rector --rules cakephp45 src
-    ```
-
-  - Tests
-
-- - The jump
-
-  - ```bash
-    composer update -W
-    ```
-
-  - Tests, PHPStan
-:::
+|= Step |= Command |= Guards it |
+| Deprecations | `bin/cake upgrade rector --rules cakephp45 src` | Tests |
+| The jump | `composer update -W` | Tests, PHPStan |
 
 ---
 
