@@ -60,6 +60,16 @@ test('keeps marked in-slide rules inside LF and CRLF decks', () => {
     }
 });
 
+test('keeps slide separators inside fenced code on their slide', () => {
+    for (const fence of ['````', '~~~~']) {
+        const source = ['One', '', `${fence}text`, 'hello', '***', '---', 'world', fence, '', '***', '', 'Two'].join('\n');
+        const slides = renderDeck(source, render);
+
+        assert.equal(slides.length, 2, fence);
+        assert.match(slides[0], /hello\n\*\*\*\n---\nworld/);
+    }
+});
+
 test('nests a vertical stack in one outer section', () => {
     const slides = renderDeck('Top\n\n--\n\nBelow\n', render);
 

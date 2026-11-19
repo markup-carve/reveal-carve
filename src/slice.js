@@ -27,6 +27,48 @@ export const DEFAULTS = {
     moveCodeAttributes: true,
 };
 
+/** Split on deck separators only when their source span is outside code fences. */
+export function splitSlidesSource(source, separator) {
+    const fenced = [];
+    let open = null;
+    let offset = 0;
+
+    for (const line of source.split('\n')) {
+        const text = line.replace(/\r$/, '');
+        const match = /^(`{3,}|~{3,})(.*)$/.exec(text);
+        if (open) {
+            fenced.push([offset, offset + text.length]);
+            if (match && match[1][0] === open[0] && match[1].length >= open.length && !match[2].trim()) {
+                open = null;
+            }
+        } else if (match) {
+            open = match[1];
+            fenced.push([offset, offset + text.length]);
+        }
+        offset += line.length + 1;
+    }
+
+    const chunks = [];
+    let start = 0;
+    let fenceIndex = 0;
+    for (const match of source.matchAll(new RegExp(separator, 'gm'))) {
+        const end = match.index + match[0].length;
+        while (fenceIndex < fenced.length && fenced[fenceIndex][1] <= match.index) {
+            fenceIndex += 1;
+        }
+        if (fenceIndex < fenced.length && match.index < fenced[fenceIndex][1] && end > fenced[fenceIndex][0]) {
+            continue;
+        }
+
+        chunks.push(source.slice(start, match.index));
+        start = end;
+    }
+
+    chunks.push(source.slice(start));
+
+    return chunks;
+}
+
 /**
  * Carve wraps every heading in `<section id="...">`. reveal.js reads a nested
  * `<section>` as a slide, so those wrappers have to go before the rendered HTML
@@ -572,8 +614,7 @@ export function headingOf(source, options = {}) {
 export function deckMinutes(source, options = {}) {
     source = splitFrontmatter(source).source;
     const config = { ...DEFAULTS, ...options };
-    const slides = source
-        .split(new RegExp(config.separator, 'm'))
+    const slides = splitSlidesSource(source, config.separator)
         .flatMap((chunk) => chunk.split(new RegExp(config.verticalSeparator, 'm')))
         .filter((chunk) => chunk.trim());
 
@@ -729,7 +770,7 @@ export function renderDeck(source, render, options = {}) {
         : extractFootnotes(source);
     const chunks = config.splitAtHeading
         ? splitAtHeading(body, config.splitAtHeading)
-        : body.split(new RegExp(config.separator, 'm'));
+        : splitSlidesSource(body, config.separator);
     const vertical = new RegExp(config.verticalSeparator, 'm');
 
     return chunks
