@@ -98,9 +98,40 @@ export function extensionSpec(spec, without = []) {
 }
 
 /**
+ * 0.1 extensions with no Carve 0.2 port yet, and the carve-js change that brings each back.
+ * A deck that asks for one by name fails with that pointer; as a default it is left out.
+ */
+export const PENDING_IN_0_2 = {
+    details: 'markup-carve/carve-js#5070',
+    spoiler: 'markup-carve/carve-js#5070',
+    listTable: 'markup-carve/carve-js#5070',
+    colorSwatch: 'markup-carve/carve-js#5070',
+    semanticSpan: 'markup-carve/carve-js#5070',
+    imgFence: 'markup-carve/carve-js#5070',
+    tableOfContents: 'markup-carve/carve-js#5073',
+    headingPermalinks: 'markup-carve/carve-js#5073',
+    headingNumbers: 'markup-carve/carve-js#5073',
+    externalLinks: 'markup-carve/carve-js#5073',
+    glossary: 'markup-carve/carve-js#5071',
+    smartQuotes: 'no 0.2 port; smart typography is the smartTypography render option',
+};
+
+/**
+ * The 0.2 engine ships tabs as definitions plus a renderer rather than a factory.
+ */
+function builtinBundle(name, engine) {
+    if (name === 'tabs' && engine?.tabsExtensions && engine?.tabsRenderer) {
+        return { extensions: engine.tabsExtensions, renderers: { 'carve.tabs': engine.tabsRenderer } };
+    }
+
+    return null;
+}
+
+/**
  * @param {Array<string|Function|{name: string, options?: object}>} spec
- * @param {object} engine The Carve module or browser global
- * @returns {Array<object>} extension instances for `carveToHtml`
+ * @param {object} engine The Carve module or browser global, with the standard extensions
+ *   of `@markup-carve/carve/extensions` merged in
+ * @returns {Array<object>} extension bundles (`{ extensions, renderers, transforms? }`)
  */
 export function resolveExtensions(spec, engine) {
     if (!spec || !spec.length) {
@@ -118,11 +149,24 @@ export function resolveExtensions(spec, engine) {
 
         const name = canonicalName(typeof entry === 'string' ? entry : entry.name);
         const options = typeof entry === 'object' ? entry.options || {} : {};
+        const builtin = builtinBundle(name, engine);
+
+        if (builtin) {
+            return builtin;
+        }
+
         const factory = engine?.[name];
 
         if (typeof factory !== 'function') {
             if (entry?.optional) {
                 return null;
+            }
+
+            if (PENDING_IN_0_2[name]) {
+                throw new Error(
+                    `reveal-carve: the Carve extension "${name}" is not available in Carve 0.2 yet `
+                    + `(${PENDING_IN_0_2[name]}). Leave it out of the deck's extensions for now.`,
+                );
             }
 
             throw new Error(
@@ -133,6 +177,54 @@ export function resolveExtensions(spec, engine) {
 
         return factory(options);
     }).filter(Boolean);
+}
+
+/**
+ * Render options for resolved bundles: the definitions, the renderers and the document transforms.
+ *
+ * @param {Array<object>} bundles from `resolveExtensions`
+ */
+export function bundleOptions(bundles) {
+    const extensions = [];
+    const renderers = {};
+    const transforms = [];
+
+    for (const bundle of bundles || []) {
+        extensions.push(...(bundle.extensions || []));
+        Object.assign(renderers, bundle.renderers || {});
+        transforms.push(...(bundle.transforms || []));
+    }
+
+    return { extensions, renderers, transforms };
+}
+
+/**
+ * A render function over the Carve 0.2 engine (`render`, `renderWithDocumentTransforms`).
+ *
+ * @param {object} engine
+ * @param {Array<object>} bundles from `resolveExtensions`
+ * @param {object} [options] Carve render options
+ * @returns {(text: string) => string}
+ */
+export function carveRenderer(engine, bundles, options = {}) {
+    if (typeof engine?.render !== 'function') {
+        throw new Error(
+            'reveal-carve: this Carve engine has no render(). reveal-carve on next2 needs the Carve 0.2 engine.',
+        );
+    }
+
+    const { extensions, renderers, transforms } = bundleOptions(bundles);
+    const renderOptions = {
+        ...options,
+        extensions: [...(options.extensions || []), ...extensions],
+        renderers: { ...(options.renderers || {}), ...renderers },
+    };
+
+    if (transforms.length && typeof engine.renderWithDocumentTransforms === 'function') {
+        return (text) => engine.renderWithDocumentTransforms(text, transforms, renderOptions).html;
+    }
+
+    return (text) => engine.render(text, renderOptions);
 }
 
 /**

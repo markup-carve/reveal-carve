@@ -1,4 +1,4 @@
-# Deck frontmatter
+= Deck frontmatter
 
 A single entry file can hold the settings needed to render a deck. Metadata is
 removed before slide splitting, so its fences do not become slide boundaries.
@@ -20,7 +20,7 @@ reveal:
 Make time for practice.
 ```
 
-## Settings
+== Settings
 
 |= Setting |= Meaning |
 | `title` | HTML document title; it does not insert a heading |
@@ -41,7 +41,7 @@ the file; an unclosed fence is treated as ordinary source, as in Carve. A block
 containing only YAML comments is rejected because slide headings can look like
 comments. Remove the opening separator if the block is slide content.
 
-## Overrides and commands
+== Overrides and commands
 
 Explicit CLI or API options override metadata, which overrides defaults. Lists
 replace rather than append: `--with katex` replaces a declared renderer list,
@@ -68,7 +68,7 @@ the project if the deck needs them. Asset paths, custom CSS/JS, output filenames
 and server ports remain CLI/API options. Dark theme helpers still need
 `--dark-css` when custom helpers are used.
 
-## Chapters
+== Chapters
 
 Directory sources retain their existing behavior. They cannot supply deck-wide
 settings through a chapter's frontmatter. Directory lint and check validate each
@@ -93,7 +93,7 @@ override it. Per-slide frontmatter is not supported; use the existing slide
 directives for classes, notes and timing. The training starter uses this entry
 file structure while keeping its asset paths and commands in `deck.mjs`.
 
-## Browser plugin and JavaScript API
+== Browser plugin and JavaScript API
 
 The browser plugin removes frontmatter from each loaded Carve source. Its host
 page keeps control of the document title, language and theme stylesheets; those

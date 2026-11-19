@@ -1,6 +1,6 @@
 %% class: center
 
-# Everything Carve can put on a slide
+= Everything Carve can put on a slide
 
 Diagrams, charts, math, real SVG, and the parts of the language a deck actually uses.
 
@@ -9,14 +9,13 @@ Diagrams, charts, math, real SVG, and the parts of the language a deck actually 
 Every slide after this one is rendered from Carve source with no raw HTML anywhere.
 
 ---
-
 %% toc
 
-## What is in here
+== What is in here
 
 ---
 
-## Mermaid, drawn on the slide
+== Mermaid, drawn on the slide
 
 ```mermaid
 graph LR
@@ -33,7 +32,7 @@ graph LR
 
 ---
 
-## A sequence, same idea
+== A sequence, same idea
 
 ```mermaid
 sequenceDiagram
@@ -45,7 +44,7 @@ sequenceDiagram
 
 ---
 
-## A chart from data in the source
+== A chart from data in the source
 
 ```chart
 {
@@ -72,7 +71,7 @@ sequenceDiagram
 
 ---
 
-## Real SVG, inline in the source
+== Real SVG, inline in the source
 
 ```svg
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 90"
@@ -91,7 +90,7 @@ sequenceDiagram
 
 ---
 
-## Math
+== Math
 
 ```math
 t_{upgrade} = \sum_{i=1}^{n} \left( c_i \cdot d_i \right) + r
@@ -104,7 +103,7 @@ t_{upgrade} = \sum_{i=1}^{n} \left( c_i \cdot d_i \right) + r
 
 ---
 
-## Footnotes and definitions
+== Footnotes and definitions
 
 CakePHP 5 removed every deprecation that was live in 4.5[^1].
 
@@ -115,7 +114,7 @@ CakePHP 5 removed every deprecation that was live in 4.5[^1].
 
 ---
 
-## Task lists and admonitions
+== Task lists and admonitions
 
 - [x] Tests green on 4.5
 - [x] Deprecations resolved
@@ -128,17 +127,17 @@ Run the upgrade tool *before* bumping the dependency. Afterwards it cannot resol
 
 ---
 
-## The small type
+== The small type
 
 Press [Ctrl]{kbd} then [S]{kbd} to open the speaker view. [HTML]{abbr="HyperText Markup Language"} is rendered as an abbreviation.
 
-Text can be =highlighted=, struck ~through~, raised to x{^2^} or lowered to H{,2,}O.
+Text can be {=highlighted=}, struck {~through~}, raised to x{^2^} or lowered to H{,2,}O.
 
 Brand red is :color[#d33c43], the muted tone is :color[#6b7280].
 
 ---
 
-## Quotes and tables
+== Quotes and tables
 
 > The slides are the handout, and that is the problem.
 > :cite[Every training feedback form, ever]
@@ -150,16 +149,13 @@ Brand red is :color[#d33c43], the muted tone is :color[#6b7280].
 | Lint | style only | structural |
 
 ---
-
 %% class: center
 
-## All of it from one file
+== All of it from one file
 
-{.big}
-:::
+::: big
 No raw HTML on any slide.
 :::
-
 %% notes
 
 Point out that the same source produced the handout linked in the footer.

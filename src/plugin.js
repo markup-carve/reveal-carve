@@ -21,7 +21,7 @@
 import { readRenderers, splitFrontmatter } from './frontmatter-split.js';
 import { managedRenderers } from './renderer-runtime.js';
 import { renderDeck, DEFAULTS } from './slice.js';
-import { extensionSpec, missingRenderers, resolveExtensions } from './extensions.js';
+import { carveRenderer, extensionSpec, missingRenderers, resolveExtensions } from './extensions.js';
 import { setupTabs } from './tabs.js';
 import { setupTimer } from './timer.js';
 import { registerCarveLanguages } from './highlight.js';
@@ -95,10 +95,10 @@ function rendererFrom(config) {
 
     const engine = config.carve || (typeof window !== 'undefined' ? window.carve : undefined);
 
-    if (!engine || typeof engine.carveToHtml !== 'function') {
+    if (!engine || typeof engine.render !== 'function') {
         throw new Error(
-            'reveal-carve: no Carve engine found. Load the @markup-carve/carve browser '
-            + 'bundle before this plugin, or pass { carve } / { render } in the plugin options.',
+            'reveal-carve: no Carve engine found (the Carve 0.2 engine, with render()). Load the @markup-carve/carve '
+            + 'browser bundle before this plugin, or pass { carve } / { render } in the plugin options.',
         );
     }
 
@@ -112,11 +112,7 @@ function rendererFrom(config) {
     const requested = config.extensions === false ? false : [...(config.extensions || []),
         ...(config.renderers || []).map((name) => name === 'katex' ? 'mathBlock' : name)];
     const spec = extensionSpec(requested, config.withoutExtensions);
-    const extensions = resolveExtensions(spec, engine);
-
-    if (extensions.length) {
-        renderOptions.extensions = [...(renderOptions.extensions || []), ...extensions];
-    }
+    const bundles = resolveExtensions(spec, engine);
 
     const managed = (config.renderers || []).map((name) => name === 'katex' ? 'mathBlock' : name);
     const pending = missingRenderers(spec).filter((name) => !managed.includes(name));
@@ -127,7 +123,7 @@ function rendererFrom(config) {
         );
     }
 
-    return (text) => engine.carveToHtml(text, renderOptions);
+    return carveRenderer(engine, bundles, renderOptions);
 }
 
 // Attributes that configure this plugin rather than the slide, so they are not

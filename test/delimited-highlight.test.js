@@ -11,7 +11,7 @@ import { parseHTML } from 'linkedom';
 import { buildPage } from '../src/build.js';
 
 const source = '# CSV\n\n```csv\nname,value\na,b\n```\n';
-const render = (text) => carve.carveToHtml(text, { sections: false });
+const render = (text) => carve.render(text, { sections: false });
 
 async function revealHighlighter(window) {
     globalThis.window = window;

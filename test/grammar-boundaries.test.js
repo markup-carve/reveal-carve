@@ -19,7 +19,7 @@ async function highlighter() {
 }
 
 function highlighted(source, hljs) {
-    const html = carve.carveToHtml('```carve\n' + source + '```\n', { sections: false });
+    const html = carve.render('```carve\n' + source + '```\n', { sections: false });
     const { window } = parseHTML(`<html><head></head><body>${html}</body></html>`);
     const code = window.document.querySelector('code.language-carve');
     assert.ok(code);
