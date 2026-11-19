@@ -69,6 +69,10 @@ export function splitSlidesSource(source, separator) {
     return chunks;
 }
 
+export function stripInSlideRuleMarkers(source) {
+    return source.replace(/^% in-slide-rule[ \t]*(?:\r?\n(?:\r?\n)?)?/gm, '');
+}
+
 /**
  * Carve wraps every heading in `<section id="...">`. reveal.js reads a nested
  * `<section>` as a slide, so those wrappers have to go before the rendered HTML
@@ -488,7 +492,7 @@ export function renderSlide(source, render, options = {}) {
 
     const clean = (text) => {
         // The import marker only guides slide splitting; it is not deck content.
-        let html = unwrapSections(render(text.replace(/^% in-slide-rule[ \t]*\r?$/gm, '')));
+        let html = unwrapSections(render(stripInSlideRuleMarkers(text)));
 
         if (config.moveCodeAttributes !== false) {
             html = moveCodeAttributes(html);

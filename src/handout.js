@@ -8,7 +8,7 @@
 
 import { splitFrontmatter } from './frontmatter-split.js';
 
-import { asListItemText, chapterTitles, DEFAULTS, deckMinutes, parseSlide, splitSlidesSource } from './slice.js';
+import { asListItemText, chapterTitles, DEFAULTS, deckMinutes, parseSlide, splitSlidesSource, stripInSlideRuleMarkers } from './slice.js';
 
 /**
  * @param {string} source Carve source of a whole deck
@@ -65,7 +65,7 @@ export function buildHandout(source, toMarkdown, options = {}) {
             const parts = [];
 
             if (slide.body) {
-                parts.push(toMarkdown(slide.body).trim());
+                parts.push(toMarkdown(stripInSlideRuleMarkers(slide.body)).trim());
             }
 
             if (slide.toc) {
@@ -77,7 +77,7 @@ export function buildHandout(source, toMarkdown, options = {}) {
             }
 
             if (includeNotes && slide.notes) {
-                const notes = toMarkdown(slide.notes)
+                const notes = toMarkdown(stripInSlideRuleMarkers(slide.notes))
                     .trim()
                     .split('\n')
                     .map((line) => (line ? `> ${line}` : '>'))
