@@ -9,11 +9,14 @@
 import { splitFrontmatter } from './frontmatter-split.js';
 
 export const DEFAULTS = {
-    separator: '\\r?\\n---\\r?\\n',
+    // An imported in-slide rule carries a canonical Carve comment immediately
+    // above the separator line. The lookbehind keeps that rule on its slide.
+    separator: '(?<!% in-slide-rule\\n)(?<!% in-slide-rule\\r\\n)\\r?\\n(?:---|\\*\\*\\*)\\r?\\n',
     verticalSeparator: '\\r?\\n--\\r?\\n',
     classDirective: '^%%\\s*class:\\s*(.+)$',
     attrDirective: '^%%\\s*attr:\\s*(.+)$',
-    notesDirective: '^%%\\s*notes\\s*$',
+    // Indented too: Carve 0.2 hands a comment below a list to its last item, so `carve fmt` indents it.
+    notesDirective: '^[ \\t]*%%\\s*notes\\s*$',
     fragmentDirective: '^%%\\s*fragments\\s*$',
     animateDirective: '^%%\\s*animate\\s*$',
     minutesDirective: '^%%\\s*minutes:\\s*(\\d+)\\s*$',
@@ -23,6 +26,85 @@ export const DEFAULTS = {
     splitAtHeading: 0,
     moveCodeAttributes: true,
 };
+
+/** Split on deck separators only when their source span is outside code fences. */
+export function splitSlidesSource(source, separator) {
+    const fenced = [];
+    let open = null;
+    let offset = 0;
+
+    for (const line of source.split('\n')) {
+        const text = line.replace(/\r$/, '');
+        const match = /^ {0,3}(`{3,}|~{3,})(.*)$/.exec(text);
+        if (open) {
+            fenced.push([offset, offset + text.length]);
+            if (match && match[1][0] === open[0] && match[1].length >= open.length && !match[2].trim()) {
+                open = null;
+            }
+        } else if (match) {
+            open = match[1];
+            fenced.push([offset, offset + text.length]);
+        }
+        offset += line.length + 1;
+    }
+
+    const chunks = [];
+    let start = 0;
+    let fenceIndex = 0;
+    for (const match of source.matchAll(new RegExp(separator, 'gm'))) {
+        const end = match.index + match[0].length;
+        while (fenceIndex < fenced.length && fenced[fenceIndex][1] <= match.index) {
+            fenceIndex += 1;
+        }
+        if (fenceIndex < fenced.length && match.index < fenced[fenceIndex][1] && end > fenced[fenceIndex][0]) {
+            continue;
+        }
+        const before = source.slice(Math.max(0, match.index - 40), match.index);
+        if (/(?:^|\r?\n)% in-slide-rule[ \t]*\r?\n?\r?$/.test(before)) {
+            continue;
+        }
+
+        chunks.push(source.slice(start, match.index));
+        start = end;
+    }
+
+    chunks.push(source.slice(start));
+
+    return chunks;
+}
+
+export function stripInSlideRuleMarkers(source) {
+    const lines = source.split('\n');
+    const output = [];
+    let open = null;
+
+    for (let index = 0; index < lines.length; index += 1) {
+        const line = lines[index];
+        const fence = /^ {0,3}(`{3,}|~{3,})(.*)$/.exec(line.replace(/\r$/, ''));
+        if (open) {
+            output.push(line);
+            if (fence && fence[1][0] === open[0] && fence[1].length >= open.length && !fence[2].trim()) {
+                open = null;
+            }
+            continue;
+        }
+        if (fence) {
+            open = fence[1];
+            output.push(line);
+            continue;
+        }
+        const marker = /^% in-slide-rule[ \t]*\r?$/.test(line);
+        const blank = /^\r?$/.test(lines[index + 1] || '');
+        const rule = /^\*\*\*\r?$/.test(lines[index + (blank ? 2 : 1)] || '');
+        if (marker && rule) {
+            index += blank ? 1 : 0;
+            continue;
+        }
+        output.push(line);
+    }
+
+    return output.join('\n');
+}
 
 /**
  * Carve wraps every heading in `<section id="...">`. reveal.js reads a nested
@@ -442,7 +524,8 @@ export function renderSlide(source, render, options = {}) {
     const slide = parseSlide(source, config);
 
     const clean = (text) => {
-        let html = unwrapSections(render(text));
+        // The import marker only guides slide splitting; it is not deck content.
+        let html = unwrapSections(render(stripInSlideRuleMarkers(text)));
 
         if (config.moveCodeAttributes !== false) {
             html = moveCodeAttributes(html);
@@ -508,7 +591,8 @@ export function withRevealedSpoilers(sectionHtml) {
  * would otherwise need a separator line between every slide.
  */
 export function splitAtHeading(source, level) {
-    const marker = new RegExp(`^(?=#{${level}}\\s)`, 'm');
+    // Carve 0.2 writes headings with `=` (C2-W-035); `#` is still read.
+    const marker = new RegExp(`^(?=(?:#{${level}}|={${level}})\\s)`, 'm');
 
     return source
         .split(marker)
@@ -555,7 +639,7 @@ export function attachFootnotes(chunk, definitions) {
  */
 export function headingOf(source, options = {}) {
     const slide = parseSlide(source, options);
-    const match = slide.body.match(/^#{1,3}\s+(.+)$/m);
+    const match = slide.body.match(/^(?:#{1,3}|={1,3})\s+(.+)$/m);
 
     return match ? match[1].trim() : '';
 }
@@ -567,8 +651,7 @@ export function headingOf(source, options = {}) {
 export function deckMinutes(source, options = {}) {
     source = splitFrontmatter(source).source;
     const config = { ...DEFAULTS, ...options };
-    const slides = source
-        .split(new RegExp(config.separator, 'm'))
+    const slides = splitSlidesSource(source, config.separator)
         .flatMap((chunk) => chunk.split(new RegExp(config.verticalSeparator, 'm')))
         .filter((chunk) => chunk.trim());
 
@@ -724,7 +807,7 @@ export function renderDeck(source, render, options = {}) {
         : extractFootnotes(source);
     const chunks = config.splitAtHeading
         ? splitAtHeading(body, config.splitAtHeading)
-        : body.split(new RegExp(config.separator, 'm'));
+        : splitSlidesSource(body, config.separator);
     const vertical = new RegExp(config.verticalSeparator, 'm');
 
     return chunks

@@ -1,6 +1,6 @@
 %% class: center
 
-# A deck in chapters
+= A deck in chapters
 
 One file per chapter, ordered by file name.
 
@@ -14,7 +14,7 @@ One file per chapter, ordered by file name.
 
 ---
 
-## Why chapters
+== Why chapters
 
 - A commit touches one chapter, so the diff is readable
 - Reordering is renaming

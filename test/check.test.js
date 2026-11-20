@@ -40,10 +40,17 @@ test('masking writes a separator as *** and keeps a CRLF line end', () => {
 });
 
 test('check accepts the --- slide separator', () => {
-    const { result } = check('---yaml\ntitle: Deck\n---\n\n# One\n\n---\n\n# Two\n\n--\n\n# Three\n');
+    // C2-W-035, C2-W-085: a clean deck is canonical 0.2, `=` headings and a bare `---` frontmatter opener.
+    const { result } = check('---\ntitle: Deck\n---\n\n= One\n\n---\n\n= Two\n\n--\n\n= Three\n');
 
     assert.equal(result.status, 0, result.stdout);
     assert.doesNotMatch(result.stdout, /thematic-break-spelling|\*\*\*/);
+});
+
+test('check accepts the canonical *** slide separator', () => {
+    const { result } = check('= One\n\n***\n\n= Two\n');
+
+    assert.equal(result.status, 0, result.stdout);
 });
 
 test('check still reports a slide that carve fmt would change, under the deck path', () => {

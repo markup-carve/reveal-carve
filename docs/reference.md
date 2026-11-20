@@ -109,12 +109,26 @@ from the page and their off-state reads as broken markup: `tabs`, `codeGroup`,
 `codeCallouts`. Drop one with `--no-extension NAME`, or all of them with
 `--core-only` (`carve: { extensions: false }` at runtime).
 
+### Carve 0.2
+
+The `next2` line runs on the Carve 0.2 engine. Its extensions come from
+`@markup-carve/carve` and `@markup-carve/carve/extensions`:
+
+- `tabs`, `codeGroup`, `codeCallouts`, `mathBlock`, `mermaid`, `chart`,
+  `vegaLite`, `d2`, `graphviz`, `plantuml`, `wavedrom` and `abc`.
+- `details`, `spoiler`, `listTable`, `colorSwatch`, `semanticSpan`, `glossary`
+  and `smartQuotes`.
+- `imgFence` recognizes `img` and `image` fences with sanitized SVG content.
+- `tableOfContents`, `headingPermalinks`, `headingNumbers` and `externalLinks`.
+- A tab is written `::: tab "Label"`; the 0.1 `[Label]` form is now a group
+  label. The 0.2 tabs are radio inputs, not the 0.1 `aria` mode buttons.
+
 The rest are off until a deck asks for them with `--extension NAME` or
 `carve: { extensions: [...] }`:
 
 | Extension | What it adds | On by default | Needs a renderer on the page |
 |---|---|---|---|
-| `tabs` | `::: tabs` with `:::: tab [Label]` | yes | no |
+| `tabs` | `:::: tabs` with `::: tab "Label"` | yes | no |
 | `codeGroup` | one code block per file, switched | yes | no |
 | `details` | a folded block | yes | no |
 | `spoiler` | text blacked out until asked for | yes | no |
@@ -134,10 +148,9 @@ The rest are off until a deck asks for them with `--extension NAME` or
 | `mathBlock` | display math | no | KaTeX or MathJax |
 | `vegaLite`, `d2`, `graphviz`, `plantuml`, `wavedrom`, `abc` | that project's diagram fence | no | that project's script |
 
-The demo site runs mermaid,
-chart, mathBlock, imgFence (as ` ```svg `), details, tabs (aria mode), listTable,
-spoiler, colorSwatch, semanticSpan, codeCallouts, codeGroup and smartQuotes -
-`scripts/build-site.mjs` has the list in one place.
+The demo site runs mermaid, chart, mathBlock, tabs, codeCallouts and codeGroup;
+the rest wait for their Carve 0.2 ports - `scripts/build-site.mjs` has the list
+in one place.
 
 The plugin's own behavior - the deck footer, the speaker timer, the tab and
 spoiler keys, callout badges and diff colouring surviving the highlighter - is

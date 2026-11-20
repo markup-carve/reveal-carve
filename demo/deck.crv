@@ -1,6 +1,6 @@
 %% class: center
 
-# reveal-carve
+= reveal-carve
 
 Slides in Carve, rendered in the browser.
 
@@ -9,16 +9,14 @@ Slides in Carve, rendered in the browser.
 This deck is one `.crv` file. Press S for the speaker view, Escape for the overview.
 
 ---
-
 %% toc
 
-## What is on this deck
+== What is on this deck
 
 ---
-
 %% minutes: 2
 
-## The pitch
+== The pitch
 
 %% fragments
 
@@ -27,13 +25,13 @@ This deck is one `.crv` file. Press S for the speaker view, Escape for the overv
 - Stepwise code highlighting from a fence attribute
 - The source is checkable before anyone presents it
 
-%% notes
+  %% notes
 
 Each bullet arrives on its own key press because the slide carries a `%% fragments` directive.
 
 ---
 
-## 1. Code, unescaped
+== 1. Code, unescaped
 
 ```php
 $articles = $this->Articles->find()
@@ -50,9 +48,9 @@ In HTML this slide would need `&gt;` eleven times. Every one of them is a chance
 
 ---
 
-## 2. Highlight the line you are talking about
+== 2. Highlight the line you are talking about
 
-{data-line-numbers="1\|2-3\|4"}
+{data-line-numbers="1|2-3|4"}
 ```php
 $query = $this->Orders->selectQuery();
 $query->contain(['Customers'])
@@ -64,38 +62,34 @@ $total = $query->count();
 :::
 Press the right arrow: the deck walks the three steps written in the fence's attribute line.
 :::
-
 %% notes
 
 The attribute line is Carve. reveal reads it on the code element, so the plugin moves it there.
 
 ---
 
-## 3. Before and after, side by side
+== 3. Before and after, side by side
 
-{.two-col}
-:::
-{.before}
-::::
-### CakePHP 4
+:::: two-col
+::: before
+=== CakePHP 4
 
 ```php
 $table->query()
     ->update()
     ->set(['done' => true]);
 ```
-::::
+:::
 
-{.after}
-::::
-### CakePHP 5
+::: after
+=== CakePHP 5
 
 ```php
 $table->updateQuery()
     ->set(['done' => true]);
 ```
-::::
 :::
+::::
 
 {.note}
 :::
@@ -104,10 +98,9 @@ Two containers with attributes. No `<div>` in the source.
 
 ---
 
-## 4. The boxes a technical deck needs
+== 4. The boxes a technical deck needs
 
-{.exercise}
-:::
+::: exercise
 *Exercise:* open `config/app.php`, set `errorLevel` to `E_ALL`, click through the app and read the log.
 :::
 
@@ -115,7 +108,7 @@ Version markers ride along inline: enum support [5.0]{.tag} and enum validation 
 
 ---
 
-## 5. Tables without ceremony
+== 5. Tables without ceremony
 
 |= Removed in 5.0 |= Replacement |
 | `Shell` | `Command` |
@@ -124,35 +117,33 @@ Version markers ride along inline: enum support [5.0]{.tag} and enum validation 
 
 ---
 
-## 6. Vertical stacks
+== 6. Vertical stacks
 
 The main line stays on the horizontal axis.
 
 --
 
-### Detail on demand
+=== Detail on demand
 
 Questions that only sometimes come up live below the slide, not in the main flow.
 
 --
 
-### Another one
+=== Another one
 
 Press the up arrow to go back.
 
 ---
-
 %% attr: data-background="#1f2937" data-background-opacity="1"
-
 %% class: center
 
-## Slide attributes
+== Slide attributes
 
 Backgrounds, transitions and auto-animate pairs come from an `%% attr:` directive.
 
 ---
 
-## 7. Diagrams, from the same source
+== 7. Diagrams, from the same source
 
 ```mermaid
 graph LR
@@ -168,13 +159,11 @@ Enabled with `--extension mermaid`. Carve emits the block, Mermaid draws it.
 :::
 
 ---
-
 %% class: center
 
-## What you also get
+== What you also get
 
-{.big}
-:::
+::: big
 lint, handout, watch
 :::
 

@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import { after, test } from 'node:test';
 
 import { animateListItems, errorSlide, flattenDiagramFences, keepInlineCodeMarkup, moveCodeAttributes, restoreDataFences, renderDeck, renderSlide, splitAtHeading, unwrapSections } from '../src/slice.js';
+import * as carve from '@markup-carve/carve';
+
 import { expandIncludes, hasIncludes } from '../src/include.js';
 import { KNOWN_DIRECTIVES, formatFindings, lintSource } from '../src/lint.js';
 import { buildHandout } from '../src/handout.js';
@@ -111,43 +113,26 @@ test('deck rendering honors splitAtHeading', () => {
     assert.equal(slides.length, 2);
 });
 
-test('expands an include through the engine and reports the dependency', () => {
-    const engine = {
-        parse: (text) => ({ text }),
-        renderCarve: (doc) => doc.text.replace('{{ part.crv }}', 'included text'),
-        expandIncludes: (doc, _source) => ({
-            doc,
-            dependencies: [{ id: '/deck/part.crv', resolved: true }],
-            warnings: [],
-        }),
-    };
+const memoryResolver = (files) => () => ({ path }) =>
+    Object.hasOwn(files, path) ? { text: files[path], id: path } : { error: 'not_found' };
 
-    const out = expandIncludes('before\n{{ part.crv }}\nafter\n', {
+test('expands an include through the engine and reports the dependency', () => {
+    const out = expandIncludes('before\n\n{{ part.crv }}\n\nafter\n', {
         from: '/deck/main.crv',
-        engine,
-        resolver: () => () => ({ source: 'included text' }),
+        engine: carve,
+        resolver: memoryResolver({ 'part.crv': 'included text\n' }),
     });
 
     assert.match(out.source, /included text/);
-    assert.deepEqual(out.dependencies, [{ id: '/deck/part.crv', resolved: true }]);
+    assert.deepEqual(out.dependencies, [{ id: '/deck/part.crv', path: 'part.crv', resolved: true }]);
 });
 
 test('reports an include the engine could not resolve', () => {
-    const engine = {
-        parse: (text) => ({ text }),
-        renderCarve: (doc) => doc.text,
-        expandIncludes: () => ({
-            doc: {},
-            dependencies: [{ id: 'gone.crv', resolved: false }],
-            warnings: [],
-        }),
-    };
-
     assert.throws(
         () => expandIncludes('{{ gone.crv }}\n', {
             from: '/deck/main.crv',
-            engine,
-            resolver: () => () => null,
+            engine: carve,
+            resolver: memoryResolver({}),
         }),
         /could not be resolved: gone.crv/,
     );
@@ -202,6 +187,30 @@ test('builds a handout with the spoken notes quoted', () => {
 
     assert.match(markdown, /# Title/);
     assert.match(markdown, /> Said out loud/);
+});
+
+test('handout keeps separators inside code fences on one slide', () => {
+    const source = ['One', '', '   ````text', '', '***', '---', '', '   ````', '', '***', '', 'Two'].join('\n');
+    const markdown = buildHandout(source, (text) => text.trim());
+
+    assert.equal(markdown.split('\n\n---\n\n').length, 2);
+    assert.match(markdown, /````text\n\n\*\*\*\n---\n\n   ````/);
+});
+
+test('handout omits imported in-slide rule markers', () => {
+    const source = ['One', '', '% in-slide-rule', '', '***', '', '---', '', 'Two'].join('\n');
+    const markdown = buildHandout(source, (text) => text.trim());
+
+    assert.equal(markdown.split('\n\n---\n\n').length, 2);
+    assert.doesNotMatch(markdown, /in-slide-rule/);
+    assert.match(markdown, /One\n\n\*\*\*/);
+});
+
+test('handout keeps a literal marker inside fenced code', () => {
+    const source = ['````text', '% in-slide-rule', '', '***', '````'].join('\n');
+    const markdown = buildHandout(source, (text) => text.trim());
+
+    assert.match(markdown, /% in-slide-rule\n\n\*\*\*/);
 });
 
 test('handout can leave the notes out', () => {

@@ -6,14 +6,14 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import * as carve from '@markup-carve/carve';
+import { carve } from './helpers/engine.js';
 import { parseHTML } from 'linkedom';
 
 import { registerCarveLanguages } from '../src/highlight.js';
 import { importMarkdownDeck } from '../src/import.js';
 import { renderDeck } from '../src/slice.js';
 
-const render = (text) => carve.carveToHtml(text, { sections: false });
+const render = (text) => carve.render(text, { sections: false });
 
 test('import writes braced table alignment, admonitions for GitHub alerts and Carve comments', () => {
     const markdown = [

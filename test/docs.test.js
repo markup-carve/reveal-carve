@@ -12,21 +12,22 @@ import { existsSync, readFileSync } from 'node:fs';
 
 import { carveDocs, renderDoc } from '../scripts/build-docs.mjs';
 
-test('every Carve doc has a rendered Markdown page beside it', () => {
+
+test('every Carve doc has a rendered Markdown page beside it', async () => {
     const names = carveDocs();
 
     assert.ok(names.length, 'no .crv docs found');
 
     for (const name of names) {
-        const { path, markdown } = renderDoc(name);
+        const { path, markdown } = await renderDoc(name);
 
         assert.ok(existsSync(path), `${path} is missing. Run: npm run docs`);
         assert.equal(readFileSync(path, 'utf8'), markdown, `${path} is out of date. Run: npm run docs`);
     }
 });
 
-test('the rendered page says where it came from', () => {
+test('the rendered page says where it came from', async () => {
     for (const name of carveDocs()) {
-        assert.match(renderDoc(name).markdown, /^<!-- Generated from docs\/.*\.crv/);
+        assert.match((await renderDoc(name)).markdown, /^<!-- Generated from docs\/.*\.crv/);
     }
 });

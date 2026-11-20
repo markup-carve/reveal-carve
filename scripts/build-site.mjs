@@ -10,13 +10,17 @@ import { cpSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import * as carve from '@markup-carve/carve';
+import * as core from '@markup-carve/carve';
+import * as standard from '@markup-carve/carve/extensions';
 import { fileSystemResolver } from '@markup-carve/carve/node';
 
 import { buildPage, themeToggle, readSource } from '../src/build.js';
 import { buildHandout } from '../src/handout.js';
 import { exportPdf } from '../src/pdf.js';
-import { resolveExtensions } from '../src/extensions.js';
+import { carveRenderer, resolveExtensions } from '../src/extensions.js';
+import { markdownWriter } from '../src/markdown.js';
+
+const carve = { ...standard, ...core };
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const out = process.argv[2] || join(root, 'site');
@@ -28,9 +32,9 @@ const EXTENSIONS = [
     'mermaid',
     'chart',
     'mathBlock',
-    { name: 'imgFence', options: { language: 'svg' } },
+    'imgFence',
     'details',
-    { name: 'tabs', options: { mode: 'aria' } },
+    'tabs',
     'listTable',
     'spoiler',
     'colorSwatch',
@@ -41,7 +45,7 @@ const EXTENSIONS = [
 ];
 
 const extensions = resolveExtensions(EXTENSIONS, carve);
-const render = (text) => carve.carveToHtml(text, { sections: false, extensions });
+const render = carveRenderer(carve, extensions, { sections: false });
 
 // One version marker for the whole site, derived from the files that actually
 // change between deploys. GitHub Pages serves everything with max-age=600, so
@@ -279,11 +283,12 @@ const chapters = buildPage({
 });
 
 // 6. The handout export of the chapter deck.
+const toMarkdown = await markdownWriter(carve);
 writeFileSync(
     join(out, 'handout.md'),
     buildHandout(
         readSource(join(root, 'demo/decks'), { includeRoot: join(root, 'demo'), ...includes }),
-        (text) => carve.carveToMarkdown(text),
+        toMarkdown,
     ),
     'utf8',
 );
@@ -303,11 +308,7 @@ try {
     buildPage({
         source: everythingSource,
         target: join(out, 'everything.html'),
-        render: (text) => carve.carveToHtml(text, {
-            sections: false,
-            mode: 'static',
-            extensions,
-        }),
+        render: carveRenderer(carve, extensions, { sections: false, mode: 'static' }),
         title: 'reveal-carve - every element, for print',
         revealBase: 'vendor/reveal',
         stylesheets: ['vendor/reveal-carve/reveal-carve.css'],

@@ -6,7 +6,7 @@ import { dirname, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 
-import * as carve from '@markup-carve/carve';
+import { carve } from './helpers/engine.js';
 import { fileSystemResolver } from '@markup-carve/carve/node';
 
 import { importMarkdownDeck } from '../src/import.js';
@@ -15,7 +15,7 @@ import { renderDeck } from '../src/slice.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const fixture = join(here, 'fixtures', 'markdown-deck.md');
-const render = (text) => carve.carveToHtml(text, { sections: false });
+const render = (text) => carve.render(text, { sections: false });
 
 const temporaries = [];
 
@@ -37,10 +37,14 @@ test('converts each slide and keeps the separators', () => {
 
     assert.equal(slides, 3);
     assert.match(source, /Some \*bold\* and \/emphasized\/ text\./);
-    assert.match(source, /\n\n---\n\n%% attr: data-background="#ff0000"\n\n## Second/);
-    assert.match(source, /```\n\n--\n\n## Down/);
+    // C2-W-035: the 0.2 writer spells headings with `=`. C2-W-085: the deck is written in
+    // canonical form, with no blank line between a break and the comment under it.
+    assert.match(source, /\n\n---\n%% attr: data-background="#ff0000"\n\n== Second/);
+    // C2-W-035
+    assert.match(source, /```\n\n--\n\n== Down/);
     assert.match(source, /%% notes\n\nSay \/hello\/ first\./);
-    assert.match(source, /\{data-line-numbers="1\\\|2"\}\n```js\nconst a = 1/);
+    // C2-W-085: the canonical 0.2 spelling of the value needs no escaped pipe.
+    assert.match(source, /\{data-line-numbers="1\|2"\}\n```js\nconst a = 1/);
     assert.match(source, /\n\n```\nplain\n```/);
     assert.doesNotMatch(source, /Note:/);
     assert.deepEqual(warnings, [
@@ -52,8 +56,10 @@ test('the converted deck renders the same slides, notes and attributes', () => {
     const { source } = importMarkdownDeck(readFileSync(fixture, 'utf8'), { engine: carve });
     const deck = renderDeck(source, render);
 
+    // U-044: an imported in-slide rule stays on its slide under the host marker.
     assert.equal(deck.length, 2);
-    assert.match(deck[0], /<hr>/, 'an in-slide rule became a slide separator');
+    assert.match(deck[0], /<hr>/);
+    assert.doesNotMatch(deck[0], /in-slide-rule/);
     assert.match(deck[0], /<aside class="notes">\n<p>Say <em>hello<\/em> first\.<\/p>/);
     assert.match(deck[1], /<section data-background="#ff0000">\n<h2 id="Second">/);
     assert.match(deck[1], /<code data-line-numbers="1\|2" class="language-js">/);
@@ -64,7 +70,8 @@ test('drops line steps it cannot place, and says so', () => {
     const markdown = '- item\n\n  ```js [2]\n  a\n  ```\n\n```js [1]\nb\n```\n';
     const { source, warnings } = importMarkdownDeck(markdown, { engine: carve });
 
-    assert.match(source, /\{data-line-numbers="1"\}\n```js\nb/);
+    // C2-W-085: the canonical 0.2 spelling leaves a plain value unquoted.
+    assert.match(source, /\{data-line-numbers=1\}\n```js\nb/);
     assert.deepEqual(warnings, [
         'slide 1: line highlights on a code fence were dropped; add a {data-line-numbers} attribute line',
     ]);
@@ -74,14 +81,16 @@ test('a notes separator inside a code sample stays code', () => {
     const markdown = '# Code\n\n```text\nNote: literal\n```\n\nNote: spoken\n';
     const { source } = importMarkdownDeck(markdown, { engine: carve });
 
-    assert.equal(source, '# Code\n\n```text\nNote: literal\n```\n\n%% notes\n\nspoken\n');
+    // C2-W-035: `=` headings. C2-W-085: no blank line between the fence and the comment under it.
+    assert.equal(source, '= Code\n\n```text\nNote: literal\n```\n%% notes\n\nspoken\n');
 });
 
 test('a --- line inside code stays code, and is reported as a separator', () => {
     const markdown = '# Rules\n\n***\n\n```yaml\n---\nkey: value\n```\n';
     const { source, warnings } = importMarkdownDeck(markdown, { engine: carve, separator: '^===$' });
 
-    assert.equal(source, '# Rules\n\n***\n\n```yaml\n---\nkey: value\n```\n');
+    // C2-W-035
+    assert.equal(source, '= Rules\n\n% in-slide-rule\n\n***\n\n```yaml\n---\nkey: value\n```\n');
     assert.deepEqual(warnings, ['slide 1: a converted line reads as a slide separator; check the slide boundaries']);
 });
 
@@ -89,7 +98,8 @@ test('slide and element comments inside code stay code', () => {
     const markdown = '# Comments\n\n```html\n<!-- .slide: data-state="x" -->\n<!-- .element: class="fragment" -->\n```\n';
     const { source, warnings } = importMarkdownDeck(markdown, { engine: carve });
 
-    assert.equal(source, '# Comments\n\n```html\n<!-- .slide: data-state="x" -->\n<!-- .element: class="fragment" -->\n```\n');
+    // C2-W-035
+    assert.equal(source, '= Comments\n\n```html\n<!-- .slide: data-state="x" -->\n<!-- .element: class="fragment" -->\n```\n');
     assert.deepEqual(warnings, []);
 });
 
@@ -103,7 +113,8 @@ test('honors custom separators and drops empty slides', () => {
     });
 
     assert.equal(slides, 2);
-    assert.equal(source, '# One\n\n%% notes\n\nspoken\n\n---\n\n# Two\n');
+    // C2-W-035
+    assert.equal(source, '= One\n\n%% notes\n\nspoken\n\n---\n\n= Two\n');
 });
 
 test('the import verb writes a Carve deck and reports what it could not convert', () => {
@@ -134,7 +145,8 @@ test('a deck includes one named region of a partial', () => {
         onWarning: (message) => warnings.push(message),
     });
 
-    assert.match(source, /## House rules/);
+    // C2-W-035: a region include is written back by the 0.2 writer, which spells headings with `=`.
+    assert.match(source, /== House rules/);
     assert.doesNotMatch(source, /Before\.|After\./);
     assert.deepEqual(warnings, []);
 });
@@ -151,5 +163,6 @@ test('a missing region is reported, not dropped silently', () => {
     });
 
     assert.equal(warnings.length, 1);
-    assert.match(warnings[0], /deck\.crv: Include region "rules" is missing or invalid/);
+    // C2-N-041: the 0.2 diagnostic of a region the file does not open.
+    assert.match(warnings[0], /deck\.crv: Include "partial\.crv" was not expanded: the region rules is not opened in the file/);
 });

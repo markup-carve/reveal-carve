@@ -88,7 +88,7 @@
         "docs": "node scripts/build-docs.mjs"
     },
     "peerDependencies": {
-        "@markup-carve/carve": ">=0.1.16 <0.2.0",
+        "@markup-carve/carve": ">=0.2.0-0",
         "reveal.js": ">=4.0.0"
     },
     "peerDependenciesMeta": {
@@ -100,7 +100,7 @@
         "node": ">=20"
     },
     "devDependencies": {
-        "@markup-carve/carve": "0.1.17",
+        "@markup-carve/carve": "github:markup-carve/carve-js#fb2718493f3bcb70b4a26d05ae2ee084ec978552",
         "esbuild": "^0.28.2",
         "eslint": "^9.39.5",
         "linkedom": "^0.18.13",
@@ -109,7 +109,7 @@
     },
     "module": "./dist/reveal-carve.mjs",
     "dependencies": {
-        "@markup-carve/carve-grammars": "^0.1.23",
+        "@markup-carve/carve-grammars": "github:markup-carve/carve-grammars#31215996ebba0cad12d958275ba87fad1d99991a",
         "yaml": "^2.9.1"
     },
     "types": "./types/plugin.d.ts"
