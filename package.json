@@ -109,7 +109,7 @@
     },
     "module": "./dist/reveal-carve.mjs",
     "dependencies": {
-        "@markup-carve/carve-grammars": "^0.1.23",
+        "@markup-carve/carve-grammars": "github:markup-carve/carve-grammars#79511c4ba461cb0696e0400132da9eef414147e0",
         "yaml": "^2.9.1"
     },
     "types": "./types/plugin.d.ts"
