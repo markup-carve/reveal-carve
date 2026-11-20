@@ -100,7 +100,7 @@
         "node": ">=20"
     },
     "devDependencies": {
-        "@markup-carve/carve": "github:markup-carve/carve-js#0536ed105c0a735aec1f65c5099444ec3518bbe6",
+        "@markup-carve/carve": "github:markup-carve/carve-js#eb2ffc1a18943bc3a865639c6481a4c0bc3b87c5",
         "esbuild": "^0.28.2",
         "eslint": "^9.39.5",
         "linkedom": "^0.18.13",
