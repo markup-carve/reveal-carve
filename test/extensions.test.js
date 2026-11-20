@@ -169,6 +169,17 @@ test('SVG image fences sanitize safe and unsafe content', async () => {
     assert.match(decodeURIComponent(unsafe), /<circle r="1"\/>/);
 });
 
+test('the navigation extensions reach the renderer', async () => {
+    const { carve } = await import('./helpers/engine.js');
+    const { carveRenderer } = await import('../src/extensions.js');
+    const render = (names, text) => carveRenderer(carve, resolveExtensions(names, carve), { sections: false })(text);
+
+    assert.match(render(['externalLinks'], '[x](https://example.com)\n'), /target="_blank"/);
+    assert.match(render(['headingNumbers'], '= One\n'), /<span class="section-number">1<\/span>/);
+    assert.match(render(['headingPermalinks'], '= One\n'), /class="permalink"/);
+    assert.match(render(['tableOfContents'], '::: toc\n:::\n\n= One\n'), /<a href="#One">One<\/a>/);
+});
+
 test('the 0.2 bundles render through the engine, document transforms included', async () => {
     const { carve } = await import('./helpers/engine.js');
     const { carveRenderer } = await import('../src/extensions.js');

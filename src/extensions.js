@@ -109,6 +109,21 @@ function builtinBundle(name, engine) {
 }
 
 /**
+ * The navigation extensions return a bare definition, the others a bundle.
+ */
+function asBundle(result) {
+    if (Array.isArray(result)) {
+        return { extensions: result };
+    }
+
+    if (result && !result.extensions && typeof result.name === 'string' && result.version !== undefined) {
+        return { extensions: [result] };
+    }
+
+    return result;
+}
+
+/**
  * @param {Array<string|Function|{name: string, options?: object}>} spec
  * @param {object} engine The Carve module or browser global, with the standard extensions
  *   of `@markup-carve/carve/extensions` merged in
@@ -121,7 +136,7 @@ export function resolveExtensions(spec, engine) {
 
     return spec.map((entry) => {
         if (typeof entry === 'function') {
-            return entry();
+            return asBundle(entry());
         }
 
         if (entry && typeof entry === 'object' && !entry.name) {
@@ -149,7 +164,7 @@ export function resolveExtensions(spec, engine) {
             );
         }
 
-        return factory(options);
+        return asBundle(factory(options));
     }).filter(Boolean);
 }
 
