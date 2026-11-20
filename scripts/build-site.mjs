@@ -18,7 +18,7 @@ import { buildPage, themeToggle, readSource } from '../src/build.js';
 import { buildHandout } from '../src/handout.js';
 import { exportPdf } from '../src/pdf.js';
 import { carveRenderer, resolveExtensions } from '../src/extensions.js';
-import { findMarkdownWriter } from '../src/markdown.js';
+import { markdownWriter } from '../src/markdown.js';
 
 const carve = { ...standard, ...core };
 
@@ -282,20 +282,16 @@ const chapters = buildPage({
     version,
 });
 
-// 6. The handout export of the chapter deck, once the engine has a Markdown writer.
-const toMarkdown = await findMarkdownWriter(carve);
-if (toMarkdown) {
-    writeFileSync(
-        join(out, 'handout.md'),
-        buildHandout(
-            readSource(join(root, 'demo/decks'), { includeRoot: join(root, 'demo'), ...includes }),
-            toMarkdown,
-        ),
-        'utf8',
-    );
-} else {
-    console.warn('[build-site] handout.md skipped: needs the Carve 0.2 Markdown writer (markup-carve/carve-js#5076)');
-}
+// 6. The handout export of the chapter deck.
+const toMarkdown = await markdownWriter(carve);
+writeFileSync(
+    join(out, 'handout.md'),
+    buildHandout(
+        readSource(join(root, 'demo/decks'), { includeRoot: join(root, 'demo'), ...includes }),
+        toMarkdown,
+    ),
+    'utf8',
+);
 
 // Two PDFs: the feature deck as it looks on screen, and a handout of everything
 // in static mode, where tab groups unfold so no panel is missing from the page.
