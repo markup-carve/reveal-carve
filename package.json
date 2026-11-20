@@ -100,7 +100,7 @@
         "node": ">=20"
     },
     "devDependencies": {
-        "@markup-carve/carve": "github:markup-carve/carve-js#d4d723d3d697b74cf7972b97a94a059845f58e7b",
+        "@markup-carve/carve": "github:markup-carve/carve-js#a7aa6c32048dbc6f947232b2e4851a1067a68055",
         "esbuild": "^0.28.2",
         "eslint": "^9.39.5",
         "linkedom": "^0.18.13",
@@ -109,7 +109,7 @@
     },
     "module": "./dist/reveal-carve.mjs",
     "dependencies": {
-        "@markup-carve/carve-grammars": "github:markup-carve/carve-grammars#ab7e7f714fcabcacde876b3fdd4b2d8b4773bf62",
+        "@markup-carve/carve-grammars": "github:markup-carve/carve-grammars#31215996ebba0cad12d958275ba87fad1d99991a",
         "yaml": "^2.9.1"
     },
     "types": "./types/plugin.d.ts"
