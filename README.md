@@ -10,6 +10,8 @@ Install the deck tool and its runtime dependencies:
 npm install @markup-carve/reveal-carve @markup-carve/carve reveal.js
 ```
 
+The build command needs Node.js 20 or newer; PDF export needs Node.js 22. The `next2` line needs the Carve 0.2 engine (`@markup-carve/carve` 0.2), which is not on the registry yet.
+
 ## Usage
 
 Create a starter deck with `npx reveal-carve init talk`.
