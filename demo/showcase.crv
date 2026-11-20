@@ -73,7 +73,7 @@ sequenceDiagram
 
 == Real SVG, inline in the source
 
-```svg
+```img
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 90"
      role="img" aria-label="Three boxes">
   <rect x="4" y="20" width="66" height="44" rx="6" fill="#d33c43"/>

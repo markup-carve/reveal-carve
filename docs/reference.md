@@ -111,27 +111,17 @@ from the page and their off-state reads as broken markup: `tabs`, `codeGroup`,
 
 ### Carve 0.2
 
-The `next2` line runs on the Carve 0.2 engine. Its extensions are provisional,
-and only some of the 0.1 ones have a 0.2 port so far:
+The `next2` line runs on the Carve 0.2 engine. Its extensions come from
+`@markup-carve/carve` and `@markup-carve/carve/extensions`:
 
-- Ported: `tabs`, `codeGroup`, `codeCallouts`, `mathBlock`, `mermaid`, `chart`,
-  `vegaLite`, `d2`, `graphviz`, `plantuml`, `wavedrom` and `abc`, from
-  `@markup-carve/carve` and `@markup-carve/carve/extensions`.
-- Not ported yet: `tableOfContents`, `headingPermalinks`,
-  `headingNumbers` and `externalLinks`
-  (markup-carve/carve-js#5073); `glossary` (markup-carve/carve-js#5071). As a
-  default they are left out and their constructs render as core Carve; a deck
-  that asks for one by name fails with the issue named.
-- `details`, `spoiler`, `listTable`, `colorSwatch`, `semanticSpan`, and
-  `imgFence` are available in the pinned engine. `imgFence` recognizes `img`
-  and `image` fences with sanitized SVG content.
-- `smartQuotes` has no 0.2 port; smart typography is the `smartTypography`
-  render option.
+- `tabs`, `codeGroup`, `codeCallouts`, `mathBlock`, `mermaid`, `chart`,
+  `vegaLite`, `d2`, `graphviz`, `plantuml`, `wavedrom` and `abc`.
+- `details`, `spoiler`, `listTable`, `colorSwatch`, `semanticSpan`, `glossary`
+  and `smartQuotes`.
+- `imgFence` recognizes `img` and `image` fences with sanitized SVG content.
+- `tableOfContents`, `headingPermalinks`, `headingNumbers` and `externalLinks`.
 - A tab is written `::: tab "Label"`; the 0.1 `[Label]` form is now a group
   label. The 0.2 tabs are radio inputs, not the 0.1 `aria` mode buttons.
-- Handouts and the generated docs need the Carve 0.2 Markdown writer
-  (markup-carve/carve-js#5076); until it lands, `handout` stops with an error
-  that says so.
 
 The rest are off until a deck asks for them with `--extension NAME` or
 `carve: { extensions: [...] }`:

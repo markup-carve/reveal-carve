@@ -64,9 +64,6 @@ comes out empty or as a syntax error in a printed copy. The demo site's
 
 The SVG fence is `img` or `image` in Carve 0.2. Enable `imgFence` to sanitize it
 and render it as a data URI image.
-The [showcase deck](https://markup-carve.github.io/reveal-carve/showcase.html)
-still shows the older `svg` fence as source text while the demo is being
-updated for Carve 0.2.
 
 `graphviz`, `d2`, `plantuml`, `wavedrom`, `vegaLite` and `abc` work the same way:
 Carve emits `<pre class="graphviz">` and the like, and you add that project's

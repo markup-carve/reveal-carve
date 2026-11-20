@@ -32,13 +32,18 @@ const EXTENSIONS = [
     'mermaid',
     'chart',
     'mathBlock',
+    'imgFence',
+    'details',
     'tabs',
+    'listTable',
+    'spoiler',
+    'colorSwatch',
+    'semanticSpan',
     'codeCallouts',
     'codeGroup',
+    { name: 'smartQuotes', options: { locale: 'en' } },
 ];
 
-// Not in Carve 0.2 yet, see PENDING_IN_0_2 in src/extensions.js: imgFence, details,
-// listTable, spoiler, colorSwatch, semanticSpan (carve-js#5070) and smartQuotes.
 const extensions = resolveExtensions(EXTENSIONS, carve);
 const render = carveRenderer(carve, extensions, { sections: false });
 
