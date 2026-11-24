@@ -63,6 +63,10 @@ test('a record range counts UTF-16 offsets of the whole deck', () => {
     assert.equal(source.slice(record.range.startOffset, record.range.endOffset).split('\n')[0], '::: tab');
 });
 
+test('a CRLF deck keeps its line ends', () => {
+    assert.equal(upgradeDeck('Text\r\n# One\r\n\r\n---\r\n\r\nTwo\r\n', { upgrade }).output, 'Text\r\n\r\n# One\r\n\r\n---\r\n\r\nTwo\r\n');
+});
+
 test('the worst check of any slide is the check of the deck', () => {
     const result = upgradeDeck('= Fine\n\n---\n\nwhole\n', {
         upgrade: (text) => ({ output: text, changed: false, records: [], check: text.includes('whole') ? 'mismatch' : 'explained', engine01: '0.1' }),
@@ -91,4 +95,17 @@ test('upgrade reports without --write and writes the deck and its includes with 
     assert.equal(readFileSync(join(dir, 'decks/deck.crv'), 'utf8'), '# Deck\n\n{{ ../partials/part.crv }}\n\n---\n\nText\n\n# Two\n');
     assert.equal(readFileSync(join(dir, 'partials/part.crv'), 'utf8'), 'Intro\n\n# Partial\n');
     assert.equal(spawnSync(process.execPath, args, { encoding: 'utf8' }).status, 0);
+});
+
+test('--write writes nothing when one file of the deck is blocked', () => {
+    const dir = workspace({
+        'decks/a.crv': 'Text\n# One\n',
+        'decks/b.crv': '{.two-col}\n:::\n{.before}\n::::\n### A\n::::\n:::\n',
+    });
+    const run = spawnSync(process.execPath, [cli, 'upgrade', join(dir, 'decks'), '--write'], { encoding: 'utf8' });
+
+    assert.equal(run.status, 1);
+    assert.match(run.stdout, /b\.crv: not upgraded/);
+    assert.match(run.stdout, /nothing written/);
+    assert.equal(readFileSync(join(dir, 'decks/a.crv'), 'utf8'), 'Text\n# One\n');
 });

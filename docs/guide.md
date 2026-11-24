@@ -173,8 +173,9 @@ reveal-carve upgrade slides/ --write                   # rewrite Carve 0.1 decks
 `{{ path }}` includes (inside `--include-root`) to upgrade the included files
 too. Without `--write` it lists what would change and exits with 1 when
 anything would. Each line it prints names the upgrade entry (`U-001`, ...) and
-the source line. A file where a slide would render differently in 0.2 is never
-written: rewrite the reported lines by hand, then run it again. Run it once on
+the source line. When a slide of any file would render differently in 0.2,
+`--write` writes nothing at all: rewrite the reported lines by hand, then run
+it again. Run it once on
 a 0.1 deck: the input is read as Carve 0.1, so a second run on 0.2 text that
 uses 0.2-only syntax such as `= Heading` escapes it.
 

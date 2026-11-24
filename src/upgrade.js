@@ -48,7 +48,7 @@ export function upgradeDeck(source, { upgrade, separator, verticalSeparator } = 
             continue;
         }
 
-        const result = upgrade(`${core[2]}\n`);
+        const result = upgrade(`${core[2]}${core[2].includes('\r\n') ? '\r\n' : '\n'}`);
         const coreStart = bodyStart + start + core[1].length;
         const lineShift = source.slice(0, coreStart).split('\n').length - 1;
 
@@ -70,7 +70,7 @@ export function upgradeDeck(source, { upgrade, separator, verticalSeparator } = 
         }
 
         engine01 = engine01 || result.engine01;
-        output += core[1] + result.output.replace(/\n+$/, '') + core[3];
+        output += core[1] + result.output.replace(/(?:\r?\n)+$/, '') + core[3];
     }
 
     return { output, changed: output !== source, check, records, engine01 };

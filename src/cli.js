@@ -297,7 +297,7 @@ try {
                 .map((file) => ({ file, root: resolve(options.includeRoot || dirname(file)) }));
             const seen = new Set();
             let blocked = false;
-            let pending = false;
+            const changed = [];
 
             // A deck's includes are upgraded with it: they are spliced into the deck as written.
             while (queue.length) {
@@ -329,12 +329,9 @@ try {
                     console.log(`${file}: not upgraded, a slide would render differently in 0.2; rewrite the lines above by hand`);
                 } else if (!result.changed) {
                     console.log(`${file}: nothing to upgrade`);
-                } else if (options.write) {
-                    writeFileSync(file, result.output, 'utf8');
-                    console.log(`${file}: upgraded`);
                 } else {
-                    pending = true;
-                    console.log(`${file}: would be upgraded, run with --write`);
+                    changed.push({ file, output: result.output });
+                    console.log(`${file}: ${options.write ? 'upgrades' : 'would be upgraded, run with --write'}`);
                 }
 
                 if (options.includes !== false) {
@@ -350,7 +347,20 @@ try {
                 }
             }
 
-            process.exit(blocked || pending ? 1 : 0);
+            // All or nothing: a deck is never left half upgraded because one of its files is blocked.
+            if (options.write && changed.length) {
+                if (blocked) {
+                    console.log('\nupgrade: nothing written, a file above is blocked');
+                } else {
+                    for (const { file, output } of changed) {
+                        writeFileSync(file, output, 'utf8');
+                    }
+
+                    console.log(`\nupgrade: ${changed.length} file(s) written`);
+                }
+            }
+
+            process.exit(blocked || (changed.length && !options.write) ? 1 : 0);
             break;
         }
 
