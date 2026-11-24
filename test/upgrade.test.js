@@ -106,7 +106,7 @@ test('upgrade reports without --write and writes the deck and its includes with 
 test('--write writes nothing when one file of the deck is blocked', () => {
     const dir = workspace({
         'decks/a.crv': 'Text\n# One\n',
-        'decks/b.crv': '{.two-col}\n:::\n{.before}\n::::\n### A\n::::\n:::\n',
+        'decks/b.crv': '- ::: box\n  %%%%\n%% j\n  x\n',
     });
     const run = spawnSync(process.execPath, [cli, 'upgrade', join(dir, 'decks'), '--write'], { encoding: 'utf8' });
 
