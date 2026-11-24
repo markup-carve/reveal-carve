@@ -52,17 +52,11 @@ export function upgradeDeck(source, { upgrade, separator, verticalSeparator } = 
         const coreStart = bodyStart + start + core[1].length;
         const lineShift = source.slice(0, coreStart).split('\n').length - 1;
 
+        // The record's `range` is dropped: it counts code points of the 0.1 tree within one slide.
         for (const record of result.records) {
-            records.push({
-                ...record,
-                ...(typeof record.line === 'number' ? { line: record.line + lineShift } : {}),
-                ...(record.range ? {
-                    range: {
-                        startOffset: record.range.startOffset + coreStart,
-                        endOffset: record.range.endOffset + coreStart,
-                    },
-                } : {}),
-            });
+            const shifted = { ...record, ...(typeof record.line === 'number' ? { line: record.line + lineShift } : {}) };
+            delete shifted.range;
+            records.push(shifted);
         }
 
         if (CHECK_ORDER.indexOf(result.check) > CHECK_ORDER.indexOf(check)) {

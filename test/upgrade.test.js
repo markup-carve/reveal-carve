@@ -56,11 +56,12 @@ test('a separator inside a fence is slide text, not a boundary', () => {
     assert.equal(upgradeDeck('```\n--\n```\n\nText\n# One\n', { upgrade }).output, '```\n--\n```\n\nText\n\n# One\n');
 });
 
-test('a record range counts UTF-16 offsets of the whole deck', () => {
+test('a record keeps the deck line and drops the slide-relative range', () => {
     const source = 'Ü\n\n---\n\n[Label]\n:::: tabs\n::: tab\nx\n:::\n::::\n';
-    const [record] = upgradeDeck(source, { upgrade }).records.filter((entry) => entry.range);
+    const [record] = upgradeDeck(source, { upgrade }).records.filter((entry) => entry.entry === 'U-415');
 
-    assert.equal(source.slice(record.range.startOffset, record.range.endOffset).split('\n')[0], '::: tab');
+    assert.equal(source.split('\n')[record.line - 1], '::: tab');
+    assert.equal(record.range, undefined);
 });
 
 test('a CRLF deck keeps its line ends', () => {
