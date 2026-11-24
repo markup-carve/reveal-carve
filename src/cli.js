@@ -138,7 +138,10 @@ function buildOnce() {
 // An unresolved include is a mistake in the deck, not a crash: it is reported
 // like any other finding, with the flag that usually fixes it.
 try {
-    refreshSettings();
+    // `upgrade` renders nothing, and its 0.1 extension names (`samp`) have no 0.2 factory.
+    if (verb !== 'upgrade') {
+        refreshSettings();
+    }
     switch (verb) {
         case 'lint': {
             const files = (positional.length ? positional : ['.']).flatMap((file) =>

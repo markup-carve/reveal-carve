@@ -115,3 +115,13 @@ test('--write writes nothing when one file of the deck is blocked', () => {
     assert.match(run.stdout, /nothing written/);
     assert.equal(readFileSync(join(dir, 'decks/a.crv'), 'utf8'), 'Text\n# One\n');
 });
+
+test('the 0.1 samp and wikilinks extensions reach the upgrade from the command line', () => {
+    const dir = workspace({ 'deck.crv': 'See [[Page]]\n' });
+    const run = spawnSync(process.execPath, [cli, 'upgrade', join(dir, 'deck.crv'), '--extension', 'samp', '--extension', 'wikilinks', '--write'], {
+        encoding: 'utf8',
+    });
+
+    assert.equal(run.status, 0, run.stdout + run.stderr);
+    assert.equal(readFileSync(join(dir, 'deck.crv'), 'utf8'), 'See :wiki[Page]\n');
+});
