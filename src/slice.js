@@ -27,8 +27,11 @@ export const DEFAULTS = {
     moveCodeAttributes: true,
 };
 
-/** Split on deck separators only when their source span is outside code fences. */
-export function splitSlidesSource(source, separator) {
+/**
+ * The slide separators of `source`, as `[start, end)` string offsets: a separator inside a fence or right
+ * below a `% in-slide-rule` comment is not one.
+ */
+export function slideSeparators(source, separator) {
     const fenced = [];
     let open = null;
     let offset = 0;
@@ -48,8 +51,7 @@ export function splitSlidesSource(source, separator) {
         offset += line.length + 1;
     }
 
-    const chunks = [];
-    let start = 0;
+    const found = [];
     let fenceIndex = 0;
     for (const match of source.matchAll(new RegExp(separator, 'gm'))) {
         const end = match.index + match[0].length;
@@ -64,7 +66,18 @@ export function splitSlidesSource(source, separator) {
             continue;
         }
 
-        chunks.push(source.slice(start, match.index));
+        found.push([match.index, end]);
+    }
+
+    return found;
+}
+
+/** Split on deck separators only when their source span is outside code fences. */
+export function splitSlidesSource(source, separator) {
+    const chunks = [];
+    let start = 0;
+    for (const [index, end] of slideSeparators(source, separator)) {
+        chunks.push(source.slice(start, index));
         start = end;
     }
 

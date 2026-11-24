@@ -7,12 +7,13 @@
  *   reveal-carve lint <source...>
  *   reveal-carve handout <source> <target.md> [--no-notes]
  *   reveal-carve import <deck.md> <target.crv>
+ *   reveal-carve upgrade <source...> [--write]
  *
  * `build` is the default, so the verb may be left out.
  */
 
 import { mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
-import { basename, dirname, join, resolve } from 'node:path';
+import { basename, dirname, join, relative, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 
 import { readFrontmatter, mergeDeckOptions, FrontmatterError } from './frontmatter.js';
@@ -28,6 +29,7 @@ import { importMarkdownDeck } from './import.js';
 import { vendorAssets } from './vendor.js';
 import { initDeck } from './init.js';
 import { markdownWriter } from './markdown.js';
+import { upgradeDeck } from './upgrade.js';
 import { absoluteAsset, locateCarveCli, parseArgs, usage, VERBS } from './args.js';
 
 
@@ -66,7 +68,7 @@ try {
 }
 const [source, target] = positional;
 
-if (options.help || (!source && !['lint', 'check'].includes(verb))) {
+if (options.help || (!source && !['lint', 'check', 'upgrade'].includes(verb))) {
     usage();
     process.exit(options.help ? 0 : 1);
 }
@@ -283,6 +285,72 @@ try {
 
             console.log(failed ? '\ncheck: problems found' : '\ncheck: clean');
             process.exit(failed ? 1 : 0);
+            break;
+        }
+
+        case 'upgrade': {
+            const { upgrade } = await import('@markup-carve/carve/upgrade');
+            const queue = (positional.length ? positional : ['.']).flatMap((file) =>
+                statSync(file).isDirectory()
+                    ? readdirSync(file).filter((name) => name.endsWith(options.extension || '.crv')).map((name) => join(file, name))
+                    : [file])
+                .map((file) => ({ file, root: resolve(options.includeRoot || dirname(file)) }));
+            const seen = new Set();
+            let blocked = false;
+            let pending = false;
+
+            // A deck's includes are upgraded with it: they are spliced into the deck as written.
+            while (queue.length) {
+                const { file, root } = queue.shift();
+
+                if (seen.has(resolve(file))) {
+                    continue;
+                }
+
+                seen.add(resolve(file));
+                const text = readFileSync(file, 'utf8');
+                const deck = mergeDeckOptions(readFrontmatter(text).options, explicitOptions);
+                const result = upgradeDeck(text, {
+                    upgrade,
+                    separator: deck.separator,
+                    verticalSeparator: deck.verticalSeparator,
+                });
+
+                // U-011 says 0.2 leaves `{{ path }}` as text; a deck build expands it itself.
+                const records = result.records
+                    .filter((record) => options.includes === false || record.entry !== 'U-011');
+
+                for (const record of records) {
+                    console.log(`${file}:${record.line ?? 1} ${record.entry} (${record.class}) - ${record.message}`);
+                }
+
+                if (result.check === 'mismatch') {
+                    blocked = true;
+                    console.log(`${file}: not upgraded, a slide would render differently in 0.2; rewrite the lines above by hand`);
+                } else if (!result.changed) {
+                    console.log(`${file}: nothing to upgrade`);
+                } else if (options.write) {
+                    writeFileSync(file, result.output, 'utf8');
+                    console.log(`${file}: upgraded`);
+                } else {
+                    pending = true;
+                    console.log(`${file}: would be upgraded, run with --write`);
+                }
+
+                if (options.includes !== false) {
+                    const document = carve.parse(result.output, {
+                        includes: { resolver: fileSystemResolver(root), file: relative(root, resolve(file)) },
+                    });
+
+                    for (const dependency of carve.includeDependencies(document)) {
+                        if (dependency.read && dependency.file) {
+                            queue.push({ file: join(root, dependency.file), root });
+                        }
+                    }
+                }
+            }
+
+            process.exit(blocked || pending ? 1 : 0);
             break;
         }
 
