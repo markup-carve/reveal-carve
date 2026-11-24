@@ -57,6 +57,7 @@ them.
 | `pdf <source> <out.pdf>` | a print copy, built and printed by Chrome |
 | `vendor <dir>` | copy reveal, Carve and the renderers next to the deck |
 | `import <deck.md> <target.crv>` | convert a reveal.js Markdown deck, slide by slide |
+| `upgrade <source...>` | rewrite Carve 0.1 decks and the files they include as Carve 0.2, slide by slide; reports only, unless `--write` |
 
 | Flag | Meaning |
 |---|---|
@@ -87,6 +88,7 @@ them.
 | `--no-notes` | handout without the speaker notes |
 | `--no-reveal-spoilers` | print without the slide that opens spoilers |
 | `--port N` | port for `watch` |
+| `--write` | `upgrade`: write the upgraded files instead of only reporting them |
 | `--separator RE` | `import`: horizontal separator of the Markdown deck, default `\r?\n---\r?\n` |
 | `--vertical-separator RE` | `import`: vertical separator, default `\r?\n--\r?\n` |
 | `--no-vertical-separator` | `import`: the Markdown deck has no vertical slides |

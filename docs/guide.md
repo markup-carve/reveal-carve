@@ -143,6 +143,7 @@ reveal-carve check slides/                             # carve lint, carve fmt a
 reveal-carve vendor deck/vendor                        # copy reveal, Carve and the renderers in
 reveal-carve pdf slides/ deck.pdf                      # print copy, built and printed
 reveal-carve import deck.md slides/deck.crv            # convert a reveal.js Markdown deck
+reveal-carve upgrade slides/ --write                   # rewrite Carve 0.1 decks as 0.2
 ```
 
 | Flag | Meaning |
@@ -166,6 +167,19 @@ reveal-carve import deck.md slides/deck.crv            # convert a reveal.js Mar
 | `--no-reveal-spoilers` | print without the repeated slide that opens spoilers |
 | `--separator RE`, `--vertical-separator RE`, `--notes-separator RE` | `import`: the separators the Markdown deck uses, as in reveal's `data-separator` attributes |
 | `--no-vertical-separator` | `import`: the Markdown deck has no vertical slides |
+
+`upgrade` runs the Carve engine's 0.1 to 0.2 upgrade over each slide, so the
+`---` and `--` separators and the frontmatter stay as written, and follows
+`{{ path }}` includes (inside `--include-root`) to upgrade the included files
+too. A deck built with `--extension wikilinks` or `--extension samp` passes the
+same flag to `upgrade`, so `[[Page]]` and the 0.1 `samp` form are respelled
+too. Without `--write` it lists what would change and exits with 1 when
+anything would. Each line it prints names the upgrade entry (`U-001`, ...) and
+the source line. When a slide of any file would render differently in 0.2,
+`--write` writes nothing at all: rewrite the reported lines by hand, then run
+it again. Run it once on
+a 0.1 deck: the input is read as Carve 0.1, so a second run on 0.2 text that
+uses 0.2-only syntax such as `= Heading` escapes it.
 
 `import` converts each slide of a reveal.js Markdown deck with Carve's Markdown
 importer and writes the slide separators back as `---` and `--`. `Note:` becomes
