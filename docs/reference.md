@@ -139,7 +139,7 @@ The rest are off until a deck asks for them with `--extension NAME` or
 | `semanticSpan` | inline spans with a role | yes | no |
 | `codeCallouts` | numbered markers inside a fence | yes | no |
 | `smartQuotes` | locale-aware quotation marks | no, it needs a locale | no |
-| `headingNumbers`, `headingPermalinks`, `headingLevelShift`, `headingReference` | heading numbering, anchors, level shifting | no | no |
+| `headingNumbers`, `headingPermalinks`, `headingReference` | heading numbering and anchors | no | no |
 | `tableOfContents`, `tocPlacement` | a generated contents list | no | no |
 | `citations`, `glossary`, `index`, `wikilinks` | scholarly and wiki constructs | no | no |
 | `autolink`, `externalLinks` | bare URLs, and marking outbound links | no | no |
@@ -153,6 +153,12 @@ The rest are off until a deck asks for them with `--extension NAME` or
 The demo site runs mermaid, chart, mathBlock, tabs, codeCallouts and codeGroup;
 the rest wait for their Carve 0.2 ports - `scripts/build-site.mjs` has the list
 in one place.
+
+Moving every heading down a level is not an extension in Carve 0.2: the
+render option `headingShift` (0 to 5, default 0) replaces the 0.1
+`headingLevelShift`. Pass it as `carve: { carveOptions: { headingShift: 1 } }`,
+and `=` renders as `<h2>`. The level options of `tableOfContents`,
+`headingPermalinks` and `headingNumbers` then name the shifted levels.
 
 The plugin's own behavior - the deck footer, the speaker timer, the tab and
 spoiler keys, callout badges and diff colouring surviving the highlighter - is
