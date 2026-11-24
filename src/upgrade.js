@@ -51,7 +51,6 @@ export function upgradeDeck(source, { upgrade, separator, verticalSeparator } = 
         const result = upgrade(`${core[2]}\n`);
         const coreStart = bodyStart + start + core[1].length;
         const lineShift = source.slice(0, coreStart).split('\n').length - 1;
-        const byteShift = Buffer.byteLength(source.slice(0, coreStart));
 
         for (const record of result.records) {
             records.push({
@@ -59,8 +58,8 @@ export function upgradeDeck(source, { upgrade, separator, verticalSeparator } = 
                 ...(typeof record.line === 'number' ? { line: record.line + lineShift } : {}),
                 ...(record.range ? {
                     range: {
-                        startOffset: record.range.startOffset + byteShift,
-                        endOffset: record.range.endOffset + byteShift,
+                        startOffset: record.range.startOffset + coreStart,
+                        endOffset: record.range.endOffset + coreStart,
                     },
                 } : {}),
             });
@@ -85,9 +84,9 @@ function verticalPieces(body, from, to, vertical) {
 
     const pieces = [];
     let at = from;
-    for (const match of body.slice(from, to).matchAll(new RegExp(vertical, 'gm'))) {
-        pieces.push([at, from + match.index, false], [from + match.index, from + match.index + match[0].length, true]);
-        at = from + match.index + match[0].length;
+    for (const [start, end] of slideSeparators(body.slice(from, to), vertical)) {
+        pieces.push([at, from + start, false], [from + start, from + end, true]);
+        at = from + end;
     }
     pieces.push([at, to, false]);
 

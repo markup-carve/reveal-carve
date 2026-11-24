@@ -344,7 +344,7 @@ try {
 
                     for (const dependency of carve.includeDependencies(document)) {
                         if (dependency.read && dependency.file) {
-                            queue.push({ file: join(root, dependency.file), root });
+                            queue.push({ file: relative(process.cwd(), join(root, dependency.file)), root });
                         }
                     }
                 }

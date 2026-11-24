@@ -53,6 +53,14 @@ test('a separator inside a fence is slide text, not a boundary', () => {
     const source = '```\na\n---\nb\n```\n\nText\n# One\n';
 
     assert.equal(upgradeDeck(source, { upgrade }).output, '```\na\n---\nb\n```\n\nText\n\n# One\n');
+    assert.equal(upgradeDeck('```\n--\n```\n\nText\n# One\n', { upgrade }).output, '```\n--\n```\n\nText\n\n# One\n');
+});
+
+test('a record range counts UTF-16 offsets of the whole deck', () => {
+    const source = 'Ü\n\n---\n\n[Label]\n:::: tabs\n::: tab\nx\n:::\n::::\n';
+    const [record] = upgradeDeck(source, { upgrade }).records.filter((entry) => entry.range);
+
+    assert.equal(source.slice(record.range.startOffset, record.range.endOffset).split('\n')[0], '::: tab');
 });
 
 test('the worst check of any slide is the check of the deck', () => {
