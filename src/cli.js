@@ -314,6 +314,7 @@ try {
                     upgrade,
                     separator: deck.separator,
                     verticalSeparator: deck.verticalSeparator,
+                    extensions: deck.extensions,
                 });
 
                 // U-011 says 0.2 leaves `{{ path }}` as text; a deck build expands it itself.

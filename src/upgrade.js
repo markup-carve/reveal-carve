@@ -11,6 +11,7 @@ import { splitFrontmatter } from './frontmatter-split.js';
 import { DEFAULTS, slideSeparators } from './slice.js';
 
 const CHECK_ORDER = ['pass', 'explained', 'mismatch'];
+const REGISTERED = ['wikilinks', 'samp'];
 
 /**
  * @param {string} source Carve 0.1 deck source
@@ -18,12 +19,17 @@ const CHECK_ORDER = ['pass', 'explained', 'mismatch'];
  * @param {Function} options.upgrade `upgrade` from `@markup-carve/carve/upgrade`
  * @param {string} [options.separator] horizontal separator pattern
  * @param {string|null} [options.verticalSeparator] vertical separator pattern, `null` for none
+ * @param {Array<string|{name: string}>} [options.extensions] the deck's extensions; `wikilinks` and `samp`
+ *   have 0.1 source forms the engine respells only when they are registered
  * @returns {{ output: string, changed: boolean, check: 'pass'|'explained'|'mismatch',
  *   records: Array<object>, engine01: string }}
  */
-export function upgradeDeck(source, { upgrade, separator, verticalSeparator } = {}) {
+export function upgradeDeck(source, { upgrade, separator, verticalSeparator, extensions = [] } = {}) {
     const horizontal = separator || DEFAULTS.separator;
     const vertical = verticalSeparator === undefined ? DEFAULTS.verticalSeparator : verticalSeparator;
+    const registeredExtensions = extensions
+        .map((extension) => (typeof extension === 'string' ? extension : extension?.name))
+        .filter((name) => REGISTERED.includes(name));
     const { source: body } = splitFrontmatter(source);
     const bodyStart = source.length - body.length;
     const records = [];
@@ -48,7 +54,7 @@ export function upgradeDeck(source, { upgrade, separator, verticalSeparator } = 
             continue;
         }
 
-        const result = upgrade(`${core[2]}${core[2].includes('\r\n') ? '\r\n' : '\n'}`);
+        const result = upgrade(`${core[2]}${core[2].includes('\r\n') ? '\r\n' : '\n'}`, { registeredExtensions });
         const coreStart = bodyStart + start + core[1].length;
         const lineShift = source.slice(0, coreStart).split('\n').length - 1;
 

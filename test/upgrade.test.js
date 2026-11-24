@@ -68,6 +68,11 @@ test('a CRLF deck keeps its line ends', () => {
     assert.equal(upgradeDeck('Text\r\n# One\r\n\r\n---\r\n\r\nTwo\r\n', { upgrade }).output, 'Text\r\n\r\n# One\r\n\r\n---\r\n\r\nTwo\r\n');
 });
 
+test('a deck extension with a 0.1 source form is registered with the upgrade', () => {
+    assert.equal(upgradeDeck('See [[Page]]\n', { upgrade }).output, 'See [[Page]]\n');
+    assert.equal(upgradeDeck('See [[Page]]\n', { upgrade, extensions: ['wikilinks'] }).output, 'See :wiki[Page]\n');
+});
+
 test('the worst check of any slide is the check of the deck', () => {
     const result = upgradeDeck('= Fine\n\n---\n\nwhole\n', {
         upgrade: (text) => ({ output: text, changed: false, records: [], check: text.includes('whole') ? 'mismatch' : 'explained', engine01: '0.1' }),
