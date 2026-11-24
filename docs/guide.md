@@ -171,6 +171,8 @@ reveal-carve upgrade slides/ --write                   # rewrite Carve 0.1 decks
 `upgrade` runs the Carve engine's 0.1 to 0.2 upgrade over each slide, so the
 `---` and `--` separators and the frontmatter stay as written, and follows
 `{{ path }}` includes (inside `--include-root`) to upgrade the included files
+too. A deck built with `--extension wikilinks` or `--extension samp` passes the
+same flag to `upgrade`, so `[[Page]]` and the 0.1 `samp` form are respelled
 too. Without `--write` it lists what would change and exits with 1 when
 anything would. Each line it prints names the upgrade entry (`U-001`, ...) and
 the source line. When a slide of any file would render differently in 0.2,
