@@ -14,7 +14,7 @@
 import { readFrontmatter } from './frontmatter.js';
 import { splitFrontmatter } from './frontmatter-split.js';
 
-import { DEFAULTS, parseSlide } from './slice.js';
+import { DEFAULTS, parseSlide, splitSlidesSource } from './slice.js';
 
 // `chapter` is not written by hand: the build step puts it at the head of every
 // chapter file so an agenda can list chapters. It is linted as known all the
@@ -113,7 +113,7 @@ export function lintSource(source, options = {}) {
         }
     }
 
-    const slides = source.split(new RegExp(config.separator, 'm'));
+    const slides = splitSlidesSource(source, config.separator);
 
     for (const [index, chunk] of slides.entries()) {
         if (!chunk.trim()) {
@@ -123,7 +123,7 @@ export function lintSource(source, options = {}) {
         const slide = parseSlide(chunk, config);
         const number = index + 1;
 
-        if (!/^#{1,6}\s/m.test(slide.body) && slide.body.length > 200) {
+        if (!/^(?:#{1,6}|={1,6})\s/m.test(slide.body) && slide.body.length > 200) {
             findings.push({
                 level: 'warning',
                 line: 0,

@@ -16,19 +16,22 @@ import { fileURLToPath } from 'node:url';
 
 import * as carve from '@markup-carve/carve';
 
+import { markdownWriter } from '../src/markdown.js';
+
 const docs = join(dirname(fileURLToPath(import.meta.url)), '..', 'docs');
 
 /**
  * @param {string} name A `.crv` file in docs/
  * @returns {{path: string, markdown: string}}
  */
-export function renderDoc(name) {
+export async function renderDoc(name) {
+    const toMarkdown = await markdownWriter(carve);
     const source = readFileSync(join(docs, name), 'utf8');
     const notice = `<!-- Generated from docs/${name} by scripts/build-docs.mjs. Edit that file. -->`;
 
     return {
         path: join(docs, name.replace(/\.crv$/, '.md')),
-        markdown: `${notice}\n\n${carve.carveToMarkdown(source).trim()}\n`,
+        markdown: `${notice}\n\n${toMarkdown(source).trim()}\n`,
     };
 }
 
@@ -41,7 +44,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     let stale = 0;
 
     for (const name of carveDocs()) {
-        const { path, markdown } = renderDoc(name);
+        const { path, markdown } = await renderDoc(name);
         const current = (() => {
             try {
                 return readFileSync(path, 'utf8');

@@ -7,12 +7,13 @@
  *   reveal-carve lint <source...>
  *   reveal-carve handout <source> <target.md> [--no-notes]
  *   reveal-carve import <deck.md> <target.crv>
+ *   reveal-carve upgrade <source...> [--write]
  *
  * `build` is the default, so the verb may be left out.
  */
 
 import { mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
-import { basename, dirname, join, resolve } from 'node:path';
+import { basename, dirname, join, relative, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 
 import { readFrontmatter, mergeDeckOptions, FrontmatterError } from './frontmatter.js';
@@ -21,20 +22,30 @@ import { IncludeError } from './include.js';
 import { buildHandout } from './handout.js';
 import { formatFindings, lintSource, maskSeparators, separatorLines } from './lint.js';
 import { serve } from './dev.js';
-import { extensionSpec, missingRenderers, resolveExtensions } from './extensions.js';
+import { carveRenderer, extensionSpec, missingRenderers, resolveExtensions } from './extensions.js';
 import { deckMinutes } from './slice.js';
 import { exportPdf } from './pdf.js';
 import { importMarkdownDeck } from './import.js';
 import { vendorAssets } from './vendor.js';
 import { initDeck } from './init.js';
+import { markdownWriter } from './markdown.js';
+import { upgradeDeck } from './upgrade.js';
 import { absoluteAsset, locateCarveCli, parseArgs, usage, VERBS } from './args.js';
 
 
 // The Carve package publishes ESM only, so this is a dynamic import rather than
 // a require: `require('@markup-carve/carve')` fails with ERR_PACKAGE_PATH_NOT_EXPORTED.
+// The standard extensions and the Markdown importer live in entries of their own in Carve 0.2.
 async function loadCarve() {
     try {
-        return await import('@markup-carve/carve');
+        const [core, standard, formats] = await Promise.all([
+            import('@markup-carve/carve'),
+            import('@markup-carve/carve/extensions').catch(() => ({})),
+            import('@markup-carve/carve/import').catch(() => ({})),
+        ]);
+
+        // The import entry's importDocument also reads Markdown, GFM and Djot.
+        return { ...standard, ...core, ...formats };
     } catch (error) {
         if (error.code === 'ERR_MODULE_NOT_FOUND') {
             throw new Error(
@@ -57,7 +68,7 @@ try {
 }
 const [source, target] = positional;
 
-if (options.help || (!source && !['lint', 'check'].includes(verb))) {
+if (options.help || (!source && !['lint', 'check', 'upgrade'].includes(verb))) {
     usage();
     process.exit(options.help ? 0 : 1);
 }
@@ -111,9 +122,7 @@ function refreshSettings() {
         console.warn(`[reveal-carve] ${pending.join(', ')} need a renderer. Add it with --js.`);
     }
 }
-const render = (text) => carve.carveToHtml(text, {
-    sections: false, ...options.carveOptions, extensions,
-});
+const render = (text) => carveRenderer(carve, extensions, { sections: false, ...options.carveOptions })(text);
 
 function buildOnce() {
     refreshSettings();
@@ -129,7 +138,10 @@ function buildOnce() {
 // An unresolved include is a mistake in the deck, not a crash: it is reported
 // like any other finding, with the flag that usually fixes it.
 try {
-    refreshSettings();
+    // `upgrade` renders nothing, and its 0.1 extension names (`samp`) have no 0.2 factory.
+    if (verb !== 'upgrade') {
+        refreshSettings();
+    }
     switch (verb) {
         case 'lint': {
             const files = (positional.length ? positional : ['.']).flatMap((file) =>
@@ -213,11 +225,15 @@ try {
                 const separators = separatorLines(text, options);
 
                 if (carveCli) {
-                    const linted = spawnSync(process.execPath, [carveCli, 'lint', '--json', file], { encoding: 'utf8' });
+                    const includeRoot = options.includeRoot ? resolve(options.includeRoot) : dirname(resolve(file));
+                    const linted = spawnSync(process.execPath, [carveCli, 'lint', '--json', '--include-root', includeRoot, file], { encoding: 'utf8' });
                     let warnings = null;
 
                     try {
-                        warnings = linted.status > 1 ? null : JSON.parse(linted.stdout);
+                        // Carve 0.2 writes { files: [{ file, diagnostics }] }, each entry with its line and column.
+                        warnings = linted.status > 1 ? null : JSON.parse(linted.stdout).files
+                            .flatMap((entry) => entry.diagnostics)
+                            .map((entry) => ({ ...entry, rule: entry.code }));
                     } catch {
                         warnings = null;
                     }
@@ -227,13 +243,26 @@ try {
                         console.log((linted.stderr || linted.stdout).trim());
                     }
 
-                    // A slide separator is not a thematic break, whatever Carve calls it.
+                    // A slide separator is not a thematic break, whatever Carve calls it. A finding in an
+                    // included file is measured against that file's own separators.
+                    const separatorsOf = (entry) => {
+                        if (!entry.file) {
+                            return separators;
+                        }
+
+                        try {
+                            return separatorLines(readFileSync(resolve(includeRoot, entry.file), 'utf8'), options);
+                        } catch {
+                            return new Set();
+                        }
+                    };
                     const kept = (warnings || []).filter((warning) =>
-                        !(warning.rule === 'thematic-break-spelling' && separators.has(warning.line)));
+                        !(warning.rule === 'thematic-break-spelling' && separatorsOf(warning).has(warning.line)));
 
                     for (const warning of kept) {
                         failed = true;
-                        console.log(`${file}:${warning.line}:${warning.column ?? 1} ${warning.rule ?? warning.code} - ${warning.message}`);
+                        const where = warning.file ? join(includeRoot, warning.file) : file;
+                        console.log(`${where}:${warning.line}:${warning.column ?? 1} ${warning.rule ?? warning.code} - ${warning.message}`);
                     }
 
                     const dir = mkdtempSync(join(tmpdir(), 'reveal-carve-check-'));
@@ -262,6 +291,83 @@ try {
             break;
         }
 
+        case 'upgrade': {
+            const { upgrade } = await import('@markup-carve/carve/upgrade');
+            const queue = (positional.length ? positional : ['.']).flatMap((file) =>
+                statSync(file).isDirectory()
+                    ? readdirSync(file).filter((name) => name.endsWith(options.extension || '.crv')).map((name) => join(file, name))
+                    : [file])
+                .map((file) => ({ file, root: resolve(options.includeRoot || dirname(file)) }));
+            const seen = new Set();
+            let blocked = false;
+            const changed = [];
+
+            // A deck's includes are upgraded with it: they are spliced into the deck as written.
+            while (queue.length) {
+                const { file, root } = queue.shift();
+
+                if (seen.has(resolve(file))) {
+                    continue;
+                }
+
+                seen.add(resolve(file));
+                const text = readFileSync(file, 'utf8');
+                const deck = mergeDeckOptions(readFrontmatter(text).options, explicitOptions);
+                const result = upgradeDeck(text, {
+                    upgrade,
+                    separator: deck.separator,
+                    verticalSeparator: deck.verticalSeparator,
+                    extensions: deck.extensions,
+                });
+
+                // U-011 says 0.2 leaves `{{ path }}` as text; a deck build expands it itself.
+                const records = result.records
+                    .filter((record) => options.includes === false || record.entry !== 'U-011');
+
+                for (const record of records) {
+                    console.log(`${file}:${record.line ?? 1} ${record.entry} (${record.class}) - ${record.message}`);
+                }
+
+                if (result.check === 'mismatch') {
+                    blocked = true;
+                    console.log(`${file}: not upgraded, a slide would render differently in 0.2; rewrite the lines above by hand`);
+                } else if (!result.changed) {
+                    console.log(`${file}: nothing to upgrade`);
+                } else {
+                    changed.push({ file, output: result.output });
+                    console.log(`${file}: ${options.write ? 'upgrades' : 'would be upgraded, run with --write'}`);
+                }
+
+                if (options.includes !== false) {
+                    const document = carve.parse(result.output, {
+                        includes: { resolver: fileSystemResolver(root), file: relative(root, resolve(file)) },
+                    });
+
+                    for (const dependency of carve.includeDependencies(document)) {
+                        if (dependency.read && dependency.file) {
+                            queue.push({ file: relative(process.cwd(), join(root, dependency.file)), root });
+                        }
+                    }
+                }
+            }
+
+            // All or nothing: a deck is never left half upgraded because one of its files is blocked.
+            if (options.write && changed.length) {
+                if (blocked) {
+                    console.log('\nupgrade: nothing written, a file above is blocked');
+                } else {
+                    for (const { file, output } of changed) {
+                        writeFileSync(file, output, 'utf8');
+                    }
+
+                    console.log(`\nupgrade: ${changed.length} file(s) written`);
+                }
+            }
+
+            process.exit(blocked || (changed.length && !options.write) ? 1 : 0);
+            break;
+        }
+
         case 'pdf': {
             // A deck source is printed from a copy of its own: Carve's static mode
             // unfolds tabs and code groups into sections, so every panel reaches the
@@ -276,11 +382,10 @@ try {
                 expectedPages = buildPage({
                     source,
                     target: deck,
-                    render: (text) => carve.carveToHtml(text, {
+                    render: carveRenderer(carve, extensions, {
                         sections: false,
                         mode: 'static',
                         ...options.carveOptions,
-                        extensions,
                     }),
                     ...options,
                     // A handout cannot be clicked, so a spoiler gets its answer on
@@ -344,9 +449,10 @@ try {
         }
 
         case 'handout': {
+            const toMarkdown = await markdownWriter(carve);
             const markdown = buildHandout(
                 readSource(source, options),
-                (text) => carve.carveToMarkdown(text),
+                toMarkdown,
                 options,
             );
             writeFileSync(target, markdown, 'utf8');

@@ -57,6 +57,7 @@ them.
 | `pdf <source> <out.pdf>` | a print copy, built and printed by Chrome |
 | `vendor <dir>` | copy reveal, Carve and the renderers next to the deck |
 | `import <deck.md> <target.crv>` | convert a reveal.js Markdown deck, slide by slide |
+| `upgrade <source...>` | rewrite Carve 0.1 decks and the files they include as Carve 0.2, slide by slide; reports only, unless `--write` |
 
 | Flag | Meaning |
 |---|---|
@@ -87,6 +88,7 @@ them.
 | `--no-notes` | handout without the speaker notes |
 | `--no-reveal-spoilers` | print without the slide that opens spoilers |
 | `--port N` | port for `watch` |
+| `--write` | `upgrade`: write the upgraded files instead of only reporting them |
 | `--separator RE` | `import`: horizontal separator of the Markdown deck, default `\r?\n---\r?\n` |
 | `--vertical-separator RE` | `import`: vertical separator, default `\r?\n--\r?\n` |
 | `--no-vertical-separator` | `import`: the Markdown deck has no vertical slides |
@@ -109,12 +111,26 @@ from the page and their off-state reads as broken markup: `tabs`, `codeGroup`,
 `codeCallouts`. Drop one with `--no-extension NAME`, or all of them with
 `--core-only` (`carve: { extensions: false }` at runtime).
 
+### Carve 0.2
+
+The `next2` line runs on the Carve 0.2 engine. Its extensions come from
+`@markup-carve/carve` and `@markup-carve/carve/extensions`:
+
+- `tabs`, `codeGroup`, `codeCallouts`, `mathBlock`, `mermaid`, `chart`,
+  `vegaLite`, `d2`, `graphviz`, `plantuml`, `wavedrom` and `abc`.
+- `details`, `spoiler`, `listTable`, `colorSwatch`, `semanticSpan`, `glossary`
+  and `smartQuotes`.
+- `imgFence` recognizes `img` and `image` fences with sanitized SVG content.
+- `tableOfContents`, `headingPermalinks`, `headingNumbers` and `externalLinks`.
+- A tab is written `::: tab "Label"`; the 0.1 `[Label]` form is now a group
+  label. The 0.2 tabs are radio inputs, not the 0.1 `aria` mode buttons.
+
 The rest are off until a deck asks for them with `--extension NAME` or
 `carve: { extensions: [...] }`:
 
 | Extension | What it adds | On by default | Needs a renderer on the page |
 |---|---|---|---|
-| `tabs` | `::: tabs` with `:::: tab [Label]` | yes | no |
+| `tabs` | `:::: tabs` with `::: tab "Label"` | yes | no |
 | `codeGroup` | one code block per file, switched | yes | no |
 | `details` | a folded block | yes | no |
 | `spoiler` | text blacked out until asked for | yes | no |
@@ -123,7 +139,7 @@ The rest are off until a deck asks for them with `--extension NAME` or
 | `semanticSpan` | inline spans with a role | yes | no |
 | `codeCallouts` | numbered markers inside a fence | yes | no |
 | `smartQuotes` | locale-aware quotation marks | no, it needs a locale | no |
-| `headingNumbers`, `headingPermalinks`, `headingLevelShift`, `headingReference` | heading numbering, anchors, level shifting | no | no |
+| `headingNumbers`, `headingPermalinks`, `headingReference` | heading numbering and anchors | no | no |
 | `tableOfContents`, `tocPlacement` | a generated contents list | no | no |
 | `citations`, `glossary`, `index`, `wikilinks` | scholarly and wiki constructs | no | no |
 | `autolink`, `externalLinks` | bare URLs, and marking outbound links | no | no |
@@ -134,10 +150,15 @@ The rest are off until a deck asks for them with `--extension NAME` or
 | `mathBlock` | display math | no | KaTeX or MathJax |
 | `vegaLite`, `d2`, `graphviz`, `plantuml`, `wavedrom`, `abc` | that project's diagram fence | no | that project's script |
 
-The demo site runs mermaid,
-chart, mathBlock, imgFence (as ` ```svg `), details, tabs (aria mode), listTable,
-spoiler, colorSwatch, semanticSpan, codeCallouts, codeGroup and smartQuotes -
-`scripts/build-site.mjs` has the list in one place.
+The demo site runs mermaid, chart, mathBlock, tabs, codeCallouts and codeGroup;
+the rest wait for their Carve 0.2 ports - `scripts/build-site.mjs` has the list
+in one place.
+
+Moving every heading down a level is not an extension in Carve 0.2: the
+render option `headingShift` (0 to 5, default 0) replaces the 0.1
+`headingLevelShift`. Pass it as `carve: { carveOptions: { headingShift: 1 } }`,
+and `=` renders as `<h2>`. The level options of `tableOfContents`,
+`headingPermalinks` and `headingNumbers` then name the shifted levels.
 
 The plugin's own behavior - the deck footer, the speaker timer, the tab and
 spoiler keys, callout badges and diff colouring surviving the highlighter - is

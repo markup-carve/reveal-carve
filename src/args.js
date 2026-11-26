@@ -13,7 +13,7 @@ import { dirname, join, resolve } from 'node:path';
 import { parseExtensionArgument } from './extensions.js';
 import { rendererNames } from './renderers.js';
 
-export const VERBS = ['init', 'build', 'watch', 'lint', 'handout', 'pdf', 'agenda', 'vendor', 'check', 'import'];
+export const VERBS = ['init', 'build', 'watch', 'lint', 'handout', 'pdf', 'agenda', 'vendor', 'check', 'import', 'upgrade'];
 
 export function parseArgs(argv) {
     const positional = [];
@@ -131,6 +131,9 @@ export function parseArgs(argv) {
             case '--strict':
                 options.throwOnError = true;
                 break;
+            case '--write':
+                options.write = true;
+                break;
             case '--help':
             case '-h':
                 options.help = true;
@@ -190,6 +193,7 @@ export function usage() {
   reveal-carve vendor  <dir>                    copy reveal, Carve and the renderers next to a deck
   reveal-carve check   <source...>              carve lint, carve fmt and the deck rules in one go
   reveal-carve import  <deck.md> <target.crv>   convert a reveal.js Markdown deck to Carve
+  reveal-carve upgrade <source...> [--write]    rewrite Carve 0.1 decks and their includes as 0.2
 
 A source is a .crv file or a directory holding one file per chapter.
 
@@ -202,6 +206,7 @@ Options: --preset training --with mermaid,katex --no-renderers
          --footer "<html>" --footer-file FILE --version MARKER
          --split-at-heading N --animate-lists --slides-only --strict --static
          --no-includes --include-root DIR --no-notes --no-reveal-spoilers
+Upgrade: --write (without it, only report what would change)
 Import:  --separator RE --vertical-separator RE --no-vertical-separator
          --notes-separator RE`);
 }

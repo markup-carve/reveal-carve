@@ -1,6 +1,6 @@
-## Chapter two: reading code together
+== Chapter two: reading code together
 
-{data-line-numbers="1-4\|2\|5-7"}
+{data-line-numbers="1-4|2|5-7"}
 ```php
 foreach ($orders as $order) {
     $customer = $this->Customers->get($order->customer_id);
@@ -19,7 +19,7 @@ One query per row above, one query below. The fence walks the audience through i
 
 --
 
-### What it costs
+=== What it costs
 
 |= Rows |= Queries before |= Queries after |
 | 50 | 51 | 1 |
@@ -27,12 +27,10 @@ One query per row above, one query below. The fence walks the audience through i
 | 5000 | 5001 | 1 |
 
 ---
-
 %% class: center
 
-## Checkpoint
+== Checkpoint
 
-{.big}
-:::
+::: big
 No query inside a loop.
 :::

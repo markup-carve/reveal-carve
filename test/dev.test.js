@@ -128,7 +128,7 @@ test('the scaffold writes a deck that lints and builds', async () => {
     const { buildSlides } = await import('../src/build.js');
     const carve = await import('@markup-carve/carve');
     const { fileSystemResolver } = await import('@markup-carve/carve/node');
-    const slides = buildSlides(join(target, 'slides'), (text) => carve.carveToHtml(text, { sections: false }), {
+    const slides = buildSlides(join(target, 'slides'), (text) => carve.render(text, { sections: false }), {
         engine: carve,
         resolver: fileSystemResolver,
     });

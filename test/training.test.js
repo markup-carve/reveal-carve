@@ -7,9 +7,12 @@ import { parseHTML } from 'linkedom';
 import { initDeck } from '../src/init.js';
 import { managedRenderers, rendererNames, rendererAssets } from '../src/renderers.js';
 import { buildSlides } from '../src/build.js';
-import * as carve from '@markup-carve/carve';
+import * as core from '@markup-carve/carve';
+import * as standard from '@markup-carve/carve/extensions';
 import { fileSystemResolver } from '@markup-carve/carve/node';
-import { extensionSpec, resolveExtensions } from '../src/extensions.js';
+import { carveRenderer, extensionSpec, resolveExtensions } from '../src/extensions.js';
+
+const carve = { ...standard, ...core };
 
 function temporary(t) {
     const dir = mkdtempSync(join(tmpdir(), 'carve-training-test-'));
@@ -27,7 +30,7 @@ test('training scaffold renders its chapters and preserves edited files on repea
     assert.ok(manifest.dependencies.mermaid);
     assert.ok(manifest.dependencies.katex);
     const extensions = resolveExtensions(extensionSpec(['mermaid', 'mathBlock']), carve);
-    const html = buildSlides(join(dir, 'slides'), (text) => carve.carveToHtml(text, { extensions }), {
+    const html = buildSlides(join(dir, 'slides'), carveRenderer(carve, extensions), {
         engine: carve, resolver: fileSystemResolver,
     });
     assert.match(html, /class="mermaid"/);

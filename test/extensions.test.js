@@ -145,3 +145,57 @@ test('the renderer warning counts the defaults too, not only what was asked for'
     assert.deepEqual(missingRenderers(extensionSpec(['mermaid'])), ['mermaid']);
     assert.deepEqual(missingRenderers(extensionSpec()), []);
 });
+
+test('the 0.1 block extensions now resolve on Carve 0.2', async () => {
+    const { carve } = await import('./helpers/engine.js');
+
+    for (const name of ['details', 'spoiler', 'listTable', 'colorSwatch', 'semanticSpan']) {
+        assert.equal(resolveExtensions([name], carve).length, 1, name);
+    }
+    assert.equal(resolveExtensions(['imgFence'], carve).length, 1);
+});
+
+test('SVG image fences sanitize safe and unsafe content', async () => {
+    const { carve } = await import('./helpers/engine.js');
+    const { carveRenderer } = await import('../src/extensions.js');
+    const render = carveRenderer(carve, resolveExtensions(['imgFence'], carve), { sections: false });
+    const safe = render('```img\n<svg xmlns="http://www.w3.org/2000/svg"><circle r="1"/></svg>\n```\n');
+    const unsafe = render('```img\n<svg onload="alert(1)"><script>alert(1)</script><circle r="1"/></svg>\n```\n');
+
+    assert.match(safe, /^<img src="data:image\/svg\+xml,/);
+    assert.match(decodeURIComponent(safe), /<circle r="1"\/>/);
+    assert.match(unsafe, /^<img src="data:image\/svg\+xml,/);
+    assert.doesNotMatch(decodeURIComponent(unsafe), /onload|<script|alert\(/);
+    assert.match(decodeURIComponent(unsafe), /<circle r="1"\/>/);
+});
+
+test('the navigation extensions reach the renderer', async () => {
+    const { carve } = await import('./helpers/engine.js');
+    const { carveRenderer } = await import('../src/extensions.js');
+    const render = (names, text) => carveRenderer(carve, resolveExtensions(names, carve), { sections: false })(text);
+
+    assert.match(render(['externalLinks'], '[x](https://example.com)\n'), /target="_blank"/);
+    assert.match(render(['headingNumbers'], '= One\n'), /<span class="section-number">1<\/span>/);
+    assert.match(render(['headingPermalinks'], '= One\n'), /class="permalink"/);
+    assert.match(render(['tableOfContents'], '::: toc\n:::\n\n= One\n'), /<a href="#One">One<\/a>/);
+});
+
+test('the 0.2 bundles render through the engine, document transforms included', async () => {
+    const { carve } = await import('./helpers/engine.js');
+    const { carveRenderer } = await import('../src/extensions.js');
+    const render = carveRenderer(carve, resolveExtensions(['tabs', 'codeGroup', 'codeCallouts'], carve), { sections: false });
+
+    assert.match(render(':::: tabs\n::: tab "A"\nx\n:::\n::::\n'), /<label class="tabs-label" for="tabs-1-0">A<\/label>.*class="tab-panel tabs-panel"/);
+    assert.match(render('::: code-group\n```sh [npm]\nnpm i\n```\n:::\n'), /class="code-group"/);
+});
+
+test('without the Carve 0.2 Markdown writer, a handout says what it waits for', async () => {
+    const { carve } = await import('./helpers/engine.js');
+    const { findMarkdownWriter, markdownWriter } = await import('../src/markdown.js');
+
+    if (await findMarkdownWriter(carve)) {
+        return;
+    }
+
+    await assert.rejects(() => markdownWriter(carve), (error) => error.code === 'writer-unavailable' && /carve-js#5076/.test(error.message));
+});

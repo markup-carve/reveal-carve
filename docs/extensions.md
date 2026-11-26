@@ -54,7 +54,7 @@ What each one emits, and what draws it:
 | ` ```mermaid ` | `<pre class="mermaid">` | Mermaid |
 | ` ```chart ` | `<div class="chart">` with JSON | Chart.js, from the JSON |
 | ` ```math ` | `<div class="math display">\[ … \]</div>` | KaTeX or MathJax |
-| ` ```svg ` | `<img src="data:image/svg+xml,…">` | none: the SVG is sanitized and inlined |
+| ` ```img ` | `<img src="data:image/svg+xml,…">` | none: the SVG is sanitized and inlined |
 
 Call `mermaid.render()` per block and write the SVG back yourself rather than
 `mermaid.run()`. Reveal keeps every slide but the current one at `display: none`,
@@ -62,9 +62,8 @@ and a flowchart laid out in a hidden slide measures its labels as zero, so it
 comes out empty or as a syntax error in a printed copy. The demo site's
 `scripts/build-site.mjs` has the loop.
 
-The SVG fence is `img` by default; `imgFence:{"language":"svg"}` makes it ` ```svg `.
-The [showcase deck](https://markup-carve.github.io/reveal-carve/showcase.html)
-runs all four.
+The SVG fence is `img` or `image` in Carve 0.2. Enable `imgFence` to sanitize it
+and render it as a data URI image.
 
 `graphviz`, `d2`, `plantuml`, `wavedrom`, `vegaLite` and `abc` work the same way:
 Carve emits `<pre class="graphviz">` and the like, and you add that project's

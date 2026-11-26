@@ -98,9 +98,36 @@ export function extensionSpec(spec, without = []) {
 }
 
 /**
+ * The 0.2 engine ships tabs as definitions plus a renderer rather than a factory.
+ */
+function builtinBundle(name, engine) {
+    if (name === 'tabs' && engine?.tabsExtensions && engine?.tabsRenderer) {
+        return { extensions: engine.tabsExtensions, renderers: { 'carve.tabs': engine.tabsRenderer } };
+    }
+
+    return null;
+}
+
+/**
+ * The navigation extensions return a bare definition, the others a bundle.
+ */
+function asBundle(result) {
+    if (Array.isArray(result)) {
+        return { extensions: result };
+    }
+
+    if (result && !result.extensions && typeof result.name === 'string' && result.version !== undefined) {
+        return { extensions: [result] };
+    }
+
+    return result;
+}
+
+/**
  * @param {Array<string|Function|{name: string, options?: object}>} spec
- * @param {object} engine The Carve module or browser global
- * @returns {Array<object>} extension instances for `carveToHtml`
+ * @param {object} engine The Carve module or browser global, with the standard extensions
+ *   of `@markup-carve/carve/extensions` merged in
+ * @returns {Array<object>} extension bundles (`{ extensions, renderers, transforms? }`)
  */
 export function resolveExtensions(spec, engine) {
     if (!spec || !spec.length) {
@@ -109,7 +136,7 @@ export function resolveExtensions(spec, engine) {
 
     return spec.map((entry) => {
         if (typeof entry === 'function') {
-            return entry();
+            return asBundle(entry());
         }
 
         if (entry && typeof entry === 'object' && !entry.name) {
@@ -118,6 +145,12 @@ export function resolveExtensions(spec, engine) {
 
         const name = canonicalName(typeof entry === 'string' ? entry : entry.name);
         const options = typeof entry === 'object' ? entry.options || {} : {};
+        const builtin = builtinBundle(name, engine);
+
+        if (builtin) {
+            return builtin;
+        }
+
         const factory = engine?.[name];
 
         if (typeof factory !== 'function') {
@@ -131,8 +164,71 @@ export function resolveExtensions(spec, engine) {
             );
         }
 
-        return factory(options);
+        return asBundle(factory(options));
     }).filter(Boolean);
+}
+
+/**
+ * Render options for resolved bundles: the definitions, the renderers and the document transforms.
+ *
+ * @param {Array<object>} bundles from `resolveExtensions`
+ */
+export function bundleOptions(bundles) {
+    const extensions = [];
+    const renderers = {};
+    const transforms = [];
+
+    for (const bundle of bundles || []) {
+        extensions.push(...(bundle.extensions || []));
+        Object.assign(renderers, bundle.renderers || {});
+        transforms.push(...(bundle.transforms || []));
+    }
+
+    return { extensions, renderers, transforms };
+}
+
+/**
+ * A render function over the Carve 0.2 engine (`render`, `renderWithDocumentTransforms`).
+ *
+ * @param {object} engine
+ * @param {Array<object>} bundles from `resolveExtensions`
+ * @param {object} [options] Carve render options
+ * @returns {(text: string) => string}
+ */
+export function carveRenderer(engine, bundles, options = {}) {
+    if (typeof engine?.render !== 'function') {
+        throw new Error(
+            'reveal-carve: this Carve engine has no render(). reveal-carve on next2 needs the Carve 0.2 engine.',
+        );
+    }
+
+    const { extensions, renderers, transforms } = bundleOptions(bundles);
+    const renderOptions = {
+        ...options,
+        extensions: [...(options.extensions || []), ...extensions],
+        renderers: { ...(options.renderers || {}), ...renderers },
+    };
+
+    if (transforms.length && typeof engine.renderWithDocumentTransforms === 'function') {
+        return (text) => themeTabs(engine.renderWithDocumentTransforms(text, transforms, renderOptions).html);
+    }
+
+    return (text) => themeTabs(engine.render(text, renderOptions));
+}
+
+/**
+ * The 0.2 tabs are radio groups without classes; the theme styles radio tabs by
+ * `tabs-radio`, `tabs-label` and `tabs-panel`, so those are added.
+ */
+export function themeTabs(html) {
+    if (!html.includes('class="tabs"')) {
+        return html;
+    }
+
+    return html
+        .replace(/<input type="radio" name="(tabs-\d+)"/g, '<input type="radio" class="tabs-radio" name="$1"')
+        .replace(/<label for="(tabs-\d+-\d+)">/g, '<label class="tabs-label" for="$1">')
+        .replace(/<div class="tab-panel"/g, '<div class="tab-panel tabs-panel"');
 }
 
 /**
