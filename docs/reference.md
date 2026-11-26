@@ -113,7 +113,7 @@ from the page and their off-state reads as broken markup: `tabs`, `codeGroup`,
 
 ### Carve 0.2
 
-The `next2` line runs on the Carve 0.2 engine. Its extensions come from
+The `main` line runs on the Carve 0.2 engine. Its extensions come from
 `@markup-carve/carve` and `@markup-carve/carve/extensions`:
 
 - `tabs`, `codeGroup`, `codeCallouts`, `mathBlock`, `mermaid`, `chart`,

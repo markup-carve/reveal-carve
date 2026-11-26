@@ -198,7 +198,7 @@ export function bundleOptions(bundles) {
 export function carveRenderer(engine, bundles, options = {}) {
     if (typeof engine?.render !== 'function') {
         throw new Error(
-            'reveal-carve: this Carve engine has no render(). reveal-carve on next2 needs the Carve 0.2 engine.',
+            'reveal-carve: this Carve engine has no render(). reveal-carve 0.2 needs the Carve 0.2 engine.',
         );
     }
 
