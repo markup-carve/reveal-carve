@@ -170,9 +170,32 @@ export const CODE_ATTRIBUTES = [
 ];
 
 export function moveCodeAttributes(html, names = CODE_ATTRIBUTES) {
-    return html.replace(/<pre([^>]*)>(\s*)<code([^>]*)>/g, (match, preAttrs, gap, codeAttrs) => {
+    return html.replace(/<pre([^>]*)>(\s*)<code([^>]*)>/g, (match, preAttrs, gap, codeAttrs, offset) => {
         let remaining = preAttrs;
         let moved = '';
+        const figureAttrs = html.slice(0, offset).match(/<figure([^>]*)>\s*$/)?.[1] ?? '';
+        const sourceAttrs = `${figureAttrs} ${preAttrs}`;
+
+        const attribute = (raw, name) => raw.match(new RegExp(`\\s${name}="([^"]*)"`, 'i'))?.[1];
+        const hasAttribute = (raw, name) => new RegExp(`\\s${name}(?:=|\\s|$)`, 'i').test(raw);
+        const numbered = /(?:^|\s)line-numbers(?:\s|$)/.test(`${attribute(figureAttrs, 'class') ?? ''} ${attribute(preAttrs, 'class') ?? ''}`);
+        const explicit = hasAttribute(sourceAttrs, 'data-line-numbers') || hasAttribute(codeAttrs, 'data-line-numbers');
+        const highlight = attribute(preAttrs, 'data-highlight') ?? attribute(figureAttrs, 'data-highlight');
+        const start = attribute(preAttrs, 'data-line-start') ?? attribute(figureAttrs, 'data-line-start');
+
+        if (!explicit && highlight && /^(?:[1-9]\d*(?:-[1-9]\d*)?)(?:,(?:[1-9]\d*(?:-[1-9]\d*)?))*$/.test(highlight)) {
+            moved += ` data-line-numbers="${highlight}"`;
+        } else if (!explicit && numbered) {
+            moved += ' data-line-numbers=""';
+        }
+        if (!hasAttribute(sourceAttrs, 'data-ln-start-from') && !hasAttribute(codeAttrs, 'data-ln-start-from') && start && /^[1-9]\d*$/.test(start)) {
+            moved += ` data-ln-start-from="${start}"`;
+        }
+        for (const name of ['data-line-numbers', 'data-ln-start-from']) {
+            if (hasAttribute(figureAttrs, name) && !hasAttribute(preAttrs, name) && !hasAttribute(codeAttrs, name)) {
+                moved += figureAttrs.match(new RegExp(`\\s${name}(?:="[^"]*")?`, 'i'))?.[0] ?? '';
+            }
+        }
 
         for (const name of names) {
             const pattern = new RegExp(`\\s${name}(="[^"]*")?`, 'i');
