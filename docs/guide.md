@@ -43,7 +43,7 @@ Two entry points over one implementation:
 ## Install
 
 ```bash
-npm install @markup-carve/reveal-carve @markup-carve/carve reveal.js
+npm install @markup-carve/reveal-carve@^0.2 @markup-carve/carve@^0.2 reveal.js
 npx reveal-carve init talk      # a starter deck: chapters, a partial, the commands
 ```
 
