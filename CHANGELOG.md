@@ -5,21 +5,30 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-Runs on the Carve 0.2 engine (carve-js `next2`, pinned by commit until 0.2 is published).
+## [0.2.0] - 2026-11-27
+
+Decks are written in Carve 0.2, and `reveal-carve upgrade` rewrites Carve 0.1 decks.
 
 ### Breaking
 
-- Requires the Carve 0.2 engine: rendering goes through `render()`, includes through the 0.2 include resolver, and the browser bundle carries the standard extensions of `@markup-carve/carve/extensions`.
-- `details`, `spoiler`, `listTable`, `colorSwatch`, `semanticSpan`, `imgFence`, the navigation extensions and `glossary` have no 0.2 port yet; as defaults they are left out, and asked for by name they fail with the carve-js issue named. `smartQuotes` is the `smartTypography` option now.
-- A tab is written `::: tab "Label"`. The tabs render as 0.2 radio groups, not the 0.1 `aria` mode.
-- `handout` and the generated docs need the Carve 0.2 Markdown writer (markup-carve/carve-js#5076) and stop with an error until it lands.
-- `import` writes canonical 0.2 Carve (`=` headings, `carve fmt` spacing), so `check` passes on its output; HTML comments still become Carve comments.
+- Requires the Carve 0.2 engine (`@markup-carve/carve` 0.2): rendering goes through `render()`, includes through the 0.2 include resolver, and the browser bundle carries the standard extensions of `@markup-carve/carve/extensions` (#50).
+- A tab is written `::: tab "Label"`. The tabs render as 0.2 radio groups, not the 0.1 `aria` mode (#50).
+- The 0.1 `headingLevelShift()` extension is gone; set the render option `headingShift` instead (#67).
+- `import` writes canonical 0.2 Carve (`=` headings, `carve fmt` spacing), so `check` passes on its output; HTML comments still become Carve comments (#50).
 
 ### Fixes
 
-- `check` passes the deck's include root to `carve lint` and filters separator hints in included files against their own separators.
-- Speaker notes are found when `carve fmt` indents `%% notes` under a list, as 0.2 does, and agendas and heading splits read `=` headings.
+- `check` passes the deck's include root to `carve lint` and filters separator hints in included files against their own separators (#50).
+- Speaker notes are found when `carve fmt` indents `%% notes` under a list, as 0.2 does, and agendas and heading splits read `=` headings (#50).
+- A slide separator inside a code fence no longer splits the slide, and an imported thematic rule under `***` separators stays a rule (#52).
+- `tableOfContents`, `headingPermalinks`, `headingNumbers` and `externalLinks` take effect when asked for (#55).
 
+### Improvements
+
+- `reveal-carve upgrade` rewrites Carve 0.1 decks and their included files as 0.2, slide by slide; it only reports unless `--write`, and writes all files or none (#66).
+- `imgFence` renders `img` and `image` fences with sanitized SVG content (#53).
+
+**Full Changelog**: https://github.com/markup-carve/reveal-carve/compare/0.1.6...0.2.0
 
 ## [0.1.6] - 2026-11-12
 

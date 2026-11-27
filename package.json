@@ -1,6 +1,6 @@
 {
     "name": "@markup-carve/reveal-carve",
-    "version": "0.1.6",
+    "version": "0.2.0",
     "description": "Write reveal.js presentations in Carve markup - a runtime plugin and a static build step.",
     "keywords": [
         "reveal.js",
@@ -88,7 +88,7 @@
         "docs": "node scripts/build-docs.mjs"
     },
     "peerDependencies": {
-        "@markup-carve/carve": ">=0.2.0-0",
+        "@markup-carve/carve": "^0.2",
         "reveal.js": ">=4.0.0"
     },
     "peerDependenciesMeta": {

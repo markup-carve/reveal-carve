@@ -6,7 +6,7 @@ From an empty directory to a deck you can present, in five commands.
 
 ```bash
 npm init -y
-npm install @markup-carve/reveal-carve @markup-carve/carve reveal.js
+npm install @markup-carve/reveal-carve@^0.2 @markup-carve/carve@^0.2 reveal.js
 ```
 
 The Carve engine and reveal.js are peer dependencies: a page loads one of each,

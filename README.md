@@ -1,16 +1,16 @@
 # reveal-carve
 
-Write reveal.js presentations in Carve. Package version 0.1.6 provides a browser plugin and a Node build command. See the [Carve documentation](https://markup-carve.github.io/carve/) for the markup language.
+Write reveal.js presentations in Carve. Package version 0.2.0 provides a browser plugin and a Node build command. See the [Carve documentation](https://markup-carve.github.io/carve/) for the markup language.
 
 ## Install
 
 Install the deck tool and its runtime dependencies:
 
 ```sh
-npm install @markup-carve/reveal-carve @markup-carve/carve reveal.js
+npm install @markup-carve/reveal-carve@^0.2 @markup-carve/carve@^0.2 reveal.js
 ```
 
-The build command needs Node.js 20 or newer; PDF export needs Node.js 22. The `main` line needs the Carve 0.2 engine (`@markup-carve/carve` 0.2), which is not on the registry yet.
+The build command needs Node.js 20 or newer; PDF export needs Node.js 22. It needs the Carve 0.2 engine (`@markup-carve/carve` 0.2).
 
 ## Usage
 
